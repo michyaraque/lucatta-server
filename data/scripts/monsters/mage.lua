@@ -41,7 +41,7 @@ monster.attacks = {
   },
   {
     name = "combat",
-    type = COMBAT_UNDEFINEDDAMAGE,
+    type = COMBAT_ENERGYDAMAGE,
     chance = 28,
     interval = 2200,
     target = true,
@@ -69,7 +69,7 @@ monster.defenses = {
 }
 monster.elements = {
   {
-    type = COMBAT_UNDEFINEDDAMAGE,
+    type = COMBAT_ENERGYDAMAGE,
     percent = 50
   },
   {

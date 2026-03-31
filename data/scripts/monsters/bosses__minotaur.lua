@@ -41,7 +41,7 @@ monster.defenses = {
 }
 monster.elements = {
   {
-    type = COMBAT_UNDEFINEDDAMAGE,
+    type = COMBAT_ENERGYDAMAGE,
     percent = 80
   },
   {
