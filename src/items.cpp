@@ -10,6 +10,8 @@
 #include "pugicast.h"
 #include "weapons.h"
 
+#include <unordered_set>
+
 extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
 
@@ -679,10 +681,18 @@ bool Items::loadFromXml()
 		return false;
 	}
 
+	std::unordered_set<uint16_t> xmlSeenIds;
+
 	for (auto itemNode : doc.child("items").children()) {
 		pugi::xml_attribute idAttribute = itemNode.attribute("id");
 		if (idAttribute) {
-			parseItemNode(itemNode, pugi::cast<uint16_t>(idAttribute.value()));
+			uint16_t id = pugi::cast<uint16_t>(idAttribute.value());
+			if (!xmlSeenIds.emplace(id).second) {
+				std::cout << "[Warning - Items::loadFromXml] Duplicate item node with id: " << id << std::endl;
+				continue;
+			}
+
+			parseItemNode(itemNode, id);
 			continue;
 		}
 
@@ -702,6 +712,12 @@ bool Items::loadFromXml()
 		uint16_t id = pugi::cast<uint16_t>(fromIdAttribute.value());
 		uint16_t toId = pugi::cast<uint16_t>(toIdAttribute.value());
 		while (id <= toId) {
+			if (!xmlSeenIds.emplace(id).second) {
+				std::cout << "[Warning - Items::loadFromXml] Duplicate item node with id: " << id << std::endl;
+				++id;
+				continue;
+			}
+
 			parseItemNode(itemNode, id++);
 		}
 	}
@@ -721,12 +737,10 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 		return;
 	}
 
-	if (!it.name.empty()) {
-		std::cout << "[Warning - Items::parseItemNode] Duplicate item with id: " << id << std::endl;
-		return;
+	const std::string xmlName = itemNode.attribute("name").as_string();
+	if (!xmlName.empty()) {
+		it.name = xmlName;
 	}
-
-	it.name = itemNode.attribute("name").as_string();
 
 	if (!it.name.empty()) {
 		std::string lowerCaseName = boost::algorithm::to_lower_copy(it.name);
