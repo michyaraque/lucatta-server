@@ -286,9 +286,14 @@ bool IOMap::parseTileArea(OTB::Loader& loader, const OTB::Node& tileAreaNode, Ma
 				}
 
 				case OTBM_ATTR_ITEM: {
+					PropStream itemPreview = propStream;
+					uint16_t rawItemId = 0;
+					itemPreview.read<uint16_t>(rawItemId);
+
 					Item* item = Item::CreateItem(propStream);
 					if (!item) {
-						setLastErrorString(fmt::format("[x:{:d}, y:{:d}, z:{:d}] Failed to create item.", x, y, z));
+						setLastErrorString(
+						    fmt::format("[x:{:d}, y:{:d}, z:{:d}] Failed to create item with id {:d}.", x, y, z, rawItemId));
 						return false;
 					}
 
@@ -337,9 +342,14 @@ bool IOMap::parseTileArea(OTB::Loader& loader, const OTB::Node& tileAreaNode, Ma
 				return false;
 			}
 
+			PropStream itemPreview = stream;
+			uint16_t rawItemId = 0;
+			itemPreview.read<uint16_t>(rawItemId);
+
 			Item* item = Item::CreateItem(stream);
 			if (!item) {
-				setLastErrorString(fmt::format("[x:{:d}, y:{:d}, z:{:d}] Failed to create item.", x, y, z));
+				setLastErrorString(
+				    fmt::format("[x:{:d}, y:{:d}, z:{:d}] Failed to create item with id {:d}.", x, y, z, rawItemId));
 				return false;
 			}
 

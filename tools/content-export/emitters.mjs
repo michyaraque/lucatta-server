@@ -27,7 +27,8 @@ const resistanceCombatTypes = {
   flame: "COMBAT_FIREDAMAGE",
   lightning: "COMBAT_ENERGYDAMAGE",
   cold: "COMBAT_ICEDAMAGE",
-  magic: "COMBAT_UNDEFINEDDAMAGE",
+  magic: "COMBAT_ENERGYDAMAGE",
+  spectral: "COMBAT_DEATHDAMAGE",
 };
 
 const spellCombatTypes = {
@@ -38,7 +39,7 @@ const spellCombatTypes = {
   5: "COMBAT_EARTHDAMAGE",
   6: "COMBAT_LIFEDRAIN",
   7: "COMBAT_HEALING",
-  8: "COMBAT_UNDEFINEDDAMAGE",
+  8: "COMBAT_ENERGYDAMAGE",
 };
 
 const spellConditionTypes = {
