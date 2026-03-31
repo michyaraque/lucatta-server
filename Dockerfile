@@ -7,6 +7,8 @@ RUN apk add --no-cache \
   luajit-dev \
   mariadb-connector-c-dev \
   openssl-dev \
+  protobuf \
+  protobuf-dev \
   pugixml-dev \
   samurai
 
@@ -26,6 +28,7 @@ RUN apk add --no-cache \
   luajit \
   mariadb-connector-c \
   openssl \
+  protobuf \
   pugixml
 
 COPY --from=build /usr/src/forgottenserver/build/RelWithDebInfo/tfs /bin/tfs

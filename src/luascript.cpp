@@ -4712,7 +4712,7 @@ int LuaScriptInterface::luaGameGetItemTypeByClientId(lua_State* L)
 {
 	// Game.getItemTypeByClientId(clientId)
 	uint16_t spriteId = tfs::lua::getNumber<uint16_t>(L, 1);
-	const ItemType& itemType = Item::items.getItemIdByClientId(spriteId);
+	const ItemType& itemType = Item::items.getItemTypeByAppearanceId(spriteId);
 	if (itemType.id != 0) {
 		tfs::lua::pushUserdata(L, &itemType);
 		tfs::lua::setMetatable(L, -1, "ItemType");
@@ -10213,7 +10213,7 @@ int LuaScriptInterface::luaPlayerSendSupplyUsed(lua_State* L)
 		return 1;
 	}
 
-	player->sendSupplyUsed(item->getClientID());
+	player->sendSupplyUsed(item->getID());
 	tfs::lua::pushBoolean(L, true);
 	return 1;
 }
@@ -13203,7 +13203,7 @@ int LuaScriptInterface::luaItemTypeGetClientId(lua_State* L)
 	// itemType:getClientId()
 	const ItemType* itemType = tfs::lua::getUserdata<const ItemType>(L, 1);
 	if (itemType) {
-		lua_pushnumber(L, itemType->clientId);
+		lua_pushnumber(L, itemType->id);
 	} else {
 		lua_pushnil(L);
 	}

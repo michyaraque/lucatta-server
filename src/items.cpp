@@ -5,6 +5,7 @@
 
 #include "items.h"
 
+#include "appearance_catalog.h"
 #include "movement.h"
 #include "pugicast.h"
 #include "weapons.h"
@@ -296,6 +297,62 @@ Direction getDirection(std::string_view string)
 	return DIRECTION_NORTH;
 }
 
+void applyAppearanceMetadata(const AppearanceItemMetadata& metadata, ItemType& itemType)
+{
+	itemType.id = metadata.id;
+	itemType.name = metadata.name;
+	itemType.description = metadata.description;
+	itemType.speed = metadata.speed;
+	itemType.wareId = metadata.wareId;
+	itemType.alwaysOnTopOrder = metadata.alwaysOnTopOrder;
+	itemType.lightLevel = metadata.lightLevel;
+	itemType.lightColor = metadata.lightColor;
+	itemType.classification = metadata.classification;
+	itemType.stackable = metadata.stackable;
+	itemType.isAnimation = metadata.isAnimation;
+	itemType.useable = metadata.useable || metadata.multiUse;
+	itemType.forceUse = metadata.forceUse;
+	itemType.hasHeight = metadata.hasHeight;
+	itemType.blockSolid = metadata.blockSolid;
+	itemType.blockProjectile = metadata.blockProjectile;
+	itemType.blockPathFind = metadata.blockPathFind;
+	itemType.pickupable = metadata.pickupable;
+	itemType.moveable = metadata.moveable;
+	itemType.alwaysOnTop = metadata.alwaysOnTop;
+	itemType.canReadText = metadata.canReadText;
+	itemType.canWriteText = metadata.canWriteText;
+	itemType.isVertical = metadata.isVertical;
+	itemType.isHorizontal = metadata.isHorizontal;
+	itemType.isHangable = metadata.isHangable;
+	itemType.lookThrough = metadata.lookThrough;
+	itemType.rotatable = metadata.rotatable;
+	itemType.showClientCharges = metadata.showClientCharges;
+	itemType.showClientDuration = metadata.showClientDuration;
+
+	switch (metadata.group) {
+		case AppearanceItemGroup::Ground:
+			itemType.group = ITEM_GROUP_GROUND;
+			break;
+		case AppearanceItemGroup::Container:
+			itemType.group = ITEM_GROUP_CONTAINER;
+			itemType.type = ITEM_TYPE_CONTAINER;
+			break;
+		case AppearanceItemGroup::Splash:
+			itemType.group = ITEM_GROUP_SPLASH;
+			break;
+		case AppearanceItemGroup::Fluid:
+			itemType.group = ITEM_GROUP_FLUID;
+			break;
+		case AppearanceItemGroup::Podium:
+			itemType.group = ITEM_GROUP_PODIUM;
+			itemType.type = ITEM_TYPE_PODIUM;
+			break;
+		case AppearanceItemGroup::None:
+			itemType.group = ITEM_GROUP_NONE;
+			break;
+	}
+}
+
 } // namespace
 
 Items::Items()
@@ -316,7 +373,9 @@ void Items::clear()
 bool Items::reload()
 {
 	clear();
-	loadFromOtb("data/items/items.otb");
+	if (!loadFromAppearances("data/items/appearances.dat")) {
+		return false;
+	}
 
 	if (!loadFromXml()) {
 		return false;
@@ -325,6 +384,41 @@ bool Items::reload()
 	g_moveEvents->reload();
 	g_weapons->reload();
 	g_weapons->loadDefaults();
+	return true;
+}
+
+bool Items::loadFromAppearances(const std::string& file)
+{
+	AppearanceCatalog catalog;
+	std::string error;
+	if (!catalog.load(file, error)) {
+		std::cout << error << std::endl;
+		return false;
+	}
+
+	majorVersion = 3;
+	minorVersion = CLIENT_VERSION_LAST;
+	buildNumber = 0;
+
+	const auto& catalogItems = catalog.items();
+	if (catalogItems.size() > items.size()) {
+		items.resize(catalogItems.size());
+	}
+
+	for (const AppearanceItemMetadata& metadata : catalogItems) {
+		if (metadata.id == 0) {
+			continue;
+		}
+
+		ItemType& itemType = items[metadata.id];
+		applyAppearanceMetadata(metadata, itemType);
+
+		if (!metadata.name.empty()) {
+			nameToItems.insert({boost::algorithm::to_lower_copy(metadata.name), metadata.id});
+		}
+	}
+
+	items.shrink_to_fit();
 	return true;
 }
 
@@ -564,7 +658,6 @@ bool Items::loadFromOtb(const std::string& file)
 		iType.showClientDuration = hasBitSet(FLAG_CLIENTDURATION, flags);
 
 		iType.id = serverId;
-		iType.clientId = clientId;
 		iType.speed = speed;
 		iType.lightLevel = lightLevel;
 		iType.lightColor = lightColor;
@@ -1903,12 +1996,10 @@ const ItemType& Items::getItemType(size_t id) const
 	return items.front();
 }
 
-const ItemType& Items::getItemIdByClientId(uint16_t spriteId) const
+const ItemType& Items::getItemTypeByAppearanceId(uint16_t appearanceId) const
 {
-	if (spriteId >= 100) {
-		if (uint16_t serverId = clientIdToServerIdMap.getServerId(spriteId)) {
-			return getItemType(serverId);
-		}
+	if (appearanceId >= 100) {
+		return getItemType(appearanceId);
 	}
 	return items.front();
 }

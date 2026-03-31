@@ -91,7 +91,7 @@ void NetworkMessage::addItem(uint16_t id, uint8_t count)
 {
 	const ItemType& it = Item::items[id];
 
-	add<uint16_t>(it.clientId);
+	add<uint16_t>(it.id);
 
 	if (it.stackable) {
 		addByte(count);
@@ -122,7 +122,7 @@ void NetworkMessage::addItem(const Item* item)
 {
 	const ItemType& it = Item::items[item->getID()];
 
-	add<uint16_t>(it.clientId);
+	add<uint16_t>(it.id);
 
 	if (it.stackable) {
 		addByte(std::min<uint16_t>(0xFF, item->getItemCount()));
@@ -190,4 +190,4 @@ void NetworkMessage::addItem(const Item* item)
 	}
 }
 
-void NetworkMessage::addItemId(uint16_t itemId) { add<uint16_t>(Item::items[itemId].clientId); }
+void NetworkMessage::addItemId(uint16_t itemId) { add<uint16_t>(Item::items[itemId].id); }

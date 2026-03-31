@@ -1,4 +1,5 @@
 set(tfs_SRC
+	${CMAKE_CURRENT_LIST_DIR}/appearance_catalog.cpp
 	${CMAKE_CURRENT_LIST_DIR}/otpch.cpp
 	${CMAKE_CURRENT_LIST_DIR}/actions.cpp
 	${CMAKE_CURRENT_LIST_DIR}/ban.cpp
@@ -78,6 +79,7 @@ set(tfs_SRC
 	)
 
 set(tfs_HDR
+	${CMAKE_CURRENT_LIST_DIR}/appearance_catalog.h
 	${CMAKE_CURRENT_LIST_DIR}/otpch.h
 	${CMAKE_CURRENT_LIST_DIR}/actions.h
 	${CMAKE_CURRENT_LIST_DIR}/ban.h
@@ -168,11 +170,13 @@ set(tfs_HDR
 
 set(tfs_MAIN ${CMAKE_CURRENT_LIST_DIR}/main.cpp PARENT_SCOPE)
 
+add_subdirectory(protobuf)
 add_library(tfslib ${tfs_SRC})
 target_link_libraries(tfslib PRIVATE
 	Boost::iostreams
 	Boost::system
 	Boost::locale
+	appearances_proto
 	fmt::fmt
 	OpenSSL::Crypto
 	pugixml::pugixml

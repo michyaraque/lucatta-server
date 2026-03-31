@@ -1514,7 +1514,7 @@ void ProtocolGame::parseMarketCreateOffer(NetworkMessage& msg)
 	uint8_t type = msg.getByte();
 	uint16_t spriteId = msg.get<uint16_t>();
 
-	const ItemType& it = Item::items.getItemIdByClientId(spriteId);
+	const ItemType& it = Item::items.getItemTypeByAppearanceId(spriteId);
 	if (it.id == 0 || it.wareId == 0) {
 		return;
 	} else if (it.classification > 0) {
@@ -1964,7 +1964,7 @@ void ProtocolGame::sendShop(Npc* npc, const ShopInfoList& itemList)
 
 	// currency displayed in trade window (currently only gold supported) if item other than gold coin is sent, the shop
 	// window takes information about currency amount from player items packet (the one that updates action bars)
-	msg.add<uint16_t>(Item::items[ITEM_GOLD_COIN].clientId);
+	msg.add<uint16_t>(Item::items[ITEM_GOLD_COIN].id);
 	msg.addString(""); // doesn't show anywhere, could be used in otclient for currency name
 
 	uint16_t itemsToSend = std::min<size_t>(itemList.size(), std::numeric_limits<uint16_t>::max());
@@ -2891,7 +2891,7 @@ void ProtocolGame::sendItems()
 	}
 
 	for (const auto& item : inventory) {
-		msg.add<uint16_t>(Item::items[item.first].clientId); // item clientId
+		msg.add<uint16_t>(Item::items[item.first].id);
 		msg.addByte(0);                                      // always 0
 		msg.add<uint16_t>(item.second);                      // count
 	}
@@ -3234,7 +3234,7 @@ void ProtocolGame::sendPodiumWindow(const Item* item)
 	                : 0x00); // "mount" checkbox
 	msg.add<uint16_t>(0);    // unknown
 	msg.addPosition(item->getPosition());
-	msg.add<uint16_t>(item->getClientID());
+	msg.add<uint16_t>(item->getID());
 	msg.addByte(stackpos);
 
 	msg.addByte(podium->hasFlag(PODIUM_SHOW_PLATFORM) ? 0x01 : 0x00); // is platform visible
@@ -3725,7 +3725,7 @@ void ProtocolGame::MoveDownCreature(NetworkMessage& msg, const Creature* creatur
 void ProtocolGame::AddShopItem(NetworkMessage& msg, const ShopInfo& item)
 {
 	const ItemType& it = Item::items[item.itemId];
-	msg.add<uint16_t>(it.clientId);
+	msg.add<uint16_t>(it.id);
 
 	if (it.isSplash() || it.isFluidContainer()) {
 		msg.addByte(serverFluidToClient(item.subType));

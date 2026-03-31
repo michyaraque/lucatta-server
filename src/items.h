@@ -324,7 +324,6 @@ public:
 	itemgroup_t group = ITEM_GROUP_NONE;
 	ItemTypes_t type = ITEM_TYPE_NONE;
 	uint16_t id = 0;
-	uint16_t clientId = 0;
 	bool stackable = false;
 	bool isAnimation = false;
 
@@ -438,12 +437,13 @@ public:
 	bool reload();
 	void clear();
 
+	bool loadFromAppearances(const std::string& file);
 	bool loadFromOtb(const std::string& file);
 
 	const ItemType& operator[](size_t id) const { return getItemType(id); }
 	const ItemType& getItemType(size_t id) const;
 	ItemType& getItemType(size_t id);
-	const ItemType& getItemIdByClientId(uint16_t spriteId) const;
+	const ItemType& getItemTypeByAppearanceId(uint16_t appearanceId) const;
 
 	uint16_t getItemIdByName(const std::string& name);
 

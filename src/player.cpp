@@ -3222,7 +3222,7 @@ void Player::postRemoveNotification(Thing* thing, const Thing* newParent, int32_
 	if (const Item* item = thing->getItem()) {
 		if (item->isSupply()) {
 			if (const Player* player = item->getHoldingPlayer()) {
-				player->sendSupplyUsed(item->getClientID());
+				player->sendSupplyUsed(item->getID());
 			}
 		}
 
