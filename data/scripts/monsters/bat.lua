@@ -40,26 +40,30 @@ monster.attacks = {
     maxDamage = 0
   },
   {
-    script = "../../scripts/spells/monster/generated/bat_life_drain.lua",
+    name = "combat",
+    type = COMBAT_LIFEDRAIN,
     chance = 20,
     interval = 2000,
     target = true,
     range = 1,
     minDamage = -3,
-    maxDamage = -2
+    maxDamage = -2,
+    effect = 8
   },
 }
 monster.defenses = {
   defense = 2,
   armor = 2,
   {
-    script = "../../scripts/spells/monster/generated/bat_blood_heal.lua",
+    name = "combat",
+    type = COMBAT_HEALING,
     chance = 15,
     interval = 2000,
     target = false,
     range = 0,
     minDamage = 3,
-    maxDamage = 6
+    maxDamage = 6,
+    effect = 8
   },
 }
 

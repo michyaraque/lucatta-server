@@ -40,22 +40,27 @@ monster.attacks = {
     maxDamage = 0
   },
   {
-    script = "../../scripts/spells/monster/generated/mage_arcane_bolt.lua",
+    name = "combat",
+    type = COMBAT_UNDEFINEDDAMAGE,
     chance = 28,
     interval = 2200,
     target = true,
     range = 5,
     minDamage = -323,
-    maxDamage = -162
+    maxDamage = -162,
+    effect = 1
   },
   {
-    script = "../../scripts/spells/monster/generated/mage_fire_burst.lua",
+    name = "combat",
+    type = COMBAT_FIREDAMAGE,
     chance = 16,
     interval = 3200,
     target = true,
     range = 4,
     minDamage = -264,
-    maxDamage = -132
+    maxDamage = -132,
+    effect = 2,
+    radius = 1
   },
 }
 monster.defenses = {

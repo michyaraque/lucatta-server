@@ -182,10 +182,6 @@ function effectFromSpell(spell) {
   return spell.combat?.effectId ?? spell.combat?.impactEffectId;
 }
 
-function buildScriptPath(spell) {
-  return `../../scripts/spells/monster/generated/${generatedSpellFileName(spell)}`;
-}
-
 function buildMonsterElements(monster) {
   if (!monster.damageModifier) {
     return [];
@@ -203,14 +199,20 @@ function buildMonsterElements(monster) {
     .filter(Boolean);
 }
 
-function buildScriptedAbility(spellEntry, spellDefinition) {
+function buildLuaSpellAbility(spellEntry, spellDefinition) {
   if (!spellDefinition) {
+    return null;
+  }
+
+  const type = spellCombatTypes[spellDefinition.combat?.type];
+  if (!type) {
     return null;
   }
 
   const isHealing = spellDefinition.combat?.type === 7;
   const ability = {
-    script: buildScriptPath(spellDefinition),
+    name: "combat",
+    type: luaRaw(type),
     chance: spellEntry.chance,
     interval: spellEntry.interval,
     target: spellDefinition.targetMode === "target",
@@ -224,6 +226,42 @@ function buildScriptedAbility(spellEntry, spellDefinition) {
     } else {
       ability.minDamage = -Math.round(spellEntry.max);
       ability.maxDamage = -Math.round(spellEntry.min);
+    }
+  }
+
+  const effect = effectFromSpell(spellDefinition);
+  if (typeof effect === "number") {
+    ability.effect = effect;
+  }
+
+  if (Array.isArray(spellDefinition.area) && spellDefinition.area.length === 3 && spellDefinition.area[0]?.length === 3) {
+    ability.radius = 1;
+  }
+
+  const condition = spellDefinition.combat?.condition;
+  if (condition) {
+    const conditionType = spellConditionTypes[condition.type];
+    if (conditionType) {
+      ability.condition = {
+        type: luaRaw(conditionType),
+      };
+
+      if (typeof condition.duration === "number") {
+        ability.duration = condition.duration;
+        ability.condition.duration = condition.duration;
+      }
+
+      if (typeof condition.damagePerTick === "number") {
+        ability.condition.minDamage = Math.abs(Math.round(condition.damagePerTick));
+        ability.condition.maxDamage = Math.abs(Math.round(condition.damagePerTick));
+        ability.condition.interval = typeof condition.tickInterval === "number" && condition.tickInterval > 0
+          ? condition.tickInterval
+          : 1000;
+      }
+
+      if (typeof condition.speedChange === "number") {
+        ability.speed = Math.round(condition.speedChange);
+      }
     }
   }
 
@@ -435,7 +473,7 @@ export function emitMonsterLua(monster, spells, itemKindToId) {
 
   const defenseAbilities = [];
   for (const spellEntry of monster.attacks?.spells ?? []) {
-    const builtSpell = buildScriptedAbility(spellEntry, spells.get(spellEntry.spellId));
+    const builtSpell = buildLuaSpellAbility(spellEntry, spells.get(spellEntry.spellId));
     if (!builtSpell) {
       continue;
     }

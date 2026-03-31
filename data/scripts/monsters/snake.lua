@@ -36,13 +36,23 @@ monster.attacks = {
     maxDamage = 0
   },
   {
-    script = "../../scripts/spells/monster/generated/snake_acid_spit.lua",
+    name = "combat",
+    type = COMBAT_EARTHDAMAGE,
     chance = 18,
     interval = 2500,
     target = true,
     range = 4,
     minDamage = -18,
-    maxDamage = -10
+    maxDamage = -10,
+    effect = 144,
+    condition = {
+      type = CONDITION_POISON,
+      duration = 8000,
+      minDamage = 8,
+      maxDamage = 8,
+      interval = 1000
+    },
+    duration = 8000
   },
 }
 monster.defenses = {

@@ -31,13 +31,15 @@ monster.loot = {
 }
 monster.attacks = {
   {
-    script = "../../scripts/spells/monster/generated/rat_bite.lua",
+    name = "combat",
+    type = COMBAT_PHYSICALDAMAGE,
     chance = 100,
     interval = 2000,
     target = true,
     range = 1,
     minDamage = -3,
-    maxDamage = -1
+    maxDamage = -1,
+    effect = 164
   },
 }
 monster.defenses = {

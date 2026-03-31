@@ -41,13 +41,21 @@ monster.attacks = {
     maxDamage = -60
   },
   {
-    script = "../../scripts/spells/monster/generated/wraith_haunt_bolt.lua",
+    name = "combat",
+    type = COMBAT_ICEDAMAGE,
     chance = 24,
     interval = 2400,
     target = true,
     range = 5,
     minDamage = -188,
-    maxDamage = -97
+    maxDamage = -97,
+    effect = 138,
+    condition = {
+      type = CONDITION_FREEZING,
+      duration = 4000
+    },
+    duration = 4000,
+    speed = -220
   },
 }
 monster.defenses = {

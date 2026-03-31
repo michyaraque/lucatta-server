@@ -37,13 +37,21 @@ monster.attacks = {
     maxDamage = -10
   },
   {
-    script = "../../scripts/spells/monster/generated/sea_snake_frost_spit.lua",
+    name = "combat",
+    type = COMBAT_ICEDAMAGE,
     chance = 22,
     interval = 2600,
     target = true,
     range = 4,
     minDamage = -179,
-    maxDamage = -109
+    maxDamage = -109,
+    effect = 4,
+    condition = {
+      type = CONDITION_FREEZING,
+      duration = 4000
+    },
+    duration = 4000,
+    speed = -100
   },
 }
 monster.defenses = {
