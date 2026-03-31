@@ -384,6 +384,9 @@ local function AbilityTableToSpell(ability)
 		if ability.chance then
 			spell:setChance(ability.chance)
 		end
+		if ability.range then
+			spell:setRange(ability.range)
+		end
 		if ability.minDamage and ability.maxDamage then
 			spell:setCombatValue(ability.minDamage, ability.maxDamage)
 		end
