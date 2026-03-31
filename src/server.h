@@ -51,7 +51,7 @@ public:
 	Protocol_ptr make_protocol(NetworkMessage& msg, const Connection_ptr& connection) const;
 
 	void onStopServer();
-	void onAccept(Connection_ptr connection, const boost::system::error_code& error);
+	void onAccept(const boost::system::error_code& error, boost::asio::ip::tcp::socket socket);
 
 private:
 	void accept();

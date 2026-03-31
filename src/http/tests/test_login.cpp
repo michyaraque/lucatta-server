@@ -117,6 +117,7 @@ struct LoginFixture
 		setString(ConfigManager::SERVER_NAME, "Forgotten");
 		setString(ConfigManager::IP, "tfs.example.com");
 		setNumber(ConfigManager::GAME_PORT, 7171);
+		setNumber(ConfigManager::WEBSOCKET_PORT, 7173);
 		setString(ConfigManager::LOCATION, "Sweden");
 		setString(ConfigManager::WORLD_TYPE, "pvp");
 
@@ -255,13 +256,35 @@ BOOST_FIXTURE_TEST_CASE(test_login_success, LoginFixture)
 	BOOST_TEST(worlds[0].at("externalportprotected").as_int64() == 7171);
 	BOOST_TEST(worlds[0].at("externaladdressunprotected").as_string() == "tfs.example.com");
 	BOOST_TEST(worlds[0].at("externalportunprotected").as_int64() == 7171);
+	BOOST_TEST(worlds[0].at("websocketaddressprotected").as_string() == "tfs.example.com");
+	BOOST_TEST(worlds[0].at("websocketportprotected").as_int64() == 7173);
+	BOOST_TEST(worlds[0].at("websocketaddressunprotected").as_string() == "tfs.example.com");
+	BOOST_TEST(worlds[0].at("websocketportunprotected").as_int64() == 7173);
 	BOOST_TEST(worlds[0].at("location").as_string() == "Sweden");
 	BOOST_TEST(worlds[0].at("pvptype").as_int64() == 0);
+
+	auto& vocations = body.at("playdata").at("vocations").as_array();
+	BOOST_TEST(vocations.size() == 8);
+	BOOST_TEST(vocations[0].at("id").as_int64() == 1);
+	BOOST_TEST(vocations[0].at("name").as_string() == "Sorcerer");
+
+	auto& transport = body.at("playdata").at("transport");
+	BOOST_TEST(transport.at("login").as_string() == "session");
+	BOOST_TEST(transport.at("socket").as_string() == "websocket");
+	BOOST_TEST(transport.at("clientversionmin").as_int64() == 1310);
+	BOOST_TEST(transport.at("clientversionmax").as_int64() == 1311);
+	BOOST_TEST(transport.at("clientversionstring").as_string() == "13.10");
+	auto& security = transport.at("security");
+	BOOST_TEST(security.at("algorithm").as_string() == "rsa-xtea");
+	BOOST_TEST(security.at("exponent").as_int64() == 65537);
+	BOOST_TEST(security.at("keybytes").as_int64() == 128);
+	BOOST_TEST(!security.at("modulus").as_string().empty());
 
 	auto& characters = body.at("playdata").at("characters").as_array();
 	BOOST_TEST(characters.size() == 1);
 	BOOST_TEST(characters[0].at("name").as_string() == "Test");
 	BOOST_TEST(characters[0].at("level").as_uint64() == 2597);
+	BOOST_TEST(characters[0].at("vocationId").as_uint64() == 6);
 	BOOST_TEST(characters[0].at("vocation").as_string() == "Elder Druid");
 	BOOST_TEST(characters[0].at("lastlogin").as_uint64() == 1715719401);
 	BOOST_TEST(characters[0].at("ismale").as_bool() == true);
@@ -271,6 +294,12 @@ BOOST_FIXTURE_TEST_CASE(test_login_success, LoginFixture)
 	BOOST_TEST(characters[0].at("legscolor").as_uint64() == 114);
 	BOOST_TEST(characters[0].at("detailcolor").as_uint64() == 0);
 	BOOST_TEST(characters[0].at("addonsflags").as_uint64() == 1);
+	auto& appearance = characters[0].at("appearance");
+	BOOST_TEST(appearance.at("baseKind").as_uint64() == 1094);
+	BOOST_TEST(appearance.at("weaponKind").as_uint64() == 0);
+	BOOST_TEST(appearance.at("helmetKind").as_uint64() == 0);
+	BOOST_TEST(appearance.at("armorKind").as_uint64() == 0);
+	BOOST_TEST(appearance.at("shieldKind").as_uint64() == 0);
 }
 
 BOOST_FIXTURE_TEST_CASE(test_login_success_with_token, LoginFixture)

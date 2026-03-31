@@ -34,6 +34,18 @@ thread_local json::monotonic_resource mr;
 beast::http::message_generator tfs::http::handle_request(const beast::http::request<beast::http::string_body>& req,
                                                          std::string_view ip)
 {
+	if (req.method() == beast::http::verb::options) {
+		beast::http::response<beast::http::string_body> res{beast::http::status::no_content, req.version()};
+		auto origin = req[beast::http::field::origin];
+		res.set("Access-Control-Allow-Origin", origin.empty() ? "*" : origin);
+		res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+		res.set("Access-Control-Allow-Headers", "Content-Type");
+		res.set("Access-Control-Allow-Credentials", "true");
+		res.set("Vary", "Origin");
+		res.keep_alive(req.keep_alive());
+		return res;
+	}
+
 	auto&& [status, responseBody] = [&req, ip]() {
 		boost::system::error_code ec;
 		auto requestBody = json::parse(req.body(), ec, &mr);
@@ -51,6 +63,12 @@ beast::http::message_generator tfs::http::handle_request(const beast::http::requ
 	}();
 
 	beast::http::response<beast::http::string_body> res{status, req.version()};
+	auto origin = req[beast::http::field::origin];
+	res.set("Access-Control-Allow-Origin", origin.empty() ? "*" : origin);
+	res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+	res.set("Access-Control-Allow-Headers", "Content-Type");
+	res.set("Access-Control-Allow-Credentials", "true");
+	res.set("Vary", "Origin");
 	res.body() = json::serialize(responseBody);
 	res.keep_alive(req.keep_alive());
 	res.prepare_payload();

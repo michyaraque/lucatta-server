@@ -49,6 +49,7 @@ services:
     ports:
       - "7171:7171"
       - "7172:7172"
+      - "7173:7173"
       - "8080:8080"
     depends_on:
       new_database:

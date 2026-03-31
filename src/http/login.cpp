@@ -3,7 +3,9 @@
 #include "login.h"
 
 #include "../base64.h"
+#include "../definitions.h"
 #include "../game.h"
+#include "../rsa.h"
 #include "error.h"
 
 #include <fmt/format.h>
@@ -29,6 +31,24 @@ int getPvpType()
 	}
 
 	std::unreachable();
+}
+
+json::array buildVocations()
+{
+	json::array vocations;
+
+	for (const auto& [id, vocation] : g_vocations.getVocations()) {
+		if (id == VOCATION_NONE) {
+			continue;
+		}
+
+		vocations.push_back({
+		    {"id", id},
+		    {"name", vocation.getVocName()},
+		});
+	}
+
+	return vocations;
 }
 
 } // namespace
@@ -83,6 +103,7 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 
 	auto accountId = result->getNumber<uint64_t>("id");
 	auto premiumEndsAt = result->getNumber<int64_t>("premium_ends_at");
+	const auto websocketPort = getNumber(ConfigManager::WEBSOCKET_PORT);
 
 	std::string sessionKey = randomBytes(16);
 	if (!db.executeQuery(
@@ -106,6 +127,7 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 			    {"worldid", 0}, // not implemented
 			    {"name", result->getString("name")},
 			    {"level", result->getNumber<uint32_t>("level")},
+			    {"vocationId", vocation->getId()},
 			    {"vocation", vocation->getVocName()},
 			    {"lastlogin", result->getNumber<uint64_t>("lastlogin")},
 			    {"ismale", result->getNumber<uint16_t>("sex") == PLAYERSEX_MALE},
@@ -118,6 +140,14 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 			    {"legscolor", result->getNumber<uint32_t>("looklegs")},
 			    {"detailcolor", result->getNumber<uint32_t>("lookfeet")},
 			    {"addonsflags", result->getNumber<uint32_t>("lookaddons")},
+			    {"appearance",
+			     {
+			         {"baseKind", result->getNumber<uint32_t>("looktype")},
+			         {"weaponKind", 0},
+			         {"helmetKind", 0},
+			         {"armorKind", 0},
+			         {"shieldKind", 0},
+			     }},
 			    {"dailyrewardstate", 0}, // not implemented
 			});
 
@@ -133,6 +163,10 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 	        {"externalportprotected", getNumber(ConfigManager::GAME_PORT)},
 	        {"externaladdressunprotected", getString(ConfigManager::IP)},
 	        {"externalportunprotected", getNumber(ConfigManager::GAME_PORT)},
+	        {"websocketaddressprotected", getString(ConfigManager::IP)},
+	        {"websocketportprotected", websocketPort},
+	        {"websocketaddressunprotected", getString(ConfigManager::IP)},
+	        {"websocketportunprotected", websocketPort},
 	        {"previewstate", 0}, // not implemented
 	        {"location", getString(ConfigManager::LOCATION)},
 	        {"anticheatprotection", false}, // not implemented
@@ -161,7 +195,23 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 	        {"playdata",
 	         {
 	             {"worlds", worlds},
+	             {"vocations", buildVocations()},
 	             {"characters", characters},
+	             {"transport",
+	              {
+	                  {"login", "session"},
+	                  {"socket", "websocket"},
+	                  {"clientversionmin", CLIENT_VERSION_MIN},
+	                  {"clientversionmax", CLIENT_VERSION_MAX},
+	                  {"clientversionstring", CLIENT_VERSION_STR},
+	                  {"security",
+	                   {
+	                       {"algorithm", "rsa-xtea"},
+	                       {"modulus", tfs::rsa::getPublicModulus()},
+	                       {"exponent", tfs::rsa::getPublicExponent()},
+	                       {"keybytes", tfs::rsa::getKeySize()},
+	                   }},
+	              }},
 	         }},
 	    },
 	};

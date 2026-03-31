@@ -34,6 +34,7 @@
 #include "storeinbox.h"
 #include "talkaction.h"
 #include "weapons.h"
+#include "websocket.h"
 
 extern Actions* g_actions;
 extern Chat* g_chat;
@@ -122,6 +123,7 @@ void Game::setGameState(GameState_t newState)
 #ifdef HTTP
 			tfs::http::stop();
 #endif
+			tfs::ws::stop();
 			break;
 		}
 

@@ -19,6 +19,7 @@
 #include "script.h"
 #include "scriptmanager.h"
 #include "server.h"
+#include "websocket.h"
 
 #include <fstream>
 
@@ -214,6 +215,11 @@ void mainLoader(ServiceManager* services)
 
 	// Game client protocols
 	services->add<ProtocolGame>(static_cast<uint16_t>(getNumber(ConfigManager::GAME_PORT)));
+
+	// Browser client protocol
+	tfs::ws::start(getBoolean(ConfigManager::BIND_ONLY_GLOBAL_ADDRESS), getString(ConfigManager::IP),
+	               static_cast<uint16_t>(getNumber(ConfigManager::WEBSOCKET_PORT)),
+	               getNumber(ConfigManager::WEBSOCKET_WORKERS));
 
 	// OT protocols
 	services->add<ProtocolStatus>(static_cast<uint16_t>(getNumber(ConfigManager::STATUS_PORT)));

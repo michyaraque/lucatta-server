@@ -14,7 +14,9 @@ static bool argumentsHandler(const std::vector<std::string_view>& args)
 			             "\t--ip=$1\t\t\tIP address of the server.\n"
 			             "\t\t\t\tShould be equal to the global IP.\n"
 			             "\t--http-port=$1\tPort for http to listen on.\n"
-			             "\t--game-port=$1\tPort for game server to listen on.\n";
+			             "\t--game-port=$1\tPort for game server to listen on.\n"
+			             "\t--ws-port=$1\tPort for websocket game server to listen on.\n"
+			             "\t--ws-workers=$1\tWorker threads for the websocket server.\n";
 			return false;
 		} else if (arg == "--version") {
 			printServerVersion();
@@ -31,6 +33,10 @@ static bool argumentsHandler(const std::vector<std::string_view>& args)
 			ConfigManager::setNumber(ConfigManager::HTTP_PORT, std::stoi(tmp[1].data()));
 		else if (tmp[0] == "--game-port")
 			ConfigManager::setNumber(ConfigManager::GAME_PORT, std::stoi(tmp[1].data()));
+		else if (tmp[0] == "--ws-port")
+			ConfigManager::setNumber(ConfigManager::WEBSOCKET_PORT, std::stoi(tmp[1].data()));
+		else if (tmp[0] == "--ws-workers")
+			ConfigManager::setNumber(ConfigManager::WEBSOCKET_WORKERS, std::stoi(tmp[1].data()));
 	}
 
 	return true;

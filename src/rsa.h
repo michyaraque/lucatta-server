@@ -4,6 +4,9 @@
 #ifndef FS_RSA_H
 #define FS_RSA_H
 
+#include <cstdint>
+#include <string>
+
 struct evp_pkey_st;
 typedef struct evp_pkey_st EVP_PKEY;
 
@@ -11,6 +14,9 @@ namespace tfs::rsa {
 
 EVP_PKEY* loadPEM(std::string_view pem);
 void decrypt(uint8_t* msg, size_t len);
+std::string getPublicModulus();
+uint32_t getPublicExponent();
+size_t getKeySize();
 
 } // namespace tfs::rsa
 

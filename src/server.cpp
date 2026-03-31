@@ -7,6 +7,7 @@
 
 #include "ban.h"
 #include "configmanager.h"
+#include "connection_io.h"
 #include "scheduler.h"
 #include "tools.h"
 
@@ -130,22 +131,25 @@ void ServicePort::accept()
 		return;
 	}
 
-	auto connection = ConnectionManager::getInstance().createConnection(io_context, shared_from_this());
-	acceptor->async_accept(connection->getSocket(),
-	                       [=, thisPtr = shared_from_this()](const boost::system::error_code& error) {
-		                       thisPtr->onAccept(connection, error);
-	                       });
+	acceptor->async_accept([thisPtr = shared_from_this()](const boost::system::error_code& error,
+	                                                      boost::asio::ip::tcp::socket socket) mutable {
+		thisPtr->onAccept(error, std::move(socket));
+	});
 }
 
-void ServicePort::onAccept(Connection_ptr connection, const boost::system::error_code& error)
+void ServicePort::onAccept(const boost::system::error_code& error, boost::asio::ip::tcp::socket socket)
 {
 	if (!error) {
 		if (services.empty()) {
 			return;
 		}
 
-		const auto& remote_ip = connection->getIP();
-		if (acceptConnection(remote_ip)) {
+		boost::system::error_code endpointError;
+		const auto remoteIp = socket.remote_endpoint(endpointError).address();
+		auto connection =
+		    ConnectionManager::getInstance().createConnection(make_tcp_connection_io(std::move(socket)), shared_from_this());
+
+		if (!endpointError && acceptConnection(remoteIp)) {
 			Service_ptr service = services.front();
 			if (service->is_single_socket()) {
 				connection->accept(service->make_protocol(connection));

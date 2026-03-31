@@ -4,6 +4,7 @@
 #ifndef FS_CONNECTION_H
 #define FS_CONNECTION_H
 
+#include "connection_io.h"
 #include "networkmessage.h"
 
 enum ConnectionState_t
@@ -47,7 +48,7 @@ public:
 		return instance;
 	}
 
-	Connection_ptr createConnection(boost::asio::io_context& io_context, ConstServicePort_ptr servicePort);
+	Connection_ptr createConnection(ConnectionIO_ptr io, ConstServicePort_ptr servicePort);
 	void releaseConnection(const Connection_ptr& connection);
 	void closeAll();
 
@@ -71,7 +72,7 @@ public:
 		FORCE_CLOSE = true
 	};
 
-	Connection(boost::asio::io_context& io_context, ConstServicePort_ptr service_port);
+	Connection(ConnectionIO_ptr io, ConstServicePort_ptr service_port);
 	~Connection();
 
 	friend class ConnectionManager;
@@ -96,9 +97,6 @@ private:
 	void closeSocket();
 	void internalSend(const OutputMessage_ptr& msg);
 
-	boost::asio::ip::tcp::socket& getSocket() { return socket; }
-	friend class ServicePort;
-
 	NetworkMessage msg;
 
 	boost::asio::steady_timer readTimer;
@@ -111,7 +109,7 @@ private:
 	ConstServicePort_ptr service_port;
 	Protocol_ptr protocol;
 
-	boost::asio::ip::tcp::socket socket;
+	ConnectionIO_ptr io;
 	Address remoteAddress;
 	time_t timeConnected;
 	uint32_t packetsSent = 0;
