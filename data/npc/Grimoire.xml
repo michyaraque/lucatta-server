@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<npc name="Grimoire" script="grimoire.lua" walkinterval="0" floorchange="0">
+	<health now="100" max="100" />
+	<look typeex="1448" />
+	<parameters>
+		<parameter key="message_greet" value="The grimoire contains secrets of life and death, and the power to control the fate of souls." />
+	</parameters>
+</npc>

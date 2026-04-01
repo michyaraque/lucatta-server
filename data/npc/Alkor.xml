@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<npc name="Alkor" script="alkor.lua" walkinterval="2000" floorchange="0">
+	<health now="100" max="100" />
+	<look type="64" head="0" body="0" legs="0" feet="0" addons="0" />
+	<parameters>
+		<parameter key="message_greet" value="I had procured a valuable NFT of a stone for $2.8 million but unfortunately, it has gone missing. If you could retrieve it for me, I would be most grateful." />
+	</parameters>
+</npc>

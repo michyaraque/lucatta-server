@@ -117,6 +117,9 @@
 	<spawn centerx="7" centery="27" centerz="7" radius="0">
 		<monster name="Spectre" x="0" y="0" spawntime="60"></monster>
 	</spawn>
+	<spawn centerx="6" centery="29" centerz="7" radius="0">
+		<npc name="Lavanpc" x="0" y="0" />
+	</spawn>
 	<spawn centerx="16" centery="29" centerz="7" radius="0">
 		<monster name="Spectre" x="0" y="0" spawntime="60"></monster>
 	</spawn>
@@ -215,6 +218,9 @@
 	</spawn>
 	<spawn centerx="158" centery="55" centerz="7" radius="0">
 		<monster name="Death Knight" x="0" y="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="48" centery="57" centerz="7" radius="0">
+		<npc name="Desertnpc" x="0" y="0" />
 	</spawn>
 	<spawn centerx="78" centery="61" centerz="7" radius="0">
 		<monster name="Skeleton Warrior" x="0" y="0" spawntime="60"></monster>
@@ -501,6 +507,12 @@
 	<spawn centerx="78" centery="138" centerz="7" radius="0">
 		<monster name="Goblin" x="0" y="0" spawntime="60"></monster>
 	</spawn>
+	<spawn centerx="126" centery="138" centerz="7" radius="0">
+		<npc name="King" x="0" y="0" />
+	</spawn>
+	<spawn centerx="154" centery="138" centerz="7" radius="0">
+		<npc name="Coder" x="0" y="0" />
+	</spawn>
 	<spawn centerx="80" centery="139" centerz="7" radius="0">
 		<monster name="Goblin" x="0" y="0" spawntime="60"></monster>
 	</spawn>
@@ -588,6 +600,9 @@
 	<spawn centerx="39" centery="164" centerz="7" radius="0">
 		<monster name="Goblin" x="0" y="0" spawntime="60"></monster>
 	</spawn>
+	<spawn centerx="75" centery="164" centerz="7" radius="0">
+		<npc name="Nyan" x="0" y="0" />
+	</spawn>
 	<spawn centerx="149" centery="164" centerz="7" radius="0">
 		<monster name="Eye" x="0" y="0" spawntime="60"></monster>
 	</spawn>
@@ -636,6 +651,63 @@
 	<spawn centerx="56" centery="180" centerz="7" radius="0">
 		<monster name="Bat" x="0" y="0" spawntime="60"></monster>
 	</spawn>
+	<spawn centerx="4" centery="195" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="7" centery="195" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="41" centery="195" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="47" centery="195" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="70" centery="197" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="73" centery="197" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="37" centery="200" centerz="7" radius="0">
+		<npc name="Villager" x="0" y="0" />
+	</spawn>
+	<spawn centerx="25" centery="206" centerz="7" radius="0">
+		<npc name="Merchant" x="0" y="0" />
+	</spawn>
+	<spawn centerx="32" centery="208" centerz="7" radius="0">
+		<npc name="Janet Yellen" x="0" y="0" />
+	</spawn>
+	<spawn centerx="48" centery="210" centerz="7" radius="0">
+		<npc name="Carlos Matos" x="0" y="0" />
+	</spawn>
+	<spawn centerx="38" centery="212" centerz="7" radius="0">
+		<npc name="Sorcerer" x="0" y="0" />
+	</spawn>
+	<spawn centerx="67" centery="220" centerz="7" radius="0">
+		<npc name="Agent" x="0" y="0" />
+	</spawn>
+	<spawn centerx="10" centery="235" centerz="7" radius="0">
+		<npc name="Octocat" x="0" y="0" />
+	</spawn>
+	<spawn centerx="65" centery="253" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="72" centery="253" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="7" centery="257" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="10" centery="257" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="32" centery="257" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
+	<spawn centerx="38" centery="257" centerz="7" radius="0">
+		<npc name="Guard" x="0" y="0" />
+	</spawn>
 	<spawn centerx="14" centery="263" centerz="7" radius="0">
 		<monster name="Goblin" x="0" y="0" spawntime="60"></monster>
 	</spawn>
@@ -665,6 +737,12 @@
 	</spawn>
 	<spawn centerx="157" centery="283" centerz="7" radius="0">
 		<monster name="Rat" x="0" y="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="76" centery="293" centerz="7" radius="0">
+		<npc name="Beachnpc" x="0" y="0" />
+	</spawn>
+	<spawn centerx="127" centery="293" centerz="7" radius="0">
+		<npc name="Scientist" x="0" y="0" />
 	</spawn>
 	<spawn centerx="154" centery="308" centerz="7" radius="0">
 		<monster name="Rat" x="0" y="0" spawntime="60"></monster>
@@ -929,6 +1007,9 @@
 	</spawn>
 	<spawn centerx="128" centery="427" centerz="7" radius="0">
 		<monster name="Werewolf" x="0" y="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="9" centery="428" centerz="7" radius="0">
+		<npc name="Satoshi" x="0" y="0" />
 	</spawn>
 	<spawn centerx="40" centery="428" centerz="7" radius="0">
 		<monster name="Vampire Bat" x="0" y="0" spawntime="60"></monster>
@@ -1212,6 +1293,9 @@
 	<spawn centerx="144" centery="545" centerz="7" radius="0">
 		<monster name="Damned Snake" x="0" y="0" spawntime="60"></monster>
 	</spawn>
+	<spawn centerx="152" centery="547" centerz="7" radius="0">
+		<npc name="Olaf" x="0" y="0" />
+	</spawn>
 	<spawn centerx="168" centery="547" centerz="7" radius="0">
 		<monster name="Damned Snake" x="0" y="0" spawntime="60"></monster>
 	</spawn>
@@ -1226,6 +1310,9 @@
 	</spawn>
 	<spawn centerx="166" centery="548" centerz="7" radius="0">
 		<monster name="Damned Snake" x="0" y="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="63" centery="549" centerz="7" radius="0">
+		<npc name="Victor" x="0" y="0" />
 	</spawn>
 	<spawn centerx="166" centery="550" centerz="7" radius="0">
 		<monster name="Damned Snake" x="0" y="0" spawntime="60"></monster>
@@ -1785,6 +1872,9 @@
 	<spawn centerx="77" centery="651" centerz="7" radius="0">
 		<monster name="Oculothorax" x="0" y="0" spawntime="60"></monster>
 	</spawn>
+	<spawn centerx="158" centery="651" centerz="7" radius="0">
+		<npc name="Alkor" x="0" y="0" />
+	</spawn>
 	<spawn centerx="10" centery="652" centerz="7" radius="0">
 		<monster name="Oculothorax" x="0" y="0" spawntime="60"></monster>
 	</spawn>
@@ -1946,6 +2036,9 @@
 	</spawn>
 	<spawn centerx="90" centery="674" centerz="7" radius="0">
 		<monster name="Poison Rat" x="0" y="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="105" centery="674" centerz="7" radius="0">
+		<npc name="Fox" x="0" y="0" />
 	</spawn>
 	<spawn centerx="40" centery="675" centerz="7" radius="0">
 		<monster name="Oculothorax" x="0" y="0" spawntime="60"></monster>
@@ -2430,6 +2523,9 @@
 	<spawn centerx="21" centery="778" centerz="7" radius="0">
 		<monster name="Skeleton Archer" x="0" y="0" spawntime="60"></monster>
 	</spawn>
+	<spawn centerx="25" centery="231" centerz="7" radius="0">
+		<npc name="Priest" x="0" y="0" />
+	</spawn>
 	<spawn centerx="129" centery="379" centerz="7" radius="0">
 		<monster name="Skeleton Guard" x="0" y="0" spawntime="60"></monster>
 	</spawn>
@@ -2492,6 +2588,9 @@
 	</spawn>
 	<spawn centerx="9" centery="388" centerz="7" radius="0">
 		<monster name="Yeti" x="0" y="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="127" centery="186" centerz="7" radius="0">
+		<npc name="Rick" x="0" y="0" />
 	</spawn>
 	<spawn centerx="36" centery="379" centerz="8" radius="0">
 		<monster name="Yeti" x="0" y="0" spawntime="60"></monster>
