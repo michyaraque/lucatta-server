@@ -669,9 +669,6 @@
 	<spawn centerx="73" centery="197" centerz="7" radius="0">
 		<npc name="Guard" x="0" y="0" />
 	</spawn>
-	<spawn centerx="37" centery="200" centerz="7" radius="0">
-		<npc name="Villager" x="0" y="0" />
-	</spawn>
 	<spawn centerx="25" centery="206" centerz="7" radius="0">
 		<npc name="Merchant" x="0" y="0" />
 	</spawn>
@@ -2843,5 +2840,8 @@
 	</spawn>
 	<spawn centerx="43" centery="319" centerz="7" radius="0">
 		<monster name="Sea Snake" x="0" y="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="37" centery="201" centerz="7" radius="0">
+		<npc name="Villager" x="0" y="0" />
 	</spawn>
 </spawns>

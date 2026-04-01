@@ -7,7 +7,8 @@ local event = GlobalEvent("WorldTime")
 function event.onTime(interval)
 	local currentTime = os.time()
 	local time = os.date("*t", currentTime)
-	local worldTime = (time.sec + (time.min * 60)) / 2.5
+	local totalSeconds = time.sec + (time.min * 60)
+	local worldTime = math.floor(totalSeconds / 2.5)
 	Game.setWorldTime(worldTime)
 	return true
 end

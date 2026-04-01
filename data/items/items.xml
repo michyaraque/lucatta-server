@@ -35,7 +35,11 @@
     <attribute key="description" value="A health potion that healths +40HP. Cooldown 2s." />
   </item>
   <item id="36" name="Burger" />
-  <item id="37" name="Chest" />
+  <item id="37" name="bag" >
+	<attribute key="containerSize" value="8" />
+		<attribute key="slotType" value="backpack" />
+		<attribute key="weight" value="800" />
+  </item>
   <item id="38" name="Firefoxpotion" />
   <item id="39" name="Cake" />
   <item id="60" name="Dagger">
