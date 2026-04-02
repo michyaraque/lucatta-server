@@ -738,7 +738,9 @@
   <item id="1004" name="Skull Jewel">
     <attribute key="description" value="Can be inserted in a socket" />
   </item>
-  <item id="2000" name="Stash" />
+  <item id="2000" name="Stash">
+		<attribute key="containerSize" value="2000" />
+  </item>
   <item id="2001" name="Anvil" />
   <item id="11482" name="Waypoint" />
   <item id="11484" name="Cow Portal" />
