@@ -35,6 +35,7 @@ PlayerStorageKeys = {
 	insectoidCell = 30033,
 	-- empty: 30034
 	mutatedPumpkin = 30035,
+	waypointMaskBase = 35000,
 
 	-- Achievements:
 	achievementsTotal = 19999,
