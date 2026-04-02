@@ -3,6 +3,7 @@ local npcHandler = NpcHandler:new(keywordHandler)
 NpcSystem.parseParameters(npcHandler)
 
 local ratQuestStage = 410001
+local ratQuestKills = 410002
 
 function onCreatureAppear(cid)				npcHandler:onCreatureAppear(cid)			end
 function onCreatureDisappear(cid)			npcHandler:onCreatureDisappear(cid)			end
@@ -15,20 +16,22 @@ local function creatureSayCallback(cid, type, msg)
 	end
 
 	local player = Player(cid)
-	if (msgcontains(msg, "rat") or msgcontains(msg, "merchant") or msgcontains(msg, "storehouse")) and player:getStorageValue(ratQuestStage) == 1 then
-		player:setStorageValue(ratQuestStage, 2)
-		npcHandler:say("The rats keep pouring out near the old storehouses. If you want the full story, speak to the Priest. He knows the crypt passages below that district.", cid)
+	local stage = player:getStorageValue(ratQuestStage)
+
+	if (msgcontains(msg, "rat") or msgcontains(msg, "merchant") or msgcontains(msg, "crypt")) and stage == 2 then
+		player:setStorageValue(ratQuestStage, 3)
+		if player:getStorageValue(ratQuestKills) < 0 then
+			player:setStorageValue(ratQuestKills, 0)
+		end
+		npcHandler:say("Those vermin nest where the old crypt tunnels brush against the town. Clean them out quickly, then report back to the Merchant before they spread again.", cid)
 		return true
 	end
 
 	if npcHandler.topic[cid] == 0 then
-		npcHandler:say("Use the same scroll class as the item class you are upgrading.", cid)
+		npcHandler:say("Stay faithful, even where the old crypt brushes against the town.", cid)
 		npcHandler.topic[cid] = 1
 	elseif npcHandler.topic[cid] == 1 then
-		npcHandler:say("Careful, upgrading items gets more difficult as it's getting more powerful.", cid)
-		npcHandler.topic[cid] = 2
-	elseif npcHandler.topic[cid] == 2 then
-		npcHandler:say("Good luck.", cid)
+		npcHandler:say("Rot gathers fastest in the places people stop watching.", cid)
 		npcHandler.topic[cid] = 0
 	end
 

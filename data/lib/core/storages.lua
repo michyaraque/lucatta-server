@@ -36,6 +36,8 @@ PlayerStorageKeys = {
 	-- empty: 30034
 	mutatedPumpkin = 30035,
 	waypointMaskBase = 35000,
+	achievementNFT = 410181,
+	achievementGrimoire = 410212,
 
 	-- Achievements:
 	achievementsTotal = 19999,

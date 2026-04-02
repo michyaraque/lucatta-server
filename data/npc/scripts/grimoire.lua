@@ -2,6 +2,8 @@ local keywordHandler = KeywordHandler:new()
 local npcHandler = NpcHandler:new(keywordHandler)
 NpcSystem.parseParameters(npcHandler)
 
+local grimoireStorage = PlayerStorageKeys.achievementGrimoire
+
 function onCreatureAppear(cid)				npcHandler:onCreatureAppear(cid)			end
 function onCreatureDisappear(cid)			npcHandler:onCreatureDisappear(cid)			end
 function onCreatureSay(cid, type, msg)		npcHandler:onCreatureSay(cid, type, msg)	end
@@ -9,7 +11,9 @@ function onThink()							npcHandler:onThink()						end
 
 local function greetCallback(cid)
 	local player = Player(cid)
-	player:setStorageValue(PlayerStorageKeys.achievementGrimoire, 1)
+	if player:getStorageValue(grimoireStorage) == 0 then
+		player:setStorageValue(grimoireStorage, 1)
+	end
 	return true
 end
 
