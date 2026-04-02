@@ -2,8 +2,8 @@ local keywordHandler = KeywordHandler:new()
 local npcHandler = NpcHandler:new(keywordHandler)
 NpcSystem.parseParameters(npcHandler)
 
-local ratQuestStage = 410001
-local ratQuestKills = 410002
+local storage = QuestChain.storage
+local item = QuestChain.item
 local rewardGold = 100
 local rewardExperience = 500
 local rewardScroll = 74
@@ -17,10 +17,16 @@ function onThink()							npcHandler:onThink()						end
 
 local function greetCallback(cid)
 	local player = Player(cid)
-	local stage = player:getStorageValue(ratQuestStage)
+	local stage = player:getStorageValue(storage.ratStage)
 
 	if stage >= 4 then
-		npcHandler:setMessage(MESSAGE_GREET, "You already solved the rat infestation for me.")
+		if player:getStorageValue(storage.cowHorn) >= 1 then
+			npcHandler:setMessage(MESSAGE_GREET, "You already proved the hidden pasture is real.")
+		elseif player:getStorageValue(storage.necromancerHeart) >= 1 then
+			npcHandler:setMessage(MESSAGE_GREET, "If you want new business, ask me about the {cow} realm.")
+		else
+			npcHandler:setMessage(MESSAGE_GREET, "You already solved the rat infestation for me.")
+		end
 	else
 		npcHandler:setMessage(MESSAGE_GREET, "I need help dealing with a rat infestation around town. If you want the {contract}, say so.")
 	end
@@ -33,8 +39,8 @@ local function giveRatReward(player, cid)
 	player:addExperience(rewardExperience, true)
 	player:addItem(rewardScroll, rewardScrollCount)
 	player:addItem(rewardJewel, 1)
-	player:setStorageValue(ratQuestKills, 21)
-	player:setStorageValue(ratQuestStage, 4)
+	player:setStorageValue(storage.ratKills, 21)
+	player:setStorageValue(storage.ratStage, 4)
 	npcHandler:say("Excellent work. The warehouse district should be safer now. Here is your payment.", cid)
 end
 
@@ -44,8 +50,8 @@ local function creatureSayCallback(cid, type, msg)
 	end
 
 	local player = Player(cid)
-	local stage = player:getStorageValue(ratQuestStage)
-	local kills = player:getStorageValue(ratQuestKills)
+	local stage = player:getStorageValue(storage.ratStage)
+	local kills = player:getStorageValue(storage.ratKills)
 
 	if msgcontains(msg, "contract") or msgcontains(msg, "rat") or msgcontains(msg, "job") then
 		if stage < 1 then
@@ -65,8 +71,8 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler:say("You already solved the rat infestation for me.", cid)
 		end
 	elseif msgcontains(msg, "yes") and npcHandler.topic[cid] == 1 then
-		player:setStorageValue(ratQuestStage, 1)
-		player:setStorageValue(ratQuestKills, -1)
+		player:setStorageValue(storage.ratStage, 1)
+		player:setStorageValue(storage.ratKills, -1)
 		npcHandler:say("Good. Then start with the Guard. He has been watching the storehouses more closely than anyone else.", cid)
 		npcHandler.topic[cid] = 0
 	elseif msgcontains(msg, "no") and npcHandler.topic[cid] == 1 then
@@ -79,6 +85,23 @@ local function creatureSayCallback(cid, type, msg)
 			npcHandler:say("I already paid you for the rat contract.", cid)
 		else
 			npcHandler:say("Finish the contract first.", cid)
+		end
+	elseif msgcontains(msg, "cow") or msgcontains(msg, "horn") or msgcontains(msg, "portal") or msgcontains(msg, "pasture") then
+		local cowState = player:getStorageValue(storage.cowHorn)
+		if cowState < 0 and player:getStorageValue(storage.necromancerHeart) >= 1 then
+			QuestChain.startQuest(player, storage.cowHorn, 0)
+			npcHandler:say("If the Cow King is real, bring me his horn so I know that route can be exploited safely.", cid)
+		elseif cowState == 0 then
+			if player:getItemCount(item.cowHorn) < 1 then
+				npcHandler:say("Enter the hidden pasture, defeat the Cow King, and show me his horn.", cid)
+			else
+				player:setStorageValue(storage.cowHorn, 1)
+				npcHandler:say("A horn from the Cow King himself. Ridiculous, profitable, and exactly the proof I wanted. Alkor has been asking for capable help lately.", cid)
+			end
+		elseif cowState >= 1 then
+			npcHandler:say("You already proved the Cow King was real.", cid)
+		else
+			npcHandler:say("Finish the contract first, then we can talk about stranger opportunities.", cid)
 		end
 	end
 
