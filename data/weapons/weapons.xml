@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <weapons>
-	<!--
-		Legacy XML weapon bindings were tied to the old item id space.
-		With unified appearance ids, weapon behavior should come from item metadata
-		and repo-native scripts instead of a second hardcoded id catalog here.
-	-->
+	<melee id="77" unproperly="1">
+		<vocation name="Knight" />
+	</melee>
 </weapons>
