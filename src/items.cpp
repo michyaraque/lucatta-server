@@ -960,12 +960,16 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 					tmpStrValue = boost::algorithm::to_lower_copy<std::string>(valueAttribute.as_string());
 					if (tmpStrValue == "head") {
 						it.slotPosition |= SLOTP_HEAD;
+					} else if (tmpStrValue == "backpack") {
+						it.slotPosition |= SLOTP_BACKPACK;
 					} else if (tmpStrValue == "body") {
 						it.slotPosition |= SLOTP_ARMOR;
 					} else if (tmpStrValue == "legs") {
 						it.slotPosition |= SLOTP_LEGS;
 					} else if (tmpStrValue == "feet") {
 						it.slotPosition |= SLOTP_FEET;
+					} else if (tmpStrValue == "cape") {
+						it.slotPosition |= SLOTP_CAPE;
 					} else if (tmpStrValue == "two-handed") {
 						it.slotPosition |= SLOTP_TWO_HAND;
 					} else if (tmpStrValue == "right-hand") {
@@ -976,12 +980,16 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 						it.slotPosition |= SLOTP_NECKLACE;
 					} else if (tmpStrValue == "ring") {
 						it.slotPosition |= SLOTP_RING;
+					} else if (tmpStrValue == "ring1") {
+						it.slotPosition |= SLOTP_RING1;
+					} else if (tmpStrValue == "ring2") {
+						it.slotPosition |= SLOTP_RING2;
 					} else if (tmpStrValue == "ammo") {
 						it.slotPosition |= SLOTP_AMMO;
+					} else if (tmpStrValue == "pet") {
+						it.slotPosition |= SLOTP_PET;
 					} else if (tmpStrValue == "hand") {
 						it.slotPosition |= SLOTP_HAND;
-					} else if (tmpStrValue == "backpack") {
-						it.slotPosition |= SLOTP_BACKPACK;
 					} else {
 						std::cout << "[Warning - Items::parseItemNode] Unknown slotType: " << valueAttribute.as_string()
 						          << std::endl;

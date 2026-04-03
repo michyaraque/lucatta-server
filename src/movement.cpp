@@ -289,6 +289,9 @@ MoveEvent* MoveEvents::getEvent(Item* item, MoveEvent_t eventType, slots_t slot)
 		case CONST_SLOT_NECKLACE:
 			slotp = SLOTP_NECKLACE;
 			break;
+		case CONST_SLOT_BACKPACK:
+			slotp = SLOTP_BACKPACK;
+			break;
 		case CONST_SLOT_ARMOR:
 			slotp = SLOTP_ARMOR;
 			break;
@@ -304,14 +307,20 @@ MoveEvent* MoveEvents::getEvent(Item* item, MoveEvent_t eventType, slots_t slot)
 		case CONST_SLOT_FEET:
 			slotp = SLOTP_FEET;
 			break;
+		case CONST_SLOT_CAPE:
+			slotp = SLOTP_CAPE;
+			break;
 		case CONST_SLOT_AMMO:
 			slotp = SLOTP_AMMO;
 			break;
-		case CONST_SLOT_RING:
-			slotp = SLOTP_RING;
+		case CONST_SLOT_RING1:
+			slotp = SLOTP_RING1;
 			break;
-		case CONST_SLOT_BACKPACK:
-			slotp = SLOTP_BACKPACK;
+		case CONST_SLOT_RING2:
+			slotp = SLOTP_RING2;
+			break;
+		case CONST_SLOT_PET:
+			slotp = SLOTP_PET;
 			break;
 		default:
 			slotp = 0;
@@ -543,6 +552,8 @@ bool MoveEvent::configureEvent(const pugi::xml_node& node)
 				slot = SLOTP_HEAD;
 			} else if (tmpStr == "necklace") {
 				slot = SLOTP_NECKLACE;
+			} else if (tmpStr == "backpack") {
+				slot = SLOTP_BACKPACK;
 			} else if (tmpStr == "armor") {
 				slot = SLOTP_ARMOR;
 			} else if (tmpStr == "right-hand") {
@@ -555,12 +566,18 @@ bool MoveEvent::configureEvent(const pugi::xml_node& node)
 				slot = SLOTP_LEGS;
 			} else if (tmpStr == "feet") {
 				slot = SLOTP_FEET;
+			} else if (tmpStr == "cape") {
+				slot = SLOTP_CAPE;
 			} else if (tmpStr == "ring") {
 				slot = SLOTP_RING;
+			} else if (tmpStr == "ring1") {
+				slot = SLOTP_RING1;
+			} else if (tmpStr == "ring2") {
+				slot = SLOTP_RING2;
 			} else if (tmpStr == "ammo") {
 				slot = SLOTP_AMMO;
-			} else if (tmpStr == "backpack") {
-				slot = SLOTP_BACKPACK;
+			} else if (tmpStr == "pet") {
+				slot = SLOTP_PET;
 			} else {
 				std::cout << "[Warning - MoveEvent::configureMoveEvent] Unknown slot type: "
 				          << slotAttribute.as_string() << std::endl;

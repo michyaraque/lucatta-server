@@ -597,7 +597,7 @@ function formatItemType(itemType)
       return "Legs"
     elseif slotPosition == SLOTP_FEET then
       return "Boots"
-    elseif slotPosition == SLOTP_RING then
+    elseif slotPosition == SLOTP_RING or slotPosition == SLOTP_RING1 or slotPosition == SLOTP_RING2 then
       return "Ring"
     elseif slotPosition == SLOTP_AMMO and itemType:getAmmoType() > 0 then
       return "Ammunition"

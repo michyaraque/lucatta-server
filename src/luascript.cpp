@@ -1631,17 +1631,23 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(L, CONST_PROP_NOFIELDBLOCKPATH);
 	registerEnum(L, CONST_PROP_SUPPORTHANGABLE);
 
+	registerEnum(L, CONST_SLOT_WHEREEVER);
 	registerEnum(L, CONST_SLOT_HEAD);
 	registerEnum(L, CONST_SLOT_NECKLACE);
+	registerEnum(L, CONST_SLOT_BACKPACK);
 	registerEnum(L, CONST_SLOT_ARMOR);
 	registerEnum(L, CONST_SLOT_RIGHT);
 	registerEnum(L, CONST_SLOT_LEFT);
 	registerEnum(L, CONST_SLOT_LEGS);
 	registerEnum(L, CONST_SLOT_FEET);
-	registerEnum(L, CONST_SLOT_RING);
+	registerEnum(L, CONST_SLOT_CAPE);
 	registerEnum(L, CONST_SLOT_AMMO);
-
-	registerEnum(L, CONST_SLOT_BACKPACK);
+	registerEnum(L, CONST_SLOT_RING1);
+	registerEnum(L, CONST_SLOT_RING2);
+	registerEnum(L, CONST_SLOT_PET);
+	registerEnum(L, CONST_SLOT_STORE_INBOX);
+	registerEnum(L, CONST_SLOT_FIRST);
+	registerEnum(L, CONST_SLOT_LAST);
 
 	registerEnum(L, CREATURE_EVENT_NONE);
 	registerEnum(L, CREATURE_EVENT_LOGIN);
@@ -2036,9 +2042,12 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(L, SLOTP_LEFT);
 	registerEnum(L, SLOTP_LEGS);
 	registerEnum(L, SLOTP_FEET);
-	registerEnum(L, SLOTP_RING);
+	registerEnum(L, SLOTP_CAPE);
 	registerEnum(L, SLOTP_AMMO);
-	registerEnum(L, SLOTP_DEPOT);
+	registerEnum(L, SLOTP_RING1);
+	registerEnum(L, SLOTP_RING2);
+	registerEnum(L, SLOTP_PET);
+	registerEnum(L, SLOTP_RING);
 	registerEnum(L, SLOTP_TWO_HAND);
 
 	// Use with combat functions
@@ -17623,6 +17632,8 @@ int LuaScriptInterface::luaMoveEventSlot(lua_State* L)
 			moveevent->setSlot(SLOTP_HEAD);
 		} else if (slotName == "necklace") {
 			moveevent->setSlot(SLOTP_NECKLACE);
+		} else if (slotName == "backpack") {
+			moveevent->setSlot(SLOTP_BACKPACK);
 		} else if (slotName == "armor" || slotName == "body") {
 			moveevent->setSlot(SLOTP_ARMOR);
 		} else if (slotName == "right-hand") {
@@ -17635,12 +17646,18 @@ int LuaScriptInterface::luaMoveEventSlot(lua_State* L)
 			moveevent->setSlot(SLOTP_LEGS);
 		} else if (slotName == "feet") {
 			moveevent->setSlot(SLOTP_FEET);
+		} else if (slotName == "cape") {
+			moveevent->setSlot(SLOTP_CAPE);
 		} else if (slotName == "ring") {
 			moveevent->setSlot(SLOTP_RING);
+		} else if (slotName == "ring1") {
+			moveevent->setSlot(SLOTP_RING1);
+		} else if (slotName == "ring2") {
+			moveevent->setSlot(SLOTP_RING2);
 		} else if (slotName == "ammo") {
 			moveevent->setSlot(SLOTP_AMMO);
-		} else if (slotName == "backpack") {
-			moveevent->setSlot(SLOTP_BACKPACK);
+		} else if (slotName == "pet") {
+			moveevent->setSlot(SLOTP_PET);
 		} else {
 			std::cout << "[Warning - MoveEvent::configureMoveEvent] Unknown slot type: " << slotName << '\n';
 			tfs::lua::pushBoolean(L, false);

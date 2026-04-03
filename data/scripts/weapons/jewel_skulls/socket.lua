@@ -21,7 +21,7 @@ function JewelSkullAction.onUse(player, item, fromPosition, target, toPosition, 
         return true
     end
     
-    if toPosition.y <= CONST_SLOT_AMMO then
+    if toPosition.y <= CONST_SLOT_PET then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "Unequip the item first.")
         return true
     end
@@ -75,7 +75,7 @@ function SkullExtractorAction.onUse(player, item, fromPosition, target, toPositi
         return true
     end
     
-    if toPosition.y <= CONST_SLOT_AMMO then
+    if toPosition.y <= CONST_SLOT_PET then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "Unequip the item first.")
         return true
     end

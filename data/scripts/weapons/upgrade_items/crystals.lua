@@ -4,7 +4,7 @@ function CrystalsAction.onUse(player, item, fromPosition, target, toPosition, is
     if not target or not target:isItem() or not target:getType():isUpgradable() then
         return false
     end
-    if toPosition.y <= CONST_SLOT_AMMO then
+    if toPosition.y <= CONST_SLOT_PET then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "You can't use that on equipped item!")
         player:sendCancelMessage(RETURNVALUE_NOTPOSSIBLE)
         return true

@@ -1806,16 +1806,24 @@ slots_t getSlotType(const ItemType& it)
 			slot = CONST_SLOT_HEAD;
 		} else if (slotPosition & SLOTP_NECKLACE) {
 			slot = CONST_SLOT_NECKLACE;
+		} else if (slotPosition & SLOTP_BACKPACK) {
+			slot = CONST_SLOT_BACKPACK;
 		} else if (slotPosition & SLOTP_ARMOR) {
 			slot = CONST_SLOT_ARMOR;
 		} else if (slotPosition & SLOTP_LEGS) {
 			slot = CONST_SLOT_LEGS;
 		} else if (slotPosition & SLOTP_FEET) {
 			slot = CONST_SLOT_FEET;
-		} else if (slotPosition & SLOTP_RING) {
-			slot = CONST_SLOT_RING;
+		} else if (slotPosition & SLOTP_CAPE) {
+			slot = CONST_SLOT_CAPE;
 		} else if (slotPosition & SLOTP_AMMO) {
 			slot = CONST_SLOT_AMMO;
+		} else if (slotPosition & SLOTP_RING1) {
+			slot = CONST_SLOT_RING1;
+		} else if (slotPosition & SLOTP_RING2) {
+			slot = CONST_SLOT_RING2;
+		} else if (slotPosition & SLOTP_PET) {
+			slot = CONST_SLOT_PET;
 		} else if (slotPosition & SLOTP_TWO_HAND || slotPosition & SLOTP_LEFT) {
 			slot = CONST_SLOT_LEFT;
 		}
@@ -1844,6 +1852,10 @@ void Game::playerEquipItem(uint32_t playerId, uint16_t spriteId)
 
 	const ItemType& it = Item::items.getItemTypeByAppearanceId(spriteId);
 	slots_t slot = getSlotType(it);
+	if (slot == CONST_SLOT_RING1 && player->getInventoryItem(CONST_SLOT_RING1) &&
+	    !player->getInventoryItem(CONST_SLOT_RING2) && (it.slotPosition & SLOTP_RING2)) {
+		slot = CONST_SLOT_RING2;
+	}
 
 	Item* slotItem = player->getInventoryItem(slot);
 	Item* equipItem = searchForItem(backpack, it.id);

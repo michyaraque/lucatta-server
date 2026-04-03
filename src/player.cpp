@@ -322,8 +322,9 @@ int32_t Player::getArmor() const
 {
 	int32_t armor = 0;
 
-	static const slots_t armorSlots[] = {CONST_SLOT_HEAD, CONST_SLOT_NECKLACE, CONST_SLOT_ARMOR,
-	                                     CONST_SLOT_LEGS, CONST_SLOT_FEET,     CONST_SLOT_RING};
+	static const slots_t armorSlots[] = {CONST_SLOT_HEAD,      CONST_SLOT_NECKLACE, CONST_SLOT_ARMOR,
+	                                     CONST_SLOT_LEGS,      CONST_SLOT_FEET,     CONST_SLOT_CAPE,
+	                                     CONST_SLOT_RING1,     CONST_SLOT_RING2,    CONST_SLOT_PET};
 	for (slots_t slot : armorSlots) {
 		Item* inventoryItem = inventory[slot];
 		if (inventoryItem) {
@@ -2445,8 +2446,8 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 
 	const int32_t& slotPosition = item->getSlotPosition();
 	if ((slotPosition & SLOTP_HEAD) || (slotPosition & SLOTP_NECKLACE) || (slotPosition & SLOTP_ARMOR) ||
-	    (slotPosition & SLOTP_LEGS) || (slotPosition & SLOTP_FEET) || (slotPosition & SLOTP_RING) ||
-	    (slotPosition & SLOTP_BACKPACK)) {
+	    (slotPosition & SLOTP_LEGS) || (slotPosition & SLOTP_FEET) || (slotPosition & SLOTP_CAPE) ||
+	    (slotPosition & SLOTP_RING) || (slotPosition & SLOTP_PET) || (slotPosition & SLOTP_BACKPACK)) {
 		ret = RETURNVALUE_CANNOTBEDRESSED;
 	} else if (slotPosition & SLOTP_TWO_HAND) {
 		ret = RETURNVALUE_PUTTHISOBJECTINBOTHHANDS;
@@ -2613,8 +2614,29 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 			break;
 		}
 
-		case CONST_SLOT_RING: {
-			if (slotPosition & SLOTP_RING) {
+		case CONST_SLOT_CAPE: {
+			if (slotPosition & SLOTP_CAPE) {
+				ret = RETURNVALUE_NOERROR;
+			}
+			break;
+		}
+
+		case CONST_SLOT_RING1: {
+			if (slotPosition & SLOTP_RING1) {
+				ret = RETURNVALUE_NOERROR;
+			}
+			break;
+		}
+
+		case CONST_SLOT_RING2: {
+			if (slotPosition & SLOTP_RING2) {
+				ret = RETURNVALUE_NOERROR;
+			}
+			break;
+		}
+
+		case CONST_SLOT_PET: {
+			if (slotPosition & SLOTP_PET) {
 				ret = RETURNVALUE_NOERROR;
 			}
 			break;

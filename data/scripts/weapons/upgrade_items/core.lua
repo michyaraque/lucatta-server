@@ -110,7 +110,7 @@ MoveItemEvent.onMoveItem = function(player, item, count, fromPosition, toPositio
     end
 
     if item:isUnidentified() then
-        if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK then
+        if toPosition.y <= CONST_SLOT_PET and toPosition.y ~= CONST_SLOT_BACKPACK then
             player:sendTextMessage(MESSAGE_STATUS_SMALL, "You can't wear unidentified items.")
             return false
         end
@@ -118,14 +118,14 @@ MoveItemEvent.onMoveItem = function(player, item, count, fromPosition, toPositio
 
     if US_CONFIG.REQUIRE_LEVEL == true then
         if player:getLevel() < item:getItemLevel() and not item:isLimitless() then
-            if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK then
+            if toPosition.y <= CONST_SLOT_PET and toPosition.y ~= CONST_SLOT_BACKPACK then
                 player:sendTextMessage(MESSAGE_INFO_DESCR, "You need higher level to equip that item.")
                 return RETURNVALUE_NOTPOSSIBLE
             end
         end
     end
 
-    if toPosition.y <= CONST_SLOT_AMMO then
+    if toPosition.y <= CONST_SLOT_PET then
         if toPosition.y ~= CONST_SLOT_BACKPACK then
             if fromPosition.y >= 64 or fromPosition.x ~= CONTAINER_POSITION then
                 -- remove old item conditions (native + socketed skull bonuses)
@@ -178,7 +178,7 @@ ItemMovedEvent.onItemMoved = function(player, item, count, fromPosition, toPosit
     if not item:getType():isUpgradable() then
         return
     end
-    if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK then
+    if toPosition.y <= CONST_SLOT_PET and toPosition.y ~= CONST_SLOT_BACKPACK then
         return
     end
     if fromPosition.y >= 64 and toPosition.y >= 64 then
@@ -226,7 +226,7 @@ function us_onLogin(player)
 
     local maxHP = player:getMaxHealth()
     local maxMP = player:getMaxMana()
-    for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+    for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
         local item = player:getSlotItem(slot)
         if item then
             -- Get ALL bonuses (native + socketed jewel skulls)
@@ -357,7 +357,7 @@ function us_onDamaged(creature, attacker, primaryDamage, primaryType, secondaryD
         if attacker:isPlayer() then
             local primaryTotal = 0
             local secondaryTotal = 0
-            for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+            for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
                 local item = attacker:getSlotItem(slot)
                 if item then
                     if item:getType():usesSlot(slot) then
@@ -390,7 +390,7 @@ function us_onDamaged(creature, attacker, primaryDamage, primaryType, secondaryD
         if creature:isPlayer() then
             local primaryTotal = 0
             local secondaryTotal = 0
-            for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+            for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
                 local item = creature:getSlotItem(slot)
                 if item then
                     if item:getType():usesSlot(slot) then
@@ -441,7 +441,7 @@ function us_onDamaged(creature, attacker, primaryDamage, primaryType, secondaryD
         local secondaryDamageTotal = 0
         local lifeStealTotal = 0
         local manaStealTotal = 0
-        for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+        for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
             local item = attacker:getSlotItem(slot)
             if item then
                 if item:getType():usesSlot(slot) then
@@ -525,7 +525,7 @@ function us_onDamaged(creature, attacker, primaryDamage, primaryType, secondaryD
     if creature:isPlayer() then
         local primaryDamageTotal = 0
         local secondaryDamageTotal = 0
-        for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+        for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
             local item = creature:getSlotItem(slot)
             if item then
                 if item:getType():usesSlot(slot) then
@@ -592,7 +592,7 @@ function KillEvent.onKill(player, target, lastHit)
         return
     end
     local center = target:getPosition()
-    for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+    for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
         local item = player:getSlotItem(slot)
         if item then
             local values = item:getAllEquippedBonuses()
@@ -612,7 +612,7 @@ end
 
 function PrepareDeathEvent.onPrepareDeath(creature, killer)
     if creature:isPlayer() then
-        for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+        for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
             local item = creature:getSlotItem(slot)
             if item then
                 local values = item:getAllEquippedBonuses()
@@ -648,7 +648,7 @@ GainExperienceEvent.onGainExperience = function(player, source, exp, rawExp)
         return rawExp or 0
     end
 
-    for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+    for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
         local item = player:getSlotItem(slot)
         if item then
             local values = item:getAllEquippedBonuses()
@@ -673,7 +673,7 @@ function us_CheckCorpse(monsterType, corpsePosition, killerId)
     local killer = Player(killerId)
     local corpse = Tile(corpsePosition):getTopDownItem()
     if killer and killer:isPlayer() and corpse and corpse:isContainer() then
-        for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+        for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
             local item = killer:getSlotItem(slot)
             if item then
                 local values = item:getAllEquippedBonuses()
@@ -891,7 +891,7 @@ LookEvent.onLook = function(player, thing, position, distance, description)
         end
     elseif thing:isPlayer() then
         local iLvl = 0
-        for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+        for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
             local item = thing:getSlotItem(slot)
             if item then
                 iLvl = iLvl + item:getItemLevel()
@@ -1428,7 +1428,7 @@ function Item.getItemType(self)
         if slot == SLOTP_NECKLACE then
             return US_ITEM_TYPES.NECKLACE
         end
-        if slot == SLOTP_RING then
+        if slot == SLOTP_RING or slot == SLOTP_RING1 or slot == SLOTP_RING2 then
             return US_ITEM_TYPES.RING
         end
     end
@@ -1485,7 +1485,7 @@ function ItemType.isUpgradable(self)
             return true
         end
     else
-        if slot == SLOTP_HEAD or slot == SLOTP_ARMOR or slot == SLOTP_LEGS or slot == SLOTP_FEET or slot == SLOTP_NECKLACE or slot == SLOTP_RING then
+        if slot == SLOTP_HEAD or slot == SLOTP_ARMOR or slot == SLOTP_LEGS or slot == SLOTP_FEET or slot == SLOTP_NECKLACE or slot == SLOTP_RING or slot == SLOTP_RING1 or slot == SLOTP_RING2 then
             return true
         end
     end
@@ -1510,7 +1510,7 @@ function ItemType.canHaveItemLevel(self)
             return true
         end
     else
-        if slot == SLOTP_HEAD or slot == SLOTP_ARMOR or slot == SLOTP_LEGS or slot == SLOTP_FEET or slot == SLOTP_NECKLACE or slot == SLOTP_RING then
+        if slot == SLOTP_HEAD or slot == SLOTP_ARMOR or slot == SLOTP_LEGS or slot == SLOTP_FEET or slot == SLOTP_NECKLACE or slot == SLOTP_RING or slot == SLOTP_RING1 or slot == SLOTP_RING2 then
             return true
         end
     end
