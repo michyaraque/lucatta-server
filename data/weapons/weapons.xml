@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <weapons>
+	<melee id="61" unproperly="1"/>
 	<melee id="77" unproperly="1">
 		<vocation name="Knight" />
 	</melee>
