@@ -200,6 +200,7 @@ const std::unordered_map<std::string, ItemParseAttributes_t> ItemParseAttributes
     {"allowdistread", ITEM_PARSE_ALLOWDISTREAD},
     {"storeitem", ITEM_PARSE_STOREITEM},
     {"worth", ITEM_PARSE_WORTH},
+    {"paperdolloutfit", ITEM_PARSE_PAPERDOLLOUTFIT},
     {"supply", ITEM_PARSE_SUPPLY},
 };
 
@@ -985,6 +986,11 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 						std::cout << "[Warning - Items::parseItemNode] Unknown slotType: " << valueAttribute.as_string()
 						          << std::endl;
 					}
+					break;
+				}
+
+				case ITEM_PARSE_PAPERDOLLOUTFIT: {
+					it.paperdollOutfitId = pugi::cast<uint16_t>(valueAttribute.value());
 					break;
 				}
 

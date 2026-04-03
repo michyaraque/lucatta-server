@@ -639,6 +639,7 @@ House = {}
 ---@field getArticle fun(self: ItemType): string
 ---@field getDescription fun(self: ItemType): string
 ---@field getSlotPosition fun(self: ItemType): number
+---@field getPaperdollOutfitId fun(self: ItemType): number
 ---@field getCharges fun(self: ItemType): number
 ---@field getFluidSource fun(self: ItemType): number
 ---@field getCapacity fun(self: ItemType): number

@@ -3,8 +3,10 @@
 #include "login.h"
 
 #include "../base64.h"
+#include "../creature.h"
 #include "../definitions.h"
 #include "../game.h"
+#include "../item.h"
 #include "../rsa.h"
 #include "error.h"
 
@@ -51,6 +53,104 @@ json::array buildVocations()
 	return vocations;
 }
 
+uint8_t readRarityId(const Item* item)
+{
+	if (!item) {
+		return 0;
+	}
+
+	const auto* rarityAttribute = item->getCustomAttribute("rarity");
+	if (!rarityAttribute) {
+		return 0;
+	}
+
+	if (const auto* value = boost::get<int64_t>(&rarityAttribute->value)) {
+		return static_cast<uint8_t>(std::clamp<int64_t>(*value, 0, UINT8_MAX));
+	}
+
+	if (const auto* value = boost::get<double>(&rarityAttribute->value)) {
+		return static_cast<uint8_t>(std::clamp<int32_t>(static_cast<int32_t>(std::lround(*value)), 0, UINT8_MAX));
+	}
+
+	if (const auto* value = boost::get<bool>(&rarityAttribute->value)) {
+		return *value ? 1 : 0;
+	}
+
+	return 0;
+}
+
+json::value buildEquipmentVisualEntry(const Item* item)
+{
+	if (!item) {
+		return json::value(nullptr);
+	}
+
+	const ItemType& itemType = Item::items[item->getID()];
+	return json::object{
+	    {"itemId", item->getID()},
+	    {"outfitId", itemType.paperdollOutfitId},
+	    {"rarity", readRarityId(item)},
+	};
+}
+
+json::object buildAppearanceEquipment(Database& db, uint32_t playerId)
+{
+	json::object equipment{
+	    {"weapon", nullptr},
+	    {"helmet", nullptr},
+	    {"armor", nullptr},
+	    {"shield", nullptr},
+	};
+
+	auto result = db.storeQuery(fmt::format(
+	    "SELECT `pid`, `itemtype`, `count`, `attributes` FROM `player_items` WHERE `player_id` = {:d} AND `pid` IN ({:d}, {:d}, {:d}, {:d})",
+	    playerId, static_cast<uint32_t>(CONST_SLOT_HEAD), static_cast<uint32_t>(CONST_SLOT_ARMOR),
+	    static_cast<uint32_t>(CONST_SLOT_RIGHT), static_cast<uint32_t>(CONST_SLOT_LEFT)));
+	if (!result) {
+		return equipment;
+	}
+
+	do {
+		const uint32_t pid = result->getNumber<uint32_t>("pid");
+		const uint16_t type = result->getNumber<uint16_t>("itemtype");
+		const uint16_t count = result->getNumber<uint16_t>("count");
+		const auto attributes = result->getString("attributes");
+
+		PropStream propStream;
+		propStream.init(attributes.data(), attributes.size());
+
+		Item* item = Item::CreateItem(type, count);
+		if (!item) {
+			continue;
+		}
+
+		if (!item->unserializeAttr(propStream)) {
+			std::cout << "WARNING: Serialize error in handle_login equipment snapshot" << std::endl;
+		}
+
+		switch (pid) {
+			case CONST_SLOT_HEAD:
+				equipment["helmet"] = buildEquipmentVisualEntry(item);
+				break;
+			case CONST_SLOT_ARMOR:
+				equipment["armor"] = buildEquipmentVisualEntry(item);
+				break;
+			case CONST_SLOT_RIGHT:
+				equipment["weapon"] = buildEquipmentVisualEntry(item);
+				break;
+			case CONST_SLOT_LEFT:
+				equipment["shield"] = buildEquipmentVisualEntry(item);
+				break;
+			default:
+				break;
+		}
+
+		item->decrementReferenceCounter();
+	} while (result->next());
+
+	return equipment;
+}
+
 } // namespace
 
 std::pair<status, json::value> tfs::http::handle_login(const json::object& body, std::string_view ip)
@@ -60,13 +160,13 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 	auto emailField = body.if_contains("email");
 	if (!emailField || !emailField->is_string()) {
 		return make_error_response(
-		    {.code = 3, .message = "Tibia account email address or Tibia password is not correct."});
+		    {.code = 3, .message = "Account email address or password is not correct."});
 	}
 
 	auto passwordField = body.if_contains("password");
 	if (!passwordField || !passwordField->is_string()) {
 		return make_error_response(
-		    {.code = 3, .message = "Tibia account email address or Tibia password is not correct."});
+		    {.code = 3, .message = "Account email address or password is not correct."});
 	}
 
 	thread_local auto& db = Database::getInstance();
@@ -75,13 +175,13 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 	    db.escapeString(emailField->get_string())));
 	if (!result) {
 		return make_error_response(
-		    {.code = 3, .message = "Tibia account email address or Tibia password is not correct."});
+		    {.code = 3, .message = "Account email address or password is not correct."});
 	}
 
 	auto password = result->getString("password");
 	if (password != transformToSHA1(passwordField->get_string())) {
 		return make_error_response(
-		    {.code = 3, .message = "Tibia account email address or Tibia password is not correct."});
+		    {.code = 3, .message = "Account email address or password is not correct."});
 	}
 
 	auto now = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
@@ -147,6 +247,7 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 			         {"helmetKind", 0},
 			         {"armorKind", 0},
 			         {"shieldKind", 0},
+			         {"equipment", buildAppearanceEquipment(db, result->getNumber<uint32_t>("id"))},
 			     }},
 			    {"dailyrewardstate", 0}, // not implemented
 			});

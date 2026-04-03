@@ -3108,6 +3108,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod(L, "ItemType", "getArticle", LuaScriptInterface::luaItemTypeGetArticle);
 	registerMethod(L, "ItemType", "getDescription", LuaScriptInterface::luaItemTypeGetDescription);
 	registerMethod(L, "ItemType", "getSlotPosition", LuaScriptInterface::luaItemTypeGetSlotPosition);
+	registerMethod(L, "ItemType", "getPaperdollOutfitId", LuaScriptInterface::luaItemTypeGetPaperdollOutfitId);
 
 	registerMethod(L, "ItemType", "getCharges", LuaScriptInterface::luaItemTypeGetCharges);
 	registerMethod(L, "ItemType", "getFluidSource", LuaScriptInterface::luaItemTypeGetFluidSource);
@@ -13276,6 +13277,18 @@ int LuaScriptInterface::luaItemTypeGetSlotPosition(lua_State* L)
 	const ItemType* itemType = tfs::lua::getUserdata<const ItemType>(L, 1);
 	if (itemType) {
 		lua_pushnumber(L, itemType->slotPosition);
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaItemTypeGetPaperdollOutfitId(lua_State* L)
+{
+	// itemType:getPaperdollOutfitId()
+	const ItemType* itemType = tfs::lua::getUserdata<const ItemType>(L, 1);
+	if (itemType) {
+		lua_pushnumber(L, itemType->paperdollOutfitId);
 	} else {
 		lua_pushnil(L);
 	}

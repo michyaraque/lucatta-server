@@ -300,6 +300,11 @@ BOOST_FIXTURE_TEST_CASE(test_login_success, LoginFixture)
 	BOOST_TEST(appearance.at("helmetKind").as_uint64() == 0);
 	BOOST_TEST(appearance.at("armorKind").as_uint64() == 0);
 	BOOST_TEST(appearance.at("shieldKind").as_uint64() == 0);
+	auto& equipment = appearance.at("equipment").as_object();
+	BOOST_TEST(equipment.at("weapon").is_null());
+	BOOST_TEST(equipment.at("helmet").is_null());
+	BOOST_TEST(equipment.at("armor").is_null());
+	BOOST_TEST(equipment.at("shield").is_null());
 }
 
 BOOST_FIXTURE_TEST_CASE(test_login_success_with_token, LoginFixture)

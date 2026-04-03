@@ -580,12 +580,28 @@ public:
 		return getAttributes()->getCustomAttribute(key);
 	}
 
+	const ItemAttributes::CustomAttribute* getCustomAttribute(int64_t key) const
+	{
+		if (!attributes) {
+			return nullptr;
+		}
+		return attributes->getCustomAttribute(key);
+	}
+
 	const ItemAttributes::CustomAttribute* getCustomAttribute(const std::string& key)
 	{
 		if (!attributes) {
 			return nullptr;
 		}
 		return getAttributes()->getCustomAttribute(key);
+	}
+
+	const ItemAttributes::CustomAttribute* getCustomAttribute(const std::string& key) const
+	{
+		if (!attributes) {
+			return nullptr;
+		}
+		return attributes->getCustomAttribute(key);
 	}
 
 	bool removeCustomAttribute(int64_t key)

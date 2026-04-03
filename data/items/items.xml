@@ -6,30 +6,37 @@
   <item id="20" name="Firefox">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="1" />
+    <attribute key="paperdolloutfit" value="151" />
   </item>
   <item id="21" name="Cloth Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="1" />
+    <attribute key="paperdolloutfit" value="125" />
   </item>
   <item id="22" name="Leather Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="3" />
+    <attribute key="paperdolloutfit" value="138" />
   </item>
   <item id="23" name="Mail Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="5" />
+    <attribute key="paperdolloutfit" value="139" />
   </item>
   <item id="24" name="Plate Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="10" />
+    <attribute key="paperdolloutfit" value="144" />
   </item>
   <item id="25" name="Ruby Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="15" />
+    <attribute key="paperdolloutfit" value="145" />
   </item>
   <item id="26" name="Golden Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="20" />
+    <attribute key="paperdolloutfit" value="134" />
   </item>
   <item id="35" name="Health Potion">
     <attribute key="description" value="A health potion that healths +40HP. Cooldown 2s." />
@@ -49,26 +56,32 @@
   <item id="61" name="Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="3" />
+    <attribute key="paperdolloutfit" value="245" />
   </item>
   <item id="62" name="Morning Star">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="7" />
+    <attribute key="paperdolloutfit" value="237" />
   </item>
   <item id="63" name="Axe">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="5" />
+    <attribute key="paperdolloutfit" value="208" />
   </item>
   <item id="64" name="Magic Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="10" />
+    <attribute key="paperdolloutfit" value="211" />
   </item>
   <item id="65" name="Red Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="15" />
+    <attribute key="paperdolloutfit" value="243" />
   </item>
   <item id="66" name="Golden Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="20" />
+    <attribute key="paperdolloutfit" value="226" />
   </item>
   <item id="67" name="Nanopotion" />
   <item id="68" name="Gemruby" />
@@ -87,10 +100,12 @@
   <item id="77" name="Frozen Axe">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="24" />
+    <attribute key="paperdolloutfit" value="209" />
   </item>
   <item id="78" name="Sapphire Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="30" />
+    <attribute key="paperdolloutfit" value="133" />
   </item>
   <item id="79" name="Gemsapphire" />
   <item id="80" name="Bronze Ring" />
@@ -120,6 +135,7 @@
   <item id="107" name="Frozen Morning Star">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="26" />
+    <attribute key="paperdolloutfit" value="210" />
   </item>
   <item id="110" name="Rejuvenationpotion" />
   <item id="111" name="Poisonpotion" />
@@ -140,10 +156,12 @@
   <item id="121" name="Diamond Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="38" />
+    <attribute key="paperdolloutfit" value="220" />
   </item>
   <item id="122" name="Wirt's leg">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="5" />
+    <attribute key="paperdolloutfit" value="247" />
   </item>
   <item id="123" name="Skeleton King's thoracic cage">
     <attribute key="description" value="The thoracic cage of the Skeleton King. An unknown magic is still being emitted from the remains. Combined with other ingredients at the anvil, it will open a secret area, lv.45 required to enter" />
@@ -159,6 +177,7 @@
   <item id="128" name="Emerald Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="42" />
+    <attribute key="paperdolloutfit" value="132" />
   </item>
   <item id="129" name="Diamond Belt" />
   <item id="130" name="Cape" />
@@ -190,74 +209,92 @@
   <item id="143" name="Wood Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="2" />
+    <attribute key="paperdolloutfit" value="207" />
   </item>
   <item id="144" name="Iron Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="3" />
+    <attribute key="paperdolloutfit" value="200" />
   </item>
   <item id="145" name="Plate Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="5" />
+    <attribute key="paperdolloutfit" value="204" />
   </item>
   <item id="146" name="Red Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="7" />
+    <attribute key="paperdolloutfit" value="205" />
   </item>
   <item id="147" name="Golden Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="10" />
+    <attribute key="paperdolloutfit" value="197" />
   </item>
   <item id="148" name="Frozen Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="12" />
+    <attribute key="paperdolloutfit" value="189" />
   </item>
   <item id="149" name="Horned Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="14" />
+    <attribute key="paperdolloutfit" value="198" />
   </item>
   <item id="150" name="Sapphire Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="16" />
+    <attribute key="paperdolloutfit" value="196" />
   </item>
   <item id="151" name="Diamond Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="22" />
+    <attribute key="paperdolloutfit" value="192" />
   </item>
   <item id="152" name="Emerald Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="56" />
+    <attribute key="paperdolloutfit" value="223" />
   </item>
   <item id="153" name="Templar Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="28" />
+    <attribute key="paperdolloutfit" value="206" />
   </item>
   <item id="154" name="Executioner Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="56" />
+    <attribute key="paperdolloutfit" value="224" />
   </item>
   <item id="155" name="Templar Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="58" />
+    <attribute key="paperdolloutfit" value="246" />
   </item>
   <item id="156" name="Dragon Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="58" />
+    <attribute key="paperdolloutfit" value="221" />
   </item>
   <item id="157" name="Moon Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="30" />
+    <attribute key="paperdolloutfit" value="236" />
   </item>
   <item id="158" name="Mystical Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="62" />
+    <attribute key="paperdolloutfit" value="239" />
   </item>
   <item id="159" name="Spike Glaive">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="68" />
+    <attribute key="paperdolloutfit" value="244" />
   </item>
   <item id="160" name="Eclypse Dagger">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="60" />
+    <attribute key="paperdolloutfit" value="222" />
   </item>
   <item id="161" name="SAT Rune" />
   <item id="162" name="AL Rune" />
@@ -301,18 +338,22 @@
   <item id="196" name="Mystical Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="32" />
+    <attribute key="paperdolloutfit" value="202" />
   </item>
   <item id="197" name="Dragon Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="28" />
+    <attribute key="paperdolloutfit" value="193" />
   </item>
   <item id="198" name="Demon Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="32" />
+    <attribute key="paperdolloutfit" value="191" />
   </item>
   <item id="199" name="Emerald Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="26" />
+    <attribute key="paperdolloutfit" value="194" />
   </item>
   <item id="200" name="Legendary upgrade scroll">
     <attribute key="description" value="Upgrade legendary class item. The chances for a successful upgrade varies depending on the item's level." />
@@ -347,10 +388,12 @@
   <item id="228" name="Dragon Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="44" />
+    <attribute key="paperdolloutfit" value="131" />
   </item>
   <item id="229" name="Demon Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="46" />
+    <attribute key="paperdolloutfit" value="129" />
   </item>
   <item id="230" name="Green Chest">
     <attribute key="description" value="The chest may contain a very precious item." />
@@ -373,10 +416,12 @@
   <item id="242" name="Mystical Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="48" />
+    <attribute key="paperdolloutfit" value="141" />
   </item>
   <item id="244" name="Hell Hammer">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="68" />
+    <attribute key="paperdolloutfit" value="227" />
   </item>
   <item id="245" name="Golden Chalice">
     <attribute key="description" value="Return the Golden Chalice, a one-of-a-kind artifact, to its rightful place." />
@@ -387,6 +432,7 @@
   <item id="252" name="Immortal Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="54" />
+    <attribute key="paperdolloutfit" value="136" />
   </item>
   <item id="254" name="Death Angel Tomb" />
   <item id="255" name="Angel Tomb" />
@@ -434,14 +480,17 @@
   <item id="305" name="Demon Axe">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="64" />
+    <attribute key="paperdolloutfit" value="217" />
   </item>
   <item id="306" name="Paladin Axe">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="66" />
+    <attribute key="paperdolloutfit" value="241" />
   </item>
   <item id="307" name="Immortal Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="66" />
+    <attribute key="paperdolloutfit" value="230" />
   </item>
   <item id="309" name="Blessed transmute scroll">
     <attribute key="description" value="Transmute a ring or an amulet and generate new random stats or an item to have a chance of making it unique. The chances of transmuting stats is fixed while the chances of getting a unique varies. There is a 1% chance your item will be burned during the transmutation." />
@@ -450,10 +499,12 @@
     <attribute key="description" value="This tool is used for digging." />
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="30" />
+    <attribute key="paperdolloutfit" value="242" />
   </item>
   <item id="311" name="Moon Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="44" />
+    <attribute key="paperdolloutfit" value="140" />
   </item>
   <item id="313" name="Nanocoin" />
   <item id="314" name="Bananocoin" />
@@ -482,78 +533,97 @@
   <item id="325" name="Cloth Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="1" />
+    <attribute key="paperdolloutfit" value="126" />
   </item>
   <item id="326" name="Leather Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="2" />
+    <attribute key="paperdolloutfit" value="175" />
   </item>
   <item id="327" name="Mail Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="3" />
+    <attribute key="paperdolloutfit" value="176" />
   </item>
   <item id="328" name="Plate Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="5" />
+    <attribute key="paperdolloutfit" value="183" />
   </item>
   <item id="329" name="Red Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="7" />
+    <attribute key="paperdolloutfit" value="185" />
   </item>
   <item id="330" name="Golden Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="10" />
+    <attribute key="paperdolloutfit" value="170" />
   </item>
   <item id="331" name="Frozen Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="12" />
+    <attribute key="paperdolloutfit" value="153" />
   </item>
   <item id="332" name="Horned Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="14" />
+    <attribute key="paperdolloutfit" value="171" />
   </item>
   <item id="333" name="Sapphire Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="16" />
+    <attribute key="paperdolloutfit" value="168" />
   </item>
   <item id="334" name="Diamond Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="18" />
+    <attribute key="paperdolloutfit" value="160" />
   </item>
   <item id="335" name="Emerald Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="20" />
+    <attribute key="paperdolloutfit" value="164" />
   </item>
   <item id="336" name="Executioner Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="20" />
+    <attribute key="paperdolloutfit" value="166" />
   </item>
   <item id="337" name="Templar Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="20" />
+    <attribute key="paperdolloutfit" value="186" />
   </item>
   <item id="338" name="Dragon Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="20" />
+    <attribute key="paperdolloutfit" value="162" />
   </item>
   <item id="339" name="Moon Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="20" />
+    <attribute key="paperdolloutfit" value="177" />
   </item>
   <item id="340" name="Demon Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="22" />
+    <attribute key="paperdolloutfit" value="158" />
   </item>
   <item id="341" name="Mystical Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="22" />
+    <attribute key="paperdolloutfit" value="179" />
   </item>
   <item id="342" name="Immortal Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="26" />
+    <attribute key="paperdolloutfit" value="173" />
   </item>
   <item id="343" name="Clown Helm">
     <attribute key="slotType" value="head" />
     <attribute key="armor" value="20" />
+    <attribute key="paperdolloutfit" value="157" />
   </item>
   <item id="344" name="Goldwrap" />
   <item id="351" name="Paladin Helm">
@@ -568,6 +638,7 @@
   <item id="354" name="Immortal Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="34" />
+    <attribute key="paperdolloutfit" value="199" />
   </item>
   <item id="355" name="Immortal Belt" />
   <item id="356" name="Iou">
@@ -600,6 +671,7 @@
   <item id="377" name="Maul">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="73" />
+    <attribute key="paperdolloutfit" value="231" />
   </item>
   <item id="378" name="Wizard sword">
     <attribute key="slotType" value="hand" />
@@ -652,18 +724,22 @@
   <item id="401" name="Mystical Dagger">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="58" />
+    <attribute key="paperdolloutfit" value="238" />
   </item>
   <item id="402" name="Moon Hatchet">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="58" />
+    <attribute key="paperdolloutfit" value="234" />
   </item>
   <item id="403" name="Moon Maul">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="62" />
+    <attribute key="paperdolloutfit" value="235" />
   </item>
   <item id="404" name="Demon Sickle">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="62" />
+    <attribute key="paperdolloutfit" value="219" />
   </item>
   <item id="406" name="Pet Reindeer" />
   <item id="407" name="Hellhound Pet" />
@@ -679,14 +755,17 @@
   <item id="412" name="Christmas Sword">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="60" />
+    <attribute key="paperdolloutfit" value="214" />
   </item>
   <item id="413" name="Christmas Hatchet">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="58" />
+    <attribute key="paperdolloutfit" value="212" />
   </item>
   <item id="414" name="Christmas Shield">
     <attribute key="slotType" value="left-hand" />
     <attribute key="defense" value="30" />
+    <attribute key="paperdolloutfit" value="190" />
   </item>
   <item id="415" name="Christmas Belt" />
   <item id="416" name="Yule">
@@ -695,6 +774,7 @@
   <item id="417" name="christmas Maul">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="62" />
+    <attribute key="paperdolloutfit" value="213" />
   </item>
   <item id="418" name="ReinDeer Pet" />
   <item id="419" name="Monkey Pet" />
@@ -705,6 +785,7 @@
   <item id="421" name="Christmas Armor">
     <attribute key="slotType" value="body" />
     <attribute key="armor" value="44" />
+    <attribute key="paperdolloutfit" value="128" />
   </item>
   <item id="422" name="Pet Monkey" />
   <item id="423" name="Necklace of the Timeless Soul">
@@ -718,10 +799,12 @@
   <item id="427" name="Immortarion, the Timeless Cleaver">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="66" />
+    <attribute key="paperdolloutfit" value="228" />
   </item>
   <item id="428" name="Immortal Dagger">
     <attribute key="slotType" value="hand" />
     <attribute key="attack" value="66" />
+    <attribute key="paperdolloutfit" value="229" />
   </item>
   <item id="1000" name="Skull Jewel">
     <attribute key="description" value="Can be inserted in a socket" />

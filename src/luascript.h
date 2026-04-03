@@ -986,6 +986,7 @@ private:
 	static int luaItemTypeGetArticle(lua_State* L);
 	static int luaItemTypeGetDescription(lua_State* L);
 	static int luaItemTypeGetSlotPosition(lua_State* L);
+	static int luaItemTypeGetPaperdollOutfitId(lua_State* L);
 
 	static int luaItemTypeGetCharges(lua_State* L);
 	static int luaItemTypeGetFluidSource(lua_State* L);

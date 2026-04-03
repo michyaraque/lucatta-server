@@ -62,6 +62,86 @@ constexpr int64_t getTimeout(std::size_t slot)
 	return getWaitTime(slot) + 15;
 }
 
+bool hasEquipmentVisualData(slots_t slot)
+{
+	return slot == CONST_SLOT_HEAD || slot == CONST_SLOT_ARMOR || slot == CONST_SLOT_RIGHT || slot == CONST_SLOT_LEFT;
+}
+
+uint8_t readItemRarity(const Item* item)
+{
+	if (!item) {
+		return 0;
+	}
+
+	const auto* rarityAttribute = item->getCustomAttribute("rarity");
+	if (!rarityAttribute) {
+		return 0;
+	}
+
+	if (const auto* value = boost::get<int64_t>(&rarityAttribute->value)) {
+		return static_cast<uint8_t>(std::clamp<int64_t>(*value, 0, UINT8_MAX));
+	}
+
+	if (const auto* value = boost::get<double>(&rarityAttribute->value)) {
+		return static_cast<uint8_t>(std::clamp<int32_t>(static_cast<int32_t>(std::lround(*value)), 0, UINT8_MAX));
+	}
+
+	if (const auto* value = boost::get<bool>(&rarityAttribute->value)) {
+		return *value ? 1 : 0;
+	}
+
+	return 0;
+}
+
+void appendEquipmentVisualData(NetworkMessage& msg, slots_t slot, const Item* item)
+{
+	if (!item || !hasEquipmentVisualData(slot)) {
+		return;
+	}
+
+	const ItemType& itemType = Item::items[item->getID()];
+	msg.add<uint16_t>(itemType.paperdollOutfitId);
+	msg.addByte(readItemRarity(item));
+}
+
+void appendPlayerEquipmentSnapshot(NetworkMessage& msg, const Player* otherPlayer)
+{
+	if (!otherPlayer) {
+		msg.addByte(0);
+		return;
+	}
+
+	constexpr std::array<std::pair<slots_t, uint8_t>, 4> snapshotSlots = {{
+	    {CONST_SLOT_HEAD, 1 << 0},
+	    {CONST_SLOT_ARMOR, 1 << 1},
+	    {CONST_SLOT_RIGHT, 1 << 2},
+	    {CONST_SLOT_LEFT, 1 << 3},
+	}};
+
+	std::array<const Item*, snapshotSlots.size()> items = {};
+	uint8_t mask = 0;
+
+	for (size_t index = 0; index < snapshotSlots.size(); ++index) {
+		const auto [slot, bit] = snapshotSlots[index];
+		items[index] = otherPlayer->getInventoryItem(slot);
+		if (items[index]) {
+			mask |= bit;
+		}
+	}
+
+	msg.addByte(mask);
+	for (size_t index = 0; index < snapshotSlots.size(); ++index) {
+		const Item* item = items[index];
+		if (!item) {
+			continue;
+		}
+
+		const auto [slot, _] = snapshotSlots[index];
+		msg.add<uint16_t>(item->getID());
+		appendEquipmentVisualData(msg, slot, item);
+	}
+}
+
 std::size_t clientLogin(const Player& player)
 {
 	if (player.hasFlag(PlayerFlag_CanAlwaysLogin) || player.getAccountType() >= ACCOUNT_TYPE_GAMEMASTER) {
@@ -2865,7 +2945,12 @@ void ProtocolGame::sendInventoryItem(slots_t slot, const Item* item)
 	if (item) {
 		msg.addByte(0x78);
 		msg.addByte(slot);
-		msg.addItem(item);
+		if (hasEquipmentVisualData(slot)) {
+			msg.add<uint16_t>(item->getID());
+			appendEquipmentVisualData(msg, slot, item);
+		} else {
+			msg.addItem(item);
+		}
 	} else {
 		msg.addByte(0x79);
 		msg.addByte(slot);
@@ -3472,6 +3557,10 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 	msg.addByte(0x00); // inspection type (bool?)
 
 	msg.addByte(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
+
+	if (creatureType == CREATURETYPE_PLAYER) {
+		appendPlayerEquipmentSnapshot(msg, otherPlayer);
+	}
 }
 
 void ProtocolGame::AddCreatureIcons(NetworkMessage& msg, const Creature* creature)

@@ -176,6 +176,7 @@ enum ItemParseAttributes_t
 	ITEM_PARSE_ALLOWDISTREAD,
 	ITEM_PARSE_STOREITEM,
 	ITEM_PARSE_WORTH,
+	ITEM_PARSE_PAPERDOLLOUTFIT,
 	ITEM_PARSE_REFLECTPERCENTALL,
 	ITEM_PARSE_REFLECTPERCENTELEMENTS,
 	ITEM_PARSE_REFLECTPERCENTMAGIC,
@@ -370,6 +371,7 @@ public:
 	uint16_t slotPosition = SLOTP_HAND;
 	uint16_t speed = 0;
 	uint16_t wareId = 0;
+	uint16_t paperdollOutfitId = 0;
 
 	MagicEffectClasses magicEffect = CONST_ME_NONE;
 	Direction bedPartnerDir = DIRECTION_NONE;
