@@ -409,7 +409,7 @@ void ProtocolGame::logout(bool displayEffect, bool forced)
 	}
 
 	sendSessionEnd(forced ? SESSION_END_FORCECLOSE : SESSION_END_LOGOUT);
-	disconnect();
+	disconnect(forced ? "force-close" : "logout");
 
 	g_game.removeCreature(player);
 }
@@ -571,7 +571,7 @@ void ProtocolGame::disconnectClient(const std::string& message) const
 	output->addString(message);
 	send(output);
 
-	disconnect();
+	disconnect(message);
 }
 
 void ProtocolGame::writeToOutputBuffer(const NetworkMessage& msg)

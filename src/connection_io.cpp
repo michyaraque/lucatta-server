@@ -12,6 +12,23 @@ namespace websocket = beast::websocket;
 
 namespace {
 
+constexpr std::size_t MAX_CLOSE_REASON_LENGTH = 123;
+
+std::string normalizeCloseReason(std::string_view reason)
+{
+	if (reason.empty()) {
+		return {};
+	}
+
+	std::string closeReason{reason.substr(0, MAX_CLOSE_REASON_LENGTH)};
+	for (char& character : closeReason) {
+		if (character == '\n' || character == '\r') {
+			character = ' ';
+		}
+	}
+	return closeReason;
+}
+
 class TcpConnectionIO final : public ConnectionIO
 {
 public:
@@ -27,8 +44,13 @@ public:
 		asio::async_write(socket, asio::buffer(data, size), std::move(handler));
 	}
 
-	void close() override
+	void close(bool /*force*/, std::string_view /*reason*/) override
 	{
+		if (closed) {
+			return;
+		}
+
+		closed = true;
 		boost::system::error_code error;
 		socket.shutdown(asio::ip::tcp::socket::shutdown_both, error);
 		socket.close(error);
@@ -43,6 +65,7 @@ public:
 
 private:
 	asio::ip::tcp::socket socket;
+	bool closed = false;
 };
 
 class WebSocketConnectionIO final : public ConnectionIO, public std::enable_shared_from_this<WebSocketConnectionIO>
@@ -63,11 +86,29 @@ public:
 		stream.async_write(asio::buffer(data, size), std::move(handler));
 	}
 
-	void close() override
+	void close(bool force, std::string_view reason) override
 	{
-		boost::system::error_code error;
-		stream.next_layer().shutdown(asio::ip::tcp::socket::shutdown_both, error);
-		stream.next_layer().close(error);
+		if (transportClosed) {
+			return;
+		}
+
+		if (force) {
+			closeTransport();
+			return;
+		}
+
+		if (closeStarted) {
+			return;
+		}
+
+		closeStarted = true;
+		auto self = shared_from_this();
+		auto closeReason = websocket::close_reason{websocket::close_code::normal};
+		if (auto closeText = normalizeCloseReason(reason); !closeText.empty()) {
+			closeReason.reason = closeText;
+		}
+
+		stream.async_close(closeReason, [self](beast::error_code /*error*/) { self->closeTransport(); });
 	}
 
 	Address getRemoteAddress(boost::system::error_code& error) const override
@@ -168,12 +209,26 @@ private:
 		}
 	}
 
+	void closeTransport()
+	{
+		if (transportClosed) {
+			return;
+		}
+
+		transportClosed = true;
+		boost::system::error_code error;
+		stream.next_layer().shutdown(asio::ip::tcp::socket::shutdown_both, error);
+		stream.next_layer().close(error);
+	}
+
 	websocket::stream<asio::ip::tcp::socket> stream;
 	beast::flat_buffer frameBuffer;
 	std::vector<uint8_t> bufferedBytes;
 	std::size_t bufferedOffset = 0;
 	std::optional<PendingRead> pendingRead;
 	bool readInProgress = false;
+	bool closeStarted = false;
+	bool transportClosed = false;
 };
 
 } // namespace

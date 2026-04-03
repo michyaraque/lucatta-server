@@ -51,32 +51,49 @@ Connection::Connection(ConnectionIO_ptr io, ConstServicePort_ptr service_port) :
     timeConnected(time(nullptr))
 {}
 
+void Connection::setCloseReason(std::string_view reason)
+{
+	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
+	closeReason.assign(reason.begin(), reason.end());
+}
+
 void Connection::close(bool force)
 {
 	// any thread
 	ConnectionManager::getInstance().releaseConnection(shared_from_this());
 
 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
+	if (connectionState == CONNECTION_STATE_DISCONNECTED) {
+		if (force) {
+			closeSocket(true);
+		}
+		return;
+	}
+
 	connectionState = CONNECTION_STATE_DISCONNECTED;
 
 	if (protocol) {
 		g_dispatcher.addTask([protocol = protocol]() { protocol->release(); });
 	}
 
+	if (force) {
+		messageQueue.clear();
+	}
+
 	if (messageQueue.empty() || force) {
-		closeSocket();
+		closeSocket(force);
 	} else {
 		// will be closed by the destructor or onWriteOperation
 	}
 }
 
-void Connection::closeSocket()
+void Connection::closeSocket(bool force)
 {
 	if (io) {
 		try {
 			readTimer.cancel();
 			writeTimer.cancel();
-			io->close();
+			io->close(force, closeReason);
 		} catch (boost::system::system_error& e) {
 			std::cout << "[Network error - Connection::closeSocket] " << e.what() << std::endl;
 		}
@@ -133,10 +150,12 @@ void Connection::parseHeader(const boost::system::error_code& error)
 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
 	readTimer.cancel();
 
+	if (connectionState == CONNECTION_STATE_DISCONNECTED) {
+		return;
+	}
+
 	if (error) {
 		close(FORCE_CLOSE);
-		return;
-	} else if (connectionState == CONNECTION_STATE_DISCONNECTED) {
 		return;
 	}
 
@@ -208,10 +227,12 @@ void Connection::parsePacket(const boost::system::error_code& error)
 	std::lock_guard<std::recursive_mutex> lockClass(connectionLock);
 	readTimer.cancel();
 
+	if (connectionState == CONNECTION_STATE_DISCONNECTED) {
+		return;
+	}
+
 	if (error) {
 		close(FORCE_CLOSE);
-		return;
-	} else if (connectionState == CONNECTION_STATE_DISCONNECTED) {
 		return;
 	}
 
@@ -241,6 +262,10 @@ void Connection::parsePacket(const boost::system::error_code& error)
 		protocol->onRecvFirstMessage(msg);
 	} else {
 		protocol->onRecvMessage(msg); // Send the packet to the current protocol
+	}
+
+	if (connectionState == CONNECTION_STATE_DISCONNECTED) {
+		return;
 	}
 
 	try {

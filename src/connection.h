@@ -7,6 +7,8 @@
 #include "connection_io.h"
 #include "networkmessage.h"
 
+#include <string_view>
+
 enum ConnectionState_t
 {
 	CONNECTION_STATE_DISCONNECTED,
@@ -78,6 +80,7 @@ public:
 	friend class ConnectionManager;
 
 	void close(bool force = false);
+	void setCloseReason(std::string_view reason);
 	// Used by protocols that require server to send first
 	void accept(Protocol_ptr protocol);
 	void accept();
@@ -94,7 +97,7 @@ private:
 
 	static void handleTimeout(ConnectionWeak_ptr connectionWeak, const boost::system::error_code& error);
 
-	void closeSocket();
+	void closeSocket(bool force = false);
 	void internalSend(const OutputMessage_ptr& msg);
 
 	NetworkMessage msg;
@@ -113,6 +116,7 @@ private:
 	Address remoteAddress;
 	time_t timeConnected;
 	uint32_t packetsSent = 0;
+	std::string closeReason;
 
 	ConnectionState_t connectionState = CONNECTION_STATE_PENDING;
 	bool receivedFirst = false;

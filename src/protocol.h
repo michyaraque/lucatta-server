@@ -7,6 +7,7 @@
 #include "connection.h"
 #include "xtea.h"
 
+#include <string_view>
 #include <zlib.h>
 
 class Protocol : public std::enable_shared_from_this<Protocol>
@@ -62,9 +63,12 @@ public:
 protected:
 	static constexpr size_t RSA_BUFFER_LENGTH = 128;
 
-	void disconnect() const
+	void disconnect(std::string_view reason = {}) const
 	{
 		if (auto connection = getConnection()) {
+			if (!reason.empty()) {
+				connection->setCloseReason(reason);
+			}
 			connection->close();
 		}
 	}

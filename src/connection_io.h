@@ -1,6 +1,8 @@
 #ifndef FS_CONNECTION_IO_H
 #define FS_CONNECTION_IO_H
 
+#include <string_view>
+
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/websocket/stream.hpp>
 
@@ -17,7 +19,7 @@ public:
 
 	virtual void asyncRead(uint8_t* data, std::size_t size, IOHandler handler) = 0;
 	virtual void asyncWrite(const uint8_t* data, std::size_t size, IOHandler handler) = 0;
-	virtual void close() = 0;
+	virtual void close(bool force, std::string_view reason) = 0;
 	virtual Address getRemoteAddress(boost::system::error_code& error) const = 0;
 	virtual boost::asio::any_io_executor getExecutor() = 0;
 };
