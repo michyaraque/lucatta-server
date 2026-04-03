@@ -110,7 +110,7 @@ MoveItemEvent.onMoveItem = function(player, item, count, fromPosition, toPositio
     end
 
     if item:isUnidentified() then
-        if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK1 then
+        if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK then
             player:sendTextMessage(MESSAGE_STATUS_SMALL, "You can't wear unidentified items.")
             return false
         end
@@ -118,7 +118,7 @@ MoveItemEvent.onMoveItem = function(player, item, count, fromPosition, toPositio
 
     if US_CONFIG.REQUIRE_LEVEL == true then
         if player:getLevel() < item:getItemLevel() and not item:isLimitless() then
-            if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK1 then
+            if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK then
                 player:sendTextMessage(MESSAGE_INFO_DESCR, "You need higher level to equip that item.")
                 return RETURNVALUE_NOTPOSSIBLE
             end
@@ -126,7 +126,7 @@ MoveItemEvent.onMoveItem = function(player, item, count, fromPosition, toPositio
     end
 
     if toPosition.y <= CONST_SLOT_AMMO then
-        if toPosition.y ~= CONST_SLOT_BACKPACK1 then
+        if toPosition.y ~= CONST_SLOT_BACKPACK then
             if fromPosition.y >= 64 or fromPosition.x ~= CONTAINER_POSITION then
                 -- remove old item conditions (native + socketed skull bonuses)
                 local oldItem = player:getSlotItem(toPosition.y)
@@ -178,13 +178,13 @@ ItemMovedEvent.onItemMoved = function(player, item, count, fromPosition, toPosit
     if not item:getType():isUpgradable() then
         return
     end
-    if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK1 then
+    if toPosition.y <= CONST_SLOT_AMMO and toPosition.y ~= CONST_SLOT_BACKPACK then
         return
     end
     if fromPosition.y >= 64 and toPosition.y >= 64 then
         return
     end
-    if fromPosition.y >= 64 and toPosition.y == CONST_SLOT_BACKPACK1 then
+    if fromPosition.y >= 64 and toPosition.y == CONST_SLOT_BACKPACK then
         return
     end
 

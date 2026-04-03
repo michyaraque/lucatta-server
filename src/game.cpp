@@ -1832,7 +1832,7 @@ void Game::playerEquipItem(uint32_t playerId, uint16_t spriteId)
 		return;
 	}
 
-	Item* item = player->getInventoryItem(CONST_SLOT_BACKPACK1);
+	Item* item = player->getInventoryItem(CONST_SLOT_BACKPACK);
 	if (!item) {
 		return;
 	}
@@ -2841,21 +2841,21 @@ void Game::playerAcceptTrade(uint32_t playerId)
 		ReturnValue playerRet = RETURNVALUE_NOERROR;
 
 		// if player is trying to trade its own backpack
-		if (tradePartner->getInventoryItem(CONST_SLOT_BACKPACK1) == partnerTradeItem) {
+		if (tradePartner->getInventoryItem(CONST_SLOT_BACKPACK) == partnerTradeItem) {
 			tradePartnerRet = (tradePartner->getInventoryItem(getSlotType(Item::items[playerTradeItem->getID()]))
 			                       ? RETURNVALUE_NOTENOUGHROOM
 			                       : RETURNVALUE_NOERROR);
 		}
 
-		if (player->getInventoryItem(CONST_SLOT_BACKPACK1) == playerTradeItem) {
+		if (player->getInventoryItem(CONST_SLOT_BACKPACK) == playerTradeItem) {
 			playerRet = (player->getInventoryItem(getSlotType(Item::items[partnerTradeItem->getID()]))
 			                 ? RETURNVALUE_NOTENOUGHROOM
 			                 : RETURNVALUE_NOERROR);
 		}
 
 		// both players try to trade equipped backpacks
-		if (player->getInventoryItem(CONST_SLOT_BACKPACK1) == playerTradeItem &&
-		    tradePartner->getInventoryItem(CONST_SLOT_BACKPACK1) == partnerTradeItem) {
+		if (player->getInventoryItem(CONST_SLOT_BACKPACK) == playerTradeItem &&
+		    tradePartner->getInventoryItem(CONST_SLOT_BACKPACK) == partnerTradeItem) {
 			playerRet = RETURNVALUE_NOTENOUGHROOM;
 		}
 

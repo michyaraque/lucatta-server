@@ -13,11 +13,7 @@ do
 		[CONST_SLOT_FEET] = SLOTP_FEET,
 		[CONST_SLOT_RING] = SLOTP_RING,
 		[CONST_SLOT_AMMO] = SLOTP_AMMO,
-		[CONST_SLOT_BACKPACK1] = SLOTP_BACKPACK1,
-		[CONST_SLOT_BACKPACK2] = SLOTP_BACKPACK2,
-		[CONST_SLOT_BACKPACK3] = SLOTP_BACKPACK3,
-		[CONST_SLOT_BACKPACK4] = SLOTP_BACKPACK4,
-		[CONST_SLOT_BACKPACK5] = SLOTP_BACKPACK5,
+		[CONST_SLOT_BACKPACK] = SLOTP_BACKPACK,
 	}
 
 	function ItemType:usesSlot(slot)
@@ -73,11 +69,7 @@ function ItemType:isShield()
 end
 
 function ItemType:isBackpack()
-	return self:usesSlot(CONST_SLOT_BACKPACK1) or
-		self:usesSlot(CONST_SLOT_BACKPACK2) or
-		self:usesSlot(CONST_SLOT_BACKPACK3) or
-		self:usesSlot(CONST_SLOT_BACKPACK4) or
-		self:usesSlot(CONST_SLOT_BACKPACK5)
+	return self:usesSlot(CONST_SLOT_BACKPACK)
 end
 
 function ItemType:isNecklace()

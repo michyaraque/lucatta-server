@@ -194,7 +194,7 @@ function Player.canCarryMoney(self, amount)
 	end
 
 	-- If player don't have enough available inventory slots to carry this money
-	local backpack = self:getSlotItem(CONST_SLOT_BACKPACK1)
+	local backpack = self:getSlotItem(CONST_SLOT_BACKPACK)
 	if not backpack or backpack:getEmptySlots(true) < inventorySlots then
 		return false
 	end

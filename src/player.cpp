@@ -2446,9 +2446,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 	const int32_t& slotPosition = item->getSlotPosition();
 	if ((slotPosition & SLOTP_HEAD) || (slotPosition & SLOTP_NECKLACE) || (slotPosition & SLOTP_ARMOR) ||
 	    (slotPosition & SLOTP_LEGS) || (slotPosition & SLOTP_FEET) || (slotPosition & SLOTP_RING) ||
-	    (slotPosition & SLOTP_BACKPACK1) || (slotPosition & SLOTP_BACKPACK2) ||
-	    (slotPosition & SLOTP_BACKPACK3) || (slotPosition & SLOTP_BACKPACK4) ||
-	    (slotPosition & SLOTP_BACKPACK5)) {
+	    (slotPosition & SLOTP_BACKPACK)) {
 		ret = RETURNVALUE_CANNOTBEDRESSED;
 	} else if (slotPosition & SLOTP_TWO_HAND) {
 		ret = RETURNVALUE_PUTTHISOBJECTINBOTHHANDS;
@@ -2475,11 +2473,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 			break;
 		}
 
-		case CONST_SLOT_BACKPACK1:
-		case CONST_SLOT_BACKPACK2:
-		case CONST_SLOT_BACKPACK3:
-		case CONST_SLOT_BACKPACK4:
-		case CONST_SLOT_BACKPACK5: {
+		case CONST_SLOT_BACKPACK: {
 			if (slotPosition & SLOTP_BACKPACK) {
 				ret = RETURNVALUE_NOERROR;
 			}

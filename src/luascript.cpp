@@ -1641,11 +1641,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(L, CONST_SLOT_RING);
 	registerEnum(L, CONST_SLOT_AMMO);
 
-	registerEnum(L, CONST_SLOT_BACKPACK1);
-	registerEnum(L, CONST_SLOT_BACKPACK2);
-	registerEnum(L, CONST_SLOT_BACKPACK3);
-	registerEnum(L, CONST_SLOT_BACKPACK4);
-	registerEnum(L, CONST_SLOT_BACKPACK5);
+	registerEnum(L, CONST_SLOT_BACKPACK);
 
 	registerEnum(L, CREATURE_EVENT_NONE);
 	registerEnum(L, CREATURE_EVENT_LOGIN);
@@ -17643,16 +17639,8 @@ int LuaScriptInterface::luaMoveEventSlot(lua_State* L)
 			moveevent->setSlot(SLOTP_RING);
 		} else if (slotName == "ammo") {
 			moveevent->setSlot(SLOTP_AMMO);
-		} else if (slotName == "backpack1") {
-			moveevent->setSlot(SLOTP_BACKPACK1);
-		} else if (slotName == "backpack2") {
-			moveevent->setSlot(SLOTP_BACKPACK2);
-		} else if (slotName == "backpack3") {
-			moveevent->setSlot(SLOTP_BACKPACK3);
-		} else if (slotName == "backpack4") {
-			moveevent->setSlot(SLOTP_BACKPACK4);
-		} else if (slotName == "backpack5") {
-			moveevent->setSlot(SLOTP_BACKPACK5);
+		} else if (slotName == "backpack") {
+			moveevent->setSlot(SLOTP_BACKPACK);
 		} else {
 			std::cout << "[Warning - MoveEvent::configureMoveEvent] Unknown slot type: " << slotName << '\n';
 			tfs::lua::pushBoolean(L, false);
