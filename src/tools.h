@@ -11,6 +11,8 @@
 void printXMLError(const std::string& where, std::string_view fileName, const pugi::xml_parse_result& result);
 
 std::string transformToSHA1(std::string_view input);
+std::string hashPassword(std::string_view input);
+bool verifyPassword(std::string_view hash, std::string_view password);
 std::string hmac(std::string_view algorithm, std::string_view key, std::string_view message);
 std::string generateToken(std::string_view key, uint64_t counter, size_t length = AUTHENTICATOR_DIGITS);
 

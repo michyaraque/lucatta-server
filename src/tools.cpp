@@ -7,9 +7,21 @@
 
 #include "configmanager.h"
 
+#include <argon2.h>
 #include <chrono>
+#include <cstring>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+
+namespace {
+
+constexpr uint32_t PASSWORD_HASH_ITERATIONS = 3;
+constexpr uint32_t PASSWORD_HASH_MEMORY_KIB = 65536;
+constexpr uint32_t PASSWORD_HASH_PARALLELISM = 1;
+constexpr uint32_t PASSWORD_HASH_SALT_LENGTH = 16;
+constexpr uint32_t PASSWORD_HASH_LENGTH = 32;
+
+}
 
 void printXMLError(const std::string& where, std::string_view fileName, const pugi::xml_parse_result& result)
 {
@@ -87,6 +99,35 @@ std::string transformToSHA1(std::string_view input)
 	}
 
 	return digest;
+}
+
+std::string hashPassword(std::string_view input)
+{
+	std::string salt = randomBytes(PASSWORD_HASH_SALT_LENGTH);
+	const size_t encodedLength = argon2_encodedlen(PASSWORD_HASH_ITERATIONS, PASSWORD_HASH_MEMORY_KIB,
+	                                               PASSWORD_HASH_PARALLELISM, PASSWORD_HASH_SALT_LENGTH,
+	                                               PASSWORD_HASH_LENGTH, Argon2_id);
+
+	std::string encoded(encodedLength, '\0');
+	const int result = argon2id_hash_encoded(PASSWORD_HASH_ITERATIONS, PASSWORD_HASH_MEMORY_KIB,
+	                                         PASSWORD_HASH_PARALLELISM, input.data(), input.size(), salt.data(),
+	                                         salt.size(), PASSWORD_HASH_LENGTH, encoded.data(), encoded.size());
+	if (result != ARGON2_OK) {
+		throw std::runtime_error(fmt::format("Password hashing failed: {:s}", argon2_error_message(result)));
+	}
+
+	encoded.resize(std::strlen(encoded.c_str()));
+	return encoded;
+}
+
+bool verifyPassword(std::string_view hash, std::string_view password)
+{
+	if (hash.empty()) {
+		return false;
+	}
+
+	const std::string encodedHash(hash);
+	return argon2id_verify(encodedHash.c_str(), password.data(), password.size()) == ARGON2_OK;
 }
 
 std::string hmac(std::string_view algorithm, std::string_view key, std::string_view message)

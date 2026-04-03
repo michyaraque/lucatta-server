@@ -85,7 +85,7 @@
 	<item id="65" name="Red Sword">
 		<attribute key="weaponType" value="sword" />
 		<attribute key="attack" value="15" />
-		<attribute key="denfese" value="9" />
+		<attribute key="defense" value="9" />
 		<attribute key="extradef" value="3" />
 		<attribute key="paperdolloutfit" value="243" />
 	</item>

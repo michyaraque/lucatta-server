@@ -59,6 +59,15 @@ endif ()
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 # Find packages.
+find_package(unofficial-argon2 CONFIG QUIET)
+if (unofficial-argon2_FOUND)
+    set(ARGON2_LIB_TARGET unofficial::argon2::libargon2)
+else ()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(ARGON2 REQUIRED IMPORTED_TARGET libargon2)
+    set(ARGON2_LIB_TARGET PkgConfig::ARGON2)
+endif ()
+
 find_package(OpenSSL 3.0.0 REQUIRED COMPONENTS Crypto)
 find_package(ZLIB REQUIRED)
 

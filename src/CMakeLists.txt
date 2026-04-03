@@ -173,6 +173,7 @@ set(tfs_MAIN ${CMAKE_CURRENT_LIST_DIR}/main.cpp PARENT_SCOPE)
 add_subdirectory(protobuf)
 add_library(tfslib ${tfs_SRC})
 target_link_libraries(tfslib PRIVATE
+	${ARGON2_LIB_TARGET}
 	Boost::iostreams
 	Boost::system
 	Boost::locale

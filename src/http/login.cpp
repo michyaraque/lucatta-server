@@ -171,7 +171,7 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 
 	thread_local auto& db = Database::getInstance();
 	auto result = db.storeQuery(fmt::format(
-	    "SELECT `id`, UNHEX(`password`) AS `password`, `secret`, `premium_ends_at` FROM `accounts` WHERE `email` = {:s}",
+	    "SELECT `id`, `password`, `secret`, `premium_ends_at` FROM `accounts` WHERE `email` = {:s}",
 	    db.escapeString(emailField->get_string())));
 	if (!result) {
 		return make_error_response(
@@ -179,7 +179,7 @@ std::pair<status, json::value> tfs::http::handle_login(const json::object& body,
 	}
 
 	auto password = result->getString("password");
-	if (password != transformToSHA1(passwordField->get_string())) {
+	if (!verifyPassword(password, passwordField->get_string())) {
 		return make_error_response(
 		    {.code = 3, .message = "Account email address or password is not correct."});
 	}
