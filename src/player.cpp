@@ -1081,6 +1081,16 @@ void Player::openSavedContainers()
 		addContainer(it.first - 1, it.second);
 		onSendContainer(it.second);
 	}
+
+	// always ensure the backpack is open on login
+	if (Item* backpackItem = inventory[CONST_SLOT_BACKPACK]) {
+		if (Container* backpackContainer = backpackItem->getContainer()) {
+			if (getContainerID(backpackContainer) == -1) {
+				addContainer(0, backpackContainer);
+				onSendContainer(backpackContainer);
+			}
+		}
+	}
 }
 
 void Player::onUpdateTileItem(const Tile* tile, const Position& pos, const Item* oldItem, const ItemType& oldType,
