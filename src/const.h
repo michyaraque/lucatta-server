@@ -557,7 +557,7 @@ enum item_t : uint16_t
 	ITEM_CRYSTAL_COIN = 2160,
 	ITEM_STORE_COIN = 24774, // in-game store currency
 
-	ITEM_DEPOT = 2594,
+	ITEM_DEPOT = 2002,
 	ITEM_LOCKER = 2589,
 	ITEM_INBOX = 14404,
 	ITEM_MARKET = 14405,

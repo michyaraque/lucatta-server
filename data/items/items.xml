@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <items>
-	<item id="1" name="Backpack">
-		<attribute key="description" value="A standard backpack." />
-		<attribute key="slotType" value="backpack" />
-	</item>
 	<item id="20" name="Firefox">
 		<attribute key="slotType" value="body" />
 		<attribute key="armor" value="1" />
@@ -1016,10 +1012,13 @@
 	<item id="1004" name="Skull Jewel">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
-	<item id="2000" name="Stash">
-		<attribute key="containerSize" value="2000" />
+	<item id="2000" name="Chest">
+		<attribute key="containerSize" value="8" />
 	</item>
 	<item id="2001" name="Anvil" />
+	<item id="2002" name="Stash">
+		<attribute key="containerSize" value="560" />
+	</item>
 	<item id="11482" name="Waypoint" />
 	<item id="11484" name="Cow Portal" />
 	<item id="11485" name="Minotaur Portal" />
