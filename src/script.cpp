@@ -27,6 +27,17 @@ bool Scripts::loadScripts(std::string folderName, bool isLib, bool reload)
 	std::vector<fs::path> v;
 	std::string disable = ("#");
 	for (fs::recursive_directory_iterator it(dir); it != endit; ++it) {
+		if (fs::is_directory(*it)) {
+			size_t found = it->path().filename().string().find(disable);
+			if (found != std::string::npos) {
+				if (getBoolean(ConfigManager::SCRIPTS_CONSOLE_LOGS)) {
+					std::cout << ">> [" << it->path().filename().string() << "] [disabled]" << std::endl;
+				}
+				it.disable_recursion_pending();
+				continue;
+			}
+		}
+
 		auto fn = it->path().parent_path().filename();
 		if (fn == "lib" && !isLib) {
 			continue;
