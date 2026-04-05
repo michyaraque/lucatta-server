@@ -105,9 +105,10 @@ void appendEquipmentVisualData(NetworkMessage& msg, slots_t slot, const Item* it
 	msg.addByte(readItemRarity(item));
 }
 
-void appendPlayerEquipmentSnapshot(NetworkMessage& msg, const Player* otherPlayer)
+void appendPlayerSnapshot(NetworkMessage& msg, const Player* otherPlayer)
 {
 	if (!otherPlayer) {
+		msg.add<uint16_t>(0);
 		msg.addByte(0);
 		return;
 	}
@@ -130,6 +131,7 @@ void appendPlayerEquipmentSnapshot(NetworkMessage& msg, const Player* otherPlaye
 		}
 	}
 
+	msg.add<uint16_t>(otherPlayer->getLevel());
 	msg.addByte(mask);
 	for (size_t index = 0; index < snapshotSlots.size(); ++index) {
 		const Item* item = items[index];
@@ -3560,7 +3562,7 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 	msg.addByte(player->canWalkthroughEx(creature) ? 0x00 : 0x01);
 
 	if (creatureType == CREATURETYPE_PLAYER) {
-		appendPlayerEquipmentSnapshot(msg, otherPlayer);
+		appendPlayerSnapshot(msg, otherPlayer);
 	}
 }
 
