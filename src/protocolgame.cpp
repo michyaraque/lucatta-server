@@ -64,7 +64,8 @@ constexpr int64_t getTimeout(std::size_t slot)
 
 bool hasEquipmentVisualData(slots_t slot)
 {
-	return slot == CONST_SLOT_HEAD || slot == CONST_SLOT_ARMOR || slot == CONST_SLOT_RIGHT || slot == CONST_SLOT_LEFT;
+	return slot == CONST_SLOT_HEAD || slot == CONST_SLOT_ARMOR || slot == CONST_SLOT_RIGHT || slot == CONST_SLOT_LEFT ||
+	       slot == CONST_SLOT_CAPE;
 }
 
 uint8_t readItemRarity(const Item* item)
