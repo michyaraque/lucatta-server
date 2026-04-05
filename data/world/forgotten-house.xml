@@ -1,2 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<houses></houses>
+<houses>
+	<house name="Unnamed House #1" houseid="1" entryx="39" entryy="201" entryz="7" townid="0"></house>
+</houses>
