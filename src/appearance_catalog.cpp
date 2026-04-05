@@ -31,6 +31,15 @@ AppearanceItemGroup getAppearanceItemGroup(const Canary::protobuf::appearances::
 	return AppearanceItemGroup::None;
 }
 
+bool isAppearanceMoveable(const auto& flags)
+{
+	if (flags.unmove()) {
+		return false;
+	}
+
+	return flags.take();
+}
+
 } // namespace
 
 bool AppearanceCatalog::load(const std::string& file, std::string& error)
@@ -91,7 +100,7 @@ bool AppearanceCatalog::load(const std::string& file, std::string& error)
 		item.blockProjectile = flags.unsight();
 		item.blockPathFind = flags.avoid();
 		item.pickupable = flags.take();
-		item.moveable = !flags.unmove();
+		item.moveable = isAppearanceMoveable(flags);
 		item.alwaysOnTop = item.alwaysOnTopOrder != 0;
 		item.canWriteText = flags.has_write() || flags.has_write_once();
 		item.canReadText = item.canWriteText || (flags.has_lenshelp() && flags.lenshelp().id() == 1112);
