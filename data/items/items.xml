@@ -43,7 +43,7 @@
 		<attribute key="supply" value="true" />
 	</item>
 	<item id="37" name="bag">
-		<attribute key="containerSize" value="8" />
+		<attribute key="containerSize" value="35" />
 		<attribute key="slotType" value="backpack" />
 	</item>
 	<item id="38" name="Firefoxpotion">
@@ -1017,6 +1017,7 @@
 	</item>
 	<item id="2001" name="Anvil" />
 	<item id="2002" name="Stash">
+		<attribute key="type" value="depot" />
 		<attribute key="containerSize" value="560" />
 	</item>
 	<item id="11482" name="Waypoint" />
@@ -1040,6 +1041,9 @@
 	<item id="11502" name="Obelisk" />
 	<item id="11503" name="Lever" />
 	<item id="11504" name="Memorial" />
-	<item id="11505" name="Teleport Trigger" />
+	<item id="11505" name="Teleport">
+		<attribute key="type" value="teleport" />
+		<attribute key="effect" value="teleport" />
+	</item>
 	<item id="90018" name="Tree" />
 </items>
