@@ -371,8 +371,7 @@ std::string tfs::http::auth::buildInternalAccountName(Database& db, std::string_
 
 uint16_t tfs::http::auth::getDefaultLookType(PlayerSex_t sex)
 {
-	return 125;
-	//return sex == PLAYERSEX_MALE ? 128 : 136;
+	return sex == PLAYERSEX_MALE ? 125 : 125;
 }
 
 std::optional<std::string> tfs::http::auth::createSession(Database& db, uint32_t accountId, std::string_view ip)
