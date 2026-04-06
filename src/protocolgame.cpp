@@ -2005,7 +2005,35 @@ void ProtocolGame::sendContainer(uint8_t cid, const Container* container, uint16
 	uint32_t containerSize = container->size();
 	msg.add<uint16_t>(containerSize);
 	msg.add<uint16_t>(firstIndex);
-	if (firstIndex < containerSize) {
+
+	if (!container->hasPagination() && firstIndex == 0) {
+		uint8_t itemsToSend = std::min<uint32_t>(containerSize, std::numeric_limits<uint8_t>::max());
+		msg.addByte(itemsToSend);
+
+		const uint16_t visibleSlots = std::min<uint32_t>(container->capacity(), std::numeric_limits<uint16_t>::max());
+		const uint16_t bitmapSize = static_cast<uint16_t>((visibleSlots + 7) / 8);
+		std::vector<uint8_t> bitmap(bitmapSize, 0);
+		std::vector<const Item*> orderedItems;
+		orderedItems.reserve(itemsToSend);
+
+		for (uint16_t slot = 0; slot < visibleSlots; ++slot) {
+			if (const Item* slotItem = container->getItemBySlot(slot)) {
+				if (orderedItems.size() >= itemsToSend) {
+					break;
+				}
+				bitmap[slot / 8] |= static_cast<uint8_t>(1U << (slot % 8));
+				orderedItems.push_back(slotItem);
+			}
+		}
+
+		for (uint8_t byte : bitmap) {
+			msg.addByte(byte);
+		}
+
+		for (const Item* slotItem : orderedItems) {
+			msg.addItem(slotItem);
+		}
+	} else if (firstIndex < containerSize) {
 		uint8_t itemsToSend = std::min<uint32_t>(std::min<uint32_t>(container->capacity(), containerSize - firstIndex),
 		                                         std::numeric_limits<uint8_t>::max());
 
@@ -2036,6 +2064,7 @@ void ProtocolGame::sendEmptyContainer(uint8_t cid)
 	msg.addByte(0x00);
 	msg.add<uint16_t>(0);
 	msg.add<uint16_t>(0);
+	msg.addByte(0x00);
 	msg.addByte(0x00);
 	writeToOutputBuffer(msg);
 }

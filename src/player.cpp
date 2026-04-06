@@ -975,7 +975,13 @@ void Player::sendAddContainerItem(const Container* container, const Item* item)
 		}
 
 		uint16_t slot = openContainer.index;
-		if (container->getID() == ITEM_BROWSEFIELD) {
+		if (!container->hasPagination() && openContainer.index == 0) {
+			const int32_t itemSlot = container->getSlotByItem(item);
+			if (itemSlot < 0) {
+				continue;
+			}
+			slot = static_cast<uint16_t>(itemSlot);
+		} else if (container->getID() == ITEM_BROWSEFIELD) {
 			uint16_t containerSize = container->size() - 1;
 			uint16_t pageEnd = openContainer.index + container->capacity() - 1;
 			if (containerSize > pageEnd) {
@@ -1028,6 +1034,11 @@ void Player::sendRemoveContainerItem(const Container* container, uint16_t slot)
 	for (auto& it : openContainers) {
 		OpenContainer& openContainer = it.second;
 		if (openContainer.container != container) {
+			continue;
+		}
+
+		if (!container->hasPagination() && openContainer.index == 0) {
+			client->sendRemoveContainerItem(it.first, slot, nullptr);
 			continue;
 		}
 

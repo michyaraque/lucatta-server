@@ -289,6 +289,10 @@ Thing* Game::internalGetThing(Player* player, const Position& pos, int32_t index
 		}
 
 		uint8_t slot = pos.z;
+		if (!parentContainer->hasPagination() && player->getContainerIndex(fromCid) == 0) {
+			return parentContainer->getItemBySlot(slot);
+		}
+
 		return parentContainer->getItemByIndex(player->getContainerIndex(fromCid) + slot);
 	} else if (pos.y == 0 && pos.z == 0) {
 		const ItemType& it = Item::items.getItemTypeByAppearanceId(spriteId);

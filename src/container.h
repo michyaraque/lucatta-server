@@ -73,7 +73,9 @@ public:
 
 	void addItem(Item* item);
 	Item* getItemByIndex(size_t index) const;
+	Item* getItemBySlot(size_t slot) const;
 	bool isHoldingItem(const Item* item) const;
+	int32_t getSlotByItem(const Thing* thing) const;
 
 	uint32_t getItemHoldingCount() const;
 	uint32_t getWeight() const override final;
@@ -128,6 +130,12 @@ private:
 
 	bool unlocked;
 	bool pagination;
+
+	int32_t getStoredSlot(const Item* item) const;
+	void setStoredSlot(Item* item, int32_t slot);
+	uint32_t getFirstFreeSlot() const;
+	void insertItemBySlot(Item* item);
+	void relocateItemToSlot(Item* item, uint32_t slot, bool notify = false);
 
 	void onAddContainerItem(Item* item);
 	void onUpdateContainerItem(uint32_t index, Item* oldItem, Item* newItem);

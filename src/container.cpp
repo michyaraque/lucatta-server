@@ -15,6 +15,10 @@
 
 extern Game g_game;
 
+namespace {
+constexpr std::string_view kContainerSlotAttr = "container_slot";
+}
+
 Container::Container(uint16_t type) : Container(type, items[type].maxItems) {}
 
 Container::Container(uint16_t type, uint16_t size, bool unlocked /*= true*/, bool pagination /*= false*/) :
@@ -94,8 +98,14 @@ void Container::addItem(Item* item)
 		return;
 	}
 
-	itemlist.push_back(item);
+	int32_t storedSlot = getStoredSlot(item);
+	if (storedSlot < 0 || storedSlot >= static_cast<int32_t>(capacity()) || getItemBySlot(storedSlot)) {
+		storedSlot = static_cast<int32_t>(getFirstFreeSlot());
+	}
+
+	setStoredSlot(item, storedSlot);
 	item->setParent(this);
+	insertItemBySlot(item);
 }
 
 Attr_ReadValue Container::readAttr(AttrTypes_t attr, PropStream& propStream)
@@ -166,6 +176,16 @@ Item* Container::getItemByIndex(size_t index) const
 	return itemlist[index];
 }
 
+Item* Container::getItemBySlot(size_t slot) const
+{
+	for (Item* item : itemlist) {
+		if (getStoredSlot(item) == static_cast<int32_t>(slot)) {
+			return item;
+		}
+	}
+	return nullptr;
+}
+
 uint32_t Container::getItemHoldingCount() const
 {
 	uint32_t counter = 0;
@@ -183,6 +203,100 @@ bool Container::isHoldingItem(const Item* item) const
 		}
 	}
 	return false;
+}
+
+int32_t Container::getSlotByItem(const Thing* thing) const
+{
+	const Item* item = thing ? thing->getItem() : nullptr;
+	if (!item) {
+		return -1;
+	}
+
+	return getStoredSlot(item);
+}
+
+int32_t Container::getStoredSlot(const Item* item) const
+{
+	if (!item) {
+		return -1;
+	}
+
+	const auto* attr = item->getCustomAttribute(std::string(kContainerSlotAttr));
+	if (!attr) {
+		return -1;
+	}
+
+	if (const auto* value = boost::get<int64_t>(&attr->value)) {
+		return static_cast<int32_t>(*value);
+	}
+
+	if (const auto* value = boost::get<double>(&attr->value)) {
+		return static_cast<int32_t>(std::lround(*value));
+	}
+
+	if (const auto* value = boost::get<bool>(&attr->value)) {
+		return *value ? 1 : 0;
+	}
+
+	return -1;
+}
+
+void Container::setStoredSlot(Item* item, int32_t slot)
+{
+	if (!item) {
+		return;
+	}
+
+	item->setCustomAttribute(std::string(kContainerSlotAttr), static_cast<int64_t>(slot));
+}
+
+uint32_t Container::getFirstFreeSlot() const
+{
+	const uint32_t slotCapacity = capacity();
+	for (uint32_t slot = 0; slot < slotCapacity; ++slot) {
+		if (!getItemBySlot(slot)) {
+			return slot;
+		}
+	}
+
+	return slotCapacity;
+}
+
+void Container::insertItemBySlot(Item* item)
+{
+	if (!item) {
+		return;
+	}
+
+	const int32_t itemSlot = getStoredSlot(item);
+	auto it = itemlist.begin();
+	for (; it != itemlist.end(); ++it) {
+		if (getStoredSlot(*it) > itemSlot) {
+			break;
+		}
+	}
+
+	itemlist.insert(it, item);
+}
+
+void Container::relocateItemToSlot(Item* item, uint32_t slot, bool notify)
+{
+	if (!item) {
+		return;
+	}
+
+	auto it = std::find(itemlist.begin(), itemlist.end(), item);
+	if (it == itemlist.end()) {
+		return;
+	}
+
+	itemlist.erase(it);
+	setStoredSlot(item, static_cast<int32_t>(slot));
+	insertItemBySlot(item);
+
+	if (notify && hasParent()) {
+		onAddContainerItem(item);
+	}
 }
 
 void Container::onAddContainerItem(Item* item)
@@ -264,6 +378,19 @@ ReturnValue Container::queryAdd(int32_t index, const Thing& thing, uint32_t coun
 
 	if (item == this) {
 		return RETURNVALUE_THISISIMPOSSIBLE;
+	}
+
+	if (index != INDEX_WHEREEVER) {
+		const Item* existingItem = getItemBySlot(index);
+		if (existingItem && existingItem != item) {
+			if (item->getParent() != this) {
+				return RETURNVALUE_CONTAINERNOTENOUGHROOM;
+			}
+
+			if (!item->isStackable() || !existingItem->equals(item) || existingItem->getItemCount() >= ITEM_STACK_SIZE) {
+				return RETURNVALUE_NOERROR;
+			}
+		}
 	}
 
 	// quiver: allow ammo only
@@ -352,17 +479,17 @@ ReturnValue Container::queryMaxCount(int32_t index, const Thing& thing, uint32_t
 
 		if (index == INDEX_WHEREEVER) {
 			// Iterate through every item and check how much free stackable slots there is.
-			uint32_t slotIndex = 0;
 			for (Item* containerItem : itemlist) {
 				if (containerItem != item && containerItem->equals(item) &&
 				    containerItem->getItemCount() < ITEM_STACK_SIZE) {
-					if (queryAdd(slotIndex++, *item, count, flags) == RETURNVALUE_NOERROR) {
+					const int32_t slotIndex = getStoredSlot(containerItem);
+					if (slotIndex >= 0 && queryAdd(slotIndex, *item, count, flags) == RETURNVALUE_NOERROR) {
 						n += ITEM_STACK_SIZE - containerItem->getItemCount();
 					}
 				}
 			}
 		} else {
-			const Item* destItem = getItemByIndex(index);
+			const Item* destItem = getItemBySlot(index);
 			if (item->equals(destItem) && destItem->getItemCount() < ITEM_STACK_SIZE) {
 				if (queryAdd(index, *item, count, flags) == RETURNVALUE_NOERROR) {
 					n = ITEM_STACK_SIZE - destItem->getItemCount();
@@ -457,7 +584,7 @@ Thing* Container::queryDestination(int32_t& index, const Thing& thing, Item** de
 	}
 
 	if (index != INDEX_WHEREEVER) {
-		if (const auto itemFromIndex = getItemByIndex(index)) {
+		if (const auto itemFromIndex = getItemBySlot(index)) {
 			if (const auto receiver = itemFromIndex->getReceiver()) {
 				index = INDEX_WHEREEVER;
 				*destItem = nullptr;
@@ -499,8 +626,24 @@ void Container::addThing(int32_t index, Thing* thing)
 		return /*RETURNVALUE_NOTPOSSIBLE*/;
 	}
 
+	int32_t targetSlot = index;
+	if (targetSlot == INDEX_WHEREEVER || targetSlot < 0 || targetSlot >= static_cast<int32_t>(capacity())) {
+		targetSlot = static_cast<int32_t>(getFirstFreeSlot());
+	} else if (Item* replacedItem = getItemBySlot(targetSlot); replacedItem && replacedItem != item) {
+		int32_t replacementSlot = getStoredSlot(item);
+		if (replacementSlot == targetSlot || replacementSlot < 0 || replacementSlot >= static_cast<int32_t>(capacity()) ||
+		    getItemBySlot(replacementSlot)) {
+			replacementSlot = static_cast<int32_t>(getFirstFreeSlot());
+		}
+
+		if (replacementSlot != targetSlot && replacementSlot < static_cast<int32_t>(capacity())) {
+			relocateItemToSlot(replacedItem, static_cast<uint32_t>(replacementSlot), hasParent());
+		}
+	}
+
+	setStoredSlot(item, targetSlot);
 	item->setParent(this);
-	itemlist.push_front(item);
+	insertItemBySlot(item);
 	updateItemWeight(item->getWeight());
 	ammoCount += item->getItemCount();
 
@@ -544,7 +687,7 @@ void Container::updateThing(Thing* thing, uint16_t itemId, uint32_t count)
 
 	// send change to client
 	if (hasParent()) {
-		onUpdateContainerItem(index, item, item);
+		onUpdateContainerItem(getStoredSlot(item), item, item);
 	}
 }
 
@@ -566,6 +709,7 @@ void Container::replaceThing(uint32_t index, Thing* thing)
 
 	ammoCount -= replacedItem->getItemCount();
 
+	setStoredSlot(item, getStoredSlot(replacedItem));
 	itemlist[index] = item;
 	item->setParent(this);
 	updateItemWeight(-static_cast<int32_t>(replacedItem->getWeight()) + item->getWeight());
@@ -574,7 +718,7 @@ void Container::replaceThing(uint32_t index, Thing* thing)
 
 	// send change to client
 	if (hasParent()) {
-		onUpdateContainerItem(index, replacedItem, item);
+		onUpdateContainerItem(getStoredSlot(item), replacedItem, item);
 	}
 
 	replacedItem->setParent(nullptr);
@@ -596,6 +740,8 @@ void Container::removeThing(Thing* thing, uint32_t count)
 		return /*RETURNVALUE_NOTPOSSIBLE*/;
 	}
 
+	const int32_t slot = getStoredSlot(item);
+
 	if (item->isStackable() && count != item->getItemCount()) {
 		uint8_t newCount = static_cast<uint8_t>(std::max<int32_t>(0, item->getItemCount() - count));
 		const int32_t oldWeight = item->getWeight();
@@ -607,7 +753,7 @@ void Container::removeThing(Thing* thing, uint32_t count)
 
 		// send change to client
 		if (hasParent()) {
-			onUpdateContainerItem(index, item, item);
+			onUpdateContainerItem(slot, item, item);
 		}
 	} else {
 		updateItemWeight(-static_cast<int32_t>(item->getWeight()));
@@ -616,7 +762,7 @@ void Container::removeThing(Thing* thing, uint32_t count)
 
 		// send change to client
 		if (hasParent()) {
-			onRemoveContainerItem(index, item);
+			onRemoveContainerItem(slot, item);
 		}
 
 		item->setParent(nullptr);
@@ -724,8 +870,14 @@ void Container::internalAddThing(uint32_t, Thing* thing)
 		return;
 	}
 
+	int32_t storedSlot = getStoredSlot(item);
+	if (storedSlot < 0 || storedSlot >= static_cast<int32_t>(capacity()) || getItemBySlot(storedSlot)) {
+		storedSlot = static_cast<int32_t>(getFirstFreeSlot());
+	}
+
+	setStoredSlot(item, storedSlot);
 	item->setParent(this);
-	itemlist.push_front(item);
+	insertItemBySlot(item);
 	updateItemWeight(item->getWeight());
 	ammoCount += item->getItemCount();
 }
