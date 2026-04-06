@@ -7,6 +7,7 @@
 #include "../../tools.h"
 #include "../../vocation.h"
 #include "../login.h"
+#include "../register.h"
 
 #include <boost/test/unit_test.hpp>
 
@@ -218,6 +219,59 @@ BOOST_FIXTURE_TEST_CASE(test_login_success_no_players, LoginFixture)
 	BOOST_TEST(status == status::ok);
 	auto& characters = body.at("playdata").at("characters").as_array();
 	BOOST_TEST(characters.size() == 0);
+}
+
+BOOST_FIXTURE_TEST_CASE(test_register_success, LoginFixture)
+{
+	auto&& [status, body] =
+	    tfs::http::handle_register({{"type", "register"}, {"email", "new@example.com"}, {"password", "abcd"}}, ip);
+
+	BOOST_TEST(status == status::ok);
+
+	auto result = db.storeQuery("SELECT `id`, `email` FROM `accounts` WHERE `email` = 'new@example.com'");
+	BOOST_TEST(result, "Registered account not found.");
+	BOOST_TEST(result->getString("email") == "new@example.com");
+
+	auto& session = body.at("session");
+	BOOST_TEST(!session.at("sessionkey").as_string().empty());
+
+	auto& characters = body.at("playdata").at("characters").as_array();
+	BOOST_TEST(characters.empty());
+}
+
+BOOST_FIXTURE_TEST_CASE(test_new_character_success, LoginFixture)
+{
+	BOOST_TEST(db.executeQuery(fmt::format(
+	    "INSERT INTO `accounts` (`name`, `email`, `password`) VALUES ('seed', 'seed@example.com', {:s})",
+	    db.escapeString(hashPassword("bar")))));
+
+	auto&& [loginStatus, loginBody] =
+	    tfs::http::handle_login({{"type", "login"}, {"email", "seed@example.com"}, {"password", "bar"}}, ip);
+
+	BOOST_TEST(loginStatus == status::ok);
+
+	auto sessionKey = std::string(loginBody.at("session").at("sessionkey").as_string());
+	auto&& [createStatus, createBody] = tfs::http::handle_new_character(
+	    {
+	        {"type", "new_character"},
+	        {"sessionkey", sessionKey},
+	        {"characterName", "New Hero"},
+	        {"sex", 1},
+	        {"vocationId", 4},
+	    },
+	    ip);
+
+	BOOST_TEST(createStatus == status::ok);
+
+	auto result = db.storeQuery("SELECT `name`, `sex`, `vocation` FROM `players` WHERE `name` = 'New Hero'");
+	BOOST_TEST(result, "Created character not found.");
+	BOOST_TEST(result->getString("name") == "New Hero");
+	BOOST_TEST(result->getNumber<uint16_t>("sex") == 1);
+	BOOST_TEST(result->getNumber<uint16_t>("vocation") == 4);
+
+	auto& characters = createBody.at("playdata").at("characters").as_array();
+	BOOST_TEST(characters.size() == 1);
+	BOOST_TEST(characters[0].at("name").as_string() == "New Hero");
 }
 
 BOOST_FIXTURE_TEST_CASE(test_login_success, LoginFixture)

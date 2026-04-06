@@ -1,12 +1,17 @@
-local firstItems = {2050, 2382}
+
+local ITEM_BAG = 37
+local WOODEN_SHIELD = 143
+local LEATHER_BELT = 85
+local LEATHER_ARMOR = 22
+local SWORD = 61
 
 function onLogin(player)
 	if player:getLastLoginSaved() == 0 then
-		for i = 1, #firstItems do
-			player:addItem(firstItems[i], 1)
-		end
-		player:addItem(player:getSex() == 0 and 2651 or 2650, 1)
-		player:addItem(ITEM_BAG, 1):addItem(2674, 1)
+		local bag = player:addItem(ITEM_BAG, 1)
+		bag:addItem(WOODEN_SHIELD, 1)
+		bag:addItem(LEATHER_BELT, 1)
+		bag:addItem(LEATHER_ARMOR, 1)
+		bag:addItem(SWORD, 1)
 	end
 	return true
 end
