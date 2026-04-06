@@ -113,11 +113,12 @@ void appendPlayerSnapshot(NetworkMessage& msg, const Player* otherPlayer)
 		return;
 	}
 
-	constexpr std::array<std::pair<slots_t, uint8_t>, 4> snapshotSlots = {{
+	constexpr std::array<std::pair<slots_t, uint8_t>, 5> snapshotSlots = {{
 	    {CONST_SLOT_HEAD, 1 << 0},
 	    {CONST_SLOT_ARMOR, 1 << 1},
-	    {CONST_SLOT_RIGHT, 1 << 2},
-	    {CONST_SLOT_LEFT, 1 << 3},
+	    {CONST_SLOT_LEFT, 1 << 2},
+	    {CONST_SLOT_RIGHT, 1 << 3},
+	    {CONST_SLOT_CAPE, 1 << 4},
 	}};
 
 	std::array<const Item*, snapshotSlots.size()> items = {};
