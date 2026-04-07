@@ -184,6 +184,6 @@ pip-log.txt
 #############
 ## TFS / OT
 #############
-config.lua
+/config.lua
 
 db/*

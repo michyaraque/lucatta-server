@@ -997,19 +997,19 @@
 		<attribute key="weaponType" value="sword" />
 		<attribute key="paperdolloutfit" value="229" />
 	</item>
-	<item id="1000" name="Skull Jewel">
+	<item id="1000" name="Common Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
-	<item id="1001" name="Skull Jewel">
+	<item id="1001" name="Uncommon Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
-	<item id="1002" name="Skull Jewel">
+	<item id="1002" name="Rare Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
-	<item id="1003" name="Skull Jewel">
+	<item id="1003" name="Epic Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
-	<item id="1004" name="Skull Jewel">
+	<item id="1004" name="Legendary Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
 	<item id="2000" name="Chest">

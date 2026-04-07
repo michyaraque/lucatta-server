@@ -754,15 +754,17 @@ function us_CheckCorpse(monsterType, corpsePosition, killerId)
                     item:setItemLevel(math.min(US_CONFIG.MAX_ITEM_LEVEL, math.random(math.max(1, iLvl - 5), iLvl)), true)
                 end
                 if itemType:isUpgradable() then
-                    if math.random(US_CONFIG.UNIDENTIFIED_DROP_CHANCE) == 1 then
+                    if not US_CONFIG.ALWAYS_IDENTIFIED and math.random(US_CONFIG.UNIDENTIFIED_DROP_CHANCE) == 1 then
                         item:unidentify()
                     else
                         item:rollRarity()
-                        item:generateRandomSockets()
-
-                        -- Better roll for item level (less punishment, small bonus possibilities)
                         local levelVar = math.random(math.max(1, iLvl - 2), iLvl + 2)
                         item:setItemLevel(math.min(US_CONFIG.MAX_ITEM_LEVEL, levelVar), true)
+                        item:generateRandomSockets()
+
+                        if US_CONFIG.ALWAYS_IDENTIFIED and item:getMaxSockets() > 0 then
+                            item:rollAttribute(killer, itemType, itemType:getWeaponType(), true)
+                        end
 
                         -- Try to apply item-specific unique name
                         item:tryApplyUnique(corpsePosition)

@@ -135,10 +135,13 @@ function Item:buildTooltip()
     item_data.itemLevel = self:getItemLevel()
   end
 
-  if itemType:getRequiredLevel() >= 1 then
-    --if not self:isLimitless() then
-    item_data.reqLvl = itemType:getRequiredLevel()
-    --end
+  local requiredLevel = itemType:getRequiredLevel()
+  if US_CONFIG and US_CONFIG.REQUIRE_LEVEL and (itemType:isUpgradable() or itemType:canHaveItemLevel()) and not self:isLimitless() then
+    requiredLevel = math.max(requiredLevel, self:getItemLevel())
+  end
+
+  if requiredLevel >= 1 then
+    item_data.reqLvl = requiredLevel
   end
 
   if itemType:getVocationString():len() > 0 then
