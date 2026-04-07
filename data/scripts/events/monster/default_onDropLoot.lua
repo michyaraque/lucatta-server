@@ -23,6 +23,10 @@ event.onDropLoot = function(self, corpse)
 		end
 	end
 
+	if tryDropJewelSkull then
+		tryDropJewelSkull(mType, corpse, player)
+	end
+
 	if player then
 		local text
 		if doCreateLoot then

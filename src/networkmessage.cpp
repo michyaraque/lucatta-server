@@ -10,6 +10,36 @@
 
 #include <boost/locale.hpp>
 
+namespace {
+
+uint8_t readItemRarity(const Item* item)
+{
+	if (!item) {
+		return 1;
+	}
+
+	const auto* rarityAttribute = item->getCustomAttribute("rarity");
+	if (!rarityAttribute) {
+		return 1;
+	}
+
+	if (const auto* value = boost::get<int64_t>(&rarityAttribute->value)) {
+		return static_cast<uint8_t>(std::clamp<int64_t>(*value, 0, UINT8_MAX));
+	}
+
+	if (const auto* value = boost::get<double>(&rarityAttribute->value)) {
+		return static_cast<uint8_t>(std::clamp<int32_t>(static_cast<int32_t>(std::lround(*value)), 0, UINT8_MAX));
+	}
+
+	if (const auto* value = boost::get<bool>(&rarityAttribute->value)) {
+		return *value ? 1 : 0;
+	}
+
+	return 1;
+}
+
+}
+
 std::string NetworkMessage::getString(uint16_t stringLen /* = 0*/)
 {
 	if (stringLen == 0) {
@@ -116,6 +146,8 @@ void NetworkMessage::addItem(uint16_t id, uint8_t count)
 		addByte(2);       // direction
 		addByte(0x01);    // is visible (bool)
 	}
+
+	addByte(0);
 }
 
 void NetworkMessage::addItem(const Item* item)
@@ -186,8 +218,11 @@ void NetworkMessage::addItem(const Item* item)
 
 		addByte(podium->getDirection());
 		addByte(podium->hasFlag(PODIUM_SHOW_PLATFORM) ? 0x01 : 0x00);
+		addByte(readItemRarity(item));
 		return;
 	}
+
+	addByte(readItemRarity(item));
 }
 
 void NetworkMessage::addItemId(uint16_t itemId) { add<uint16_t>(Item::items[itemId].id); }

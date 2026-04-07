@@ -92,11 +92,16 @@ function ExtendedEvent.onExtendedOpcode(player, opcode, buffer)
     end
 
     if #data == 4 then
-      local pos = Position(data[1], data[2], data[3], data[4])
+      local pos = Position(
+        tonumber(data[1]) or 0,
+        tonumber(data[2]) or 0,
+        tonumber(data[3]) or 0,
+        tonumber(data[4]) or 0
+      )
       local item = player:getItem(pos)
       player:sendItemTooltip(item)
     elseif #data == 1 then
-      local item = Game.getRealUniqueItem(data[1])
+      local item = Item(tonumber(data[1]) or 0)
       if item then
         player:sendItemTooltip(item)
       end
@@ -114,12 +119,12 @@ function Player:sendItemTooltip(item)
 end
 
 function Item:buildTooltip()
-  local uid = self:getRealUID()
+  local uid = self:getUniqueId()
   local itemType = self:getType()
   local item_data = {
     uid = uid,
     itemName = itemType:getName(),
-    clientId = itemType:getClientId()
+    itemId = itemType:getId()
   }
 
   if itemType:getDescription():len() > 0 then
@@ -290,9 +295,9 @@ function Item:buildTooltip()
       for i = 1, self:getMaxSockets() do
         local skullId = self:getSocketedSkull(i)
         if skullId then
-          local skullClientId = ItemType(skullId):getClientId()
+          local skullItemId = ItemType(skullId):getId()
           -- Use string key to avoid sparse array issues in JSON
-          item_data.socketedSkulls[tostring(i)] = skullClientId
+          item_data.socketedSkulls[tostring(i)] = skullItemId
           local bonuses = self:getSocketedSkullBonuses(i)
           if bonuses then
             for _, bonus in ipairs(bonuses) do
@@ -421,7 +426,7 @@ function ItemType:buildTooltip(count)
   end
 
   local item_data = {
-    clientId = self:getClientId(),
+    itemId = self:getId(),
     count = count,
     itemName = self:getName()
   }

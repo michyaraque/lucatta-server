@@ -675,6 +675,7 @@ private:
 
 	static int luaPlayerGetItemCount(lua_State* L);
 	static int luaPlayerGetItemById(lua_State* L);
+	static int luaPlayerGetItem(lua_State* L);
 
 	static int luaPlayerGetVocation(lua_State* L);
 	static int luaPlayerSetVocation(lua_State* L);
@@ -1035,6 +1036,18 @@ private:
 	static int luaItemTypeHasSubType(lua_State* L);
 
 	static int luaItemTypeIsStoreItem(lua_State* L);
+
+	// Tooltip
+	static int luaItemTypeGetSpecialSkill(lua_State* L);
+	static int luaItemTypeGetAbsorbPercent(lua_State* L);
+	static int luaItemTypeGetSkill(lua_State* L);
+	static int luaItemTypeGetSpeed(lua_State* L);
+	static int luaItemTypeGetStat(lua_State* L);
+	static int luaItemTypeGetStatPercent(lua_State* L);
+	static int luaItemTypeGetHealthGain(lua_State* L);
+	static int luaItemTypeGetHealthTicks(lua_State* L);
+	static int luaItemTypeGetManaGain(lua_State* L);
+	static int luaItemTypeGetManaTicks(lua_State* L);
 
 	// Combat
 	static int luaCombatCreate(lua_State* L);

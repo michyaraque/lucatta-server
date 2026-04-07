@@ -71,12 +71,12 @@ bool hasEquipmentVisualData(slots_t slot)
 uint8_t readItemRarity(const Item* item)
 {
 	if (!item) {
-		return 0;
+		return 1;
 	}
 
 	const auto* rarityAttribute = item->getCustomAttribute("rarity");
 	if (!rarityAttribute) {
-		return 0;
+		return 1;
 	}
 
 	if (const auto* value = boost::get<int64_t>(&rarityAttribute->value)) {
@@ -91,7 +91,7 @@ uint8_t readItemRarity(const Item* item)
 		return *value ? 1 : 0;
 	}
 
-	return 0;
+	return 1;
 }
 
 void appendEquipmentVisualData(NetworkMessage& msg, slots_t slot, const Item* item)

@@ -2,7 +2,7 @@ JEWEL_SKULL_CONFIG = {
     -- dropChance: 1 en X (ej: 100 = 1/100 = 1% de probabilidad)
     SKULLS = {
         [1] = {
-            id = 1678,
+            id = 1000,
             name = "Common",
             minMonsterLevel = 1,
             maxMonsterLevel = 10,
@@ -12,7 +12,7 @@ JEWEL_SKULL_CONFIG = {
             valueMultiplier = 0.25
         },
         [2] = {
-            id = 1679,
+            id = 1001,
             name = "Uncommon",
             minMonsterLevel = 25,
             dropChance = 125,        -- 1/125 = 0.8%
@@ -21,7 +21,7 @@ JEWEL_SKULL_CONFIG = {
             valueMultiplier = 0.5
         },
         [3] = {
-            id = 1680,
+            id = 1002,
             name = "Rare",
             minMonsterLevel = 50,
             dropChance = 200,        -- 1/200 = 0.5%
@@ -30,7 +30,7 @@ JEWEL_SKULL_CONFIG = {
             valueMultiplier = 0.75
         },
         [4] = {
-            id = 1681,
+            id = 1003,
             name = "Epic",
             minMonsterLevel = 70,
             dropChance = 400,        -- 1/400 = 0.25%
@@ -39,7 +39,7 @@ JEWEL_SKULL_CONFIG = {
             valueMultiplier = 1
         },
         [5] = {
-            id = 1682,
+            id = 1004,
             name = "Legendary",
             minMonsterLevel = 100,
             dropChance = 100,       -- 1/1000 = 0.1%
@@ -64,7 +64,7 @@ JEWEL_SKULL_ENCHANTMENTS = nil
 function initJewelSkullEnchantments()
     if JEWEL_SKULL_ENCHANTMENTS then return end
     if not US_ENCHANTMENTS then return end
-    
+
     JEWEL_SKULL_ENCHANTMENTS = {}
     for i = 1, #US_ENCHANTMENTS do
         local enchant = US_ENCHANTMENTS[i]
