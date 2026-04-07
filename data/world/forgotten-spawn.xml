@@ -2841,7 +2841,7 @@
 	<spawn centerx="43" centery="319" centerz="7" radius="0">
 		<monster name="Sea Snake" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
-	<spawn centerx="32" centery="201" centerz="7" radius="0">
+	<spawn centerx="34" centery="201" centerz="7" radius="0">
 		<monster name="Villager" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 </spawns>

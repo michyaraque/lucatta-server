@@ -8,10 +8,11 @@ monster.experience = 4
 monster.outfit = {
   lookType = 29,
 }
+monster.corpse = 37
 monster.health = 23
 monster.maxHealth = 23
 monster.race = "blood"
-monster.speed = 110
+monster.speed = 150
 monster.runHealth = 5
 monster.changeTarget = {
   interval = 4000,
@@ -39,7 +40,7 @@ monster.attacks = {
     range = 1,
     minDamage = -3,
     maxDamage = -1,
-    effect = 164
+    effect = 8
   },
 }
 monster.defenses = {

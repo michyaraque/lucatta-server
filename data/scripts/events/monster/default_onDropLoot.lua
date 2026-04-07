@@ -34,6 +34,7 @@ event.onDropLoot = function(self, corpse)
 		if party then
 			party:broadcastPartyLoot(text)
 		else
+			print(text)
 			player:sendTextMessage(MESSAGE_LOOT, text)
 		end
 	end
