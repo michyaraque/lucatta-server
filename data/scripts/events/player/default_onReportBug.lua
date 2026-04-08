@@ -1,6 +1,13 @@
 local event = Event()
 
-event.onReportBug = function(self, message, position)
+local categoryNames = {
+	[0] = "map",
+	[1] = "typo",
+	[2] = "technical",
+	[3] = "other",
+}
+
+event.onReportBug = function(self, message, position, category)
 	if self:getAccountType() == ACCOUNT_TYPE_NORMAL then
 		return false
 	end
@@ -16,6 +23,7 @@ event.onReportBug = function(self, message, position)
 	io.output(file)
 	io.write("------------------------------\n")
 	io.write("Name: " .. name)
+	io.write(" [Category: " .. (categoryNames[category] or tostring(category)) .. "]")
 	if position ~= nil then
 		io.write(" [Map position: " .. position.x .. ", " .. position.y .. ", " .. position.z .. "]")
 	end

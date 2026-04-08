@@ -14,7 +14,11 @@ function handler.onReceive(player, msg)
 		position = msg:getPosition()
 	end
 
-	player:onReportBug(message, position)
+	if hasEvent.onReportBug then
+		return Event.onReportBug(player, message, position, category)
+	end
+
+	return true
 end
 
 handler:register()
