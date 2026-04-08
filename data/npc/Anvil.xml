@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<npc name="Anvil" script="anvil.lua" walkinterval="2000" floorchange="0">
-	<health now="100" max="100" />
-	<look type="72" head="0" body="0" legs="0" feet="0" addons="0" />
-	<parameters>
-		<parameter key="message_greet" value="Drop an item in the left slot and choose a middle slot for your upgrade scroll." />
-	</parameters>
-</npc>

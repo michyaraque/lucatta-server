@@ -26,7 +26,6 @@ US_CONFIG = {
     ITEM_VOID_CRYSTAL = 9970, -- Void Crystal item id
     ITEM_SCROLL_IDENTIFY = 7759, -- Scrol of Identification item id
     ITEM_UPGRADE_CATALYST = 6500, -- Upgrade Catalyst item id
-    CRYSTAL_EXTRACTOR = 26391, -- Crystal Extractor item id
     CRYSTAL_FOSSIL = 2160, -- Crystal Fossil item id
     --
     IDENTIFY_UPGRADE_LEVEL = false, -- if true, roll random upgrade level when identifing an item
@@ -212,83 +211,6 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
     },
     [4] = {
-        name = "Melee Skills",
-        combatType = US_TYPES.CONDITION,
-        condition = CONDITION_ATTRIBUTES,
-        param = CONDITION_PARAM_SKILL_MELEE,
-        VALUES_PER_LEVEL = 0.2,
-        format = function(value)
-            return string.format("+%s Melee Skills", value)
-        end,
-        itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
-    },
-    [5] = {
-        name = "Fist Fighting",
-        combatType = US_TYPES.CONDITION,
-        condition = CONDITION_ATTRIBUTES,
-        param = CONDITION_PARAM_SKILL_FIST,
-        VALUES_PER_LEVEL = 0.2,
-        format = function(value)
-            return string.format("+%s Fist Fighting", value)
-        end,
-        itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
-    },
-    [6] = {
-        name = "Sword Fighting",
-        combatType = US_TYPES.CONDITION,
-        condition = CONDITION_ATTRIBUTES,
-        param = CONDITION_PARAM_SKILL_SWORD,
-        VALUES_PER_LEVEL = 0.2,
-        format = function(value)
-            return string.format("+%s Sword Fighting", value)
-        end,
-        itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
-    },
-    [7] = {
-        name = "Axe Fighting",
-        combatType = US_TYPES.CONDITION,
-        condition = CONDITION_ATTRIBUTES,
-        param = CONDITION_PARAM_SKILL_AXE,
-        VALUES_PER_LEVEL = 0.2,
-        format = function(value)
-            return string.format("+%s Axe Fighting", value)
-        end,
-        itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
-    },
-    [8] = {
-        name = "Club Fighting",
-        combatType = US_TYPES.CONDITION,
-        condition = CONDITION_ATTRIBUTES,
-        param = CONDITION_PARAM_SKILL_CLUB,
-        VALUES_PER_LEVEL = 0.2,
-        format = function(value)
-            return "+" .. value .. " Club Fighting"
-        end,
-        itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
-    },
-    [9] = {
-        name = "Distance Fighting",
-        combatType = US_TYPES.CONDITION,
-        condition = CONDITION_ATTRIBUTES,
-        param = CONDITION_PARAM_SKILL_DISTANCE,
-        VALUES_PER_LEVEL = 0.2,
-        format = function(value)
-            return "+" .. value .. " Distance Fighting"
-        end,
-        itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
-    },
-    [10] = {
-        name = "Shielding",
-        combatType = US_TYPES.CONDITION,
-        condition = CONDITION_ATTRIBUTES,
-        param = CONDITION_PARAM_SKILL_SHIELD,
-        VALUES_PER_LEVEL = 0.2,
-        format = function(value)
-            return "+" .. value .. " Shielding"
-        end,
-        itemType = US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
-    },
-    [11] = {
         name = "Mana Shield",
         minLevel = 50,
         combatType = US_TYPES.CONDITION,
@@ -298,7 +220,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE
     },
-    [12] = {
+    [5] = {
         name = "Life Steal",
         combatType = US_TYPES.OFFENSIVE,
         VALUES_PER_LEVEL = 0.1,
@@ -308,7 +230,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.WEAPON_MELEE + US_ITEM_TYPES.WEAPON_DISTANCE,
         chance = 10
     },
-    [13] = {
+    [6] = {
         name = "Experience",
         VALUES_PER_LEVEL = 0.35,
         format = function(value)
@@ -317,7 +239,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.BOOTS,
         chance = 30
     },
-    [14] = {
+    [7] = {
         name = "Physical Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_PHYSICALDAMAGE,
@@ -327,7 +249,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [15] = {
+    [8] = {
         name = "Energy Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_ENERGYDAMAGE,
@@ -337,7 +259,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [16] = {
+    [9] = {
         name = "Earth Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_EARTHDAMAGE,
@@ -347,7 +269,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [17] = {
+    [10] = {
         name = "Fire Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_FIREDAMAGE,
@@ -357,7 +279,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [18] = {
+    [11] = {
         name = "Ice Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_ICEDAMAGE,
@@ -367,7 +289,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [19] = {
+    [12] = {
         name = "Holy Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_HOLYDAMAGE,
@@ -377,7 +299,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [20] = {
+    [13] = {
         name = "Death Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_DEATHDAMAGE,
@@ -387,7 +309,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [21] = {
+    [14] = {
         name = "Elemental Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_ENERGYDAMAGE + COMBAT_EARTHDAMAGE + COMBAT_FIREDAMAGE + COMBAT_ICEDAMAGE +
@@ -399,7 +321,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS,
         chance = 10
     },
-    [22] = {
+    [15] = {
         name = "Physical Protection",
         combatType = US_TYPES.DEFENSIVE,
         combatDamage = COMBAT_PHYSICALDAMAGE,
@@ -410,7 +332,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.ARMOR + US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.BOOTS + US_ITEM_TYPES.HELMET +
             US_ITEM_TYPES.LEGS
     },
-    [23] = {
+    [16] = {
         name = "Energy Protection",
         combatType = US_TYPES.DEFENSIVE,
         combatDamage = COMBAT_ENERGYDAMAGE,
@@ -421,7 +343,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.ARMOR + US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.BOOTS + US_ITEM_TYPES.HELMET +
             US_ITEM_TYPES.LEGS
     },
-    [24] = {
+    [17] = {
         name = "Earth Protection",
         combatType = US_TYPES.DEFENSIVE,
         combatDamage = COMBAT_EARTHDAMAGE,
@@ -432,7 +354,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.ARMOR + US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.BOOTS + US_ITEM_TYPES.HELMET +
             US_ITEM_TYPES.LEGS
     },
-    [25] = {
+    [18] = {
         name = "Fire Protection",
         combatType = US_TYPES.DEFENSIVE,
         combatDamage = COMBAT_FIREDAMAGE,
@@ -443,7 +365,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.ARMOR + US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.BOOTS + US_ITEM_TYPES.HELMET +
             US_ITEM_TYPES.LEGS
     },
-    [26] = {
+    [19] = {
         name = "Ice Protection",
         combatType = US_TYPES.DEFENSIVE,
         combatDamage = COMBAT_ICEDAMAGE,
@@ -454,7 +376,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.ARMOR + US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.BOOTS + US_ITEM_TYPES.HELMET +
             US_ITEM_TYPES.LEGS
     },
-    [27] = {
+    [20] = {
         name = "Holy Protection",
         combatType = US_TYPES.DEFENSIVE,
         combatDamage = COMBAT_HOLYDAMAGE,
@@ -465,7 +387,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.ARMOR + US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.BOOTS + US_ITEM_TYPES.HELMET +
             US_ITEM_TYPES.LEGS
     },
-    [28] = {
+    [21] = {
         name = "Death Protection",
         combatType = US_TYPES.DEFENSIVE,
         combatDamage = COMBAT_DEATHDAMAGE,
@@ -476,7 +398,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.ARMOR + US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.BOOTS + US_ITEM_TYPES.HELMET +
             US_ITEM_TYPES.LEGS
     },
-    [29] = {
+    [22] = {
         name = "Elemental Protection",
         combatType = US_TYPES.DEFENSIVE,
         combatDamage = COMBAT_ENERGYDAMAGE + COMBAT_EARTHDAMAGE + COMBAT_FIREDAMAGE + COMBAT_ICEDAMAGE +
@@ -489,7 +411,7 @@ US_ENCHANTMENTS = {
             US_ITEM_TYPES.LEGS,
         chance = 10
     },
-    [30] = {
+    [23] = {
         name = "Flame Strike on Attack",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.ATTACK,
@@ -506,7 +428,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY
     },
-    [31] = {
+    [24] = {
         name = "Flame Strike on Hit",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.HIT,
@@ -523,7 +445,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [32] = {
+    [25] = {
         name = "Ice Strike on Attack",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.ATTACK,
@@ -540,7 +462,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY
     },
-    [33] = {
+    [26] = {
         name = "Ice Strike on Hit",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.HIT,
@@ -557,7 +479,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [34] = {
+    [27] = {
         name = "Terra Strike on Attack",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.ATTACK,
@@ -574,7 +496,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY
     },
-    [35] = {
+    [28] = {
         name = "Terra Strike on Hit",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.HIT,
@@ -591,7 +513,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [36] = {
+    [29] = {
         name = "Death Strike on Attack",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.ATTACK,
@@ -608,7 +530,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY
     },
-    [37] = {
+    [30] = {
         name = "Death Strike on Hit",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.HIT,
@@ -625,7 +547,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [38] = {
+    [31] = {
         name = "Divine Missile on Attack",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.ATTACK,
@@ -642,7 +564,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY
     },
-    [39] = {
+    [32] = {
         name = "Divine Missile on Hit",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.HIT,
@@ -659,7 +581,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [40] = {
+    [33] = {
         name = "Energy Strike on Attack",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.ATTACK,
@@ -676,7 +598,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY
     },
-    [41] = {
+    [34] = {
         name = "Energy Strike on Hit",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.HIT,
@@ -693,7 +615,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.SHIELD + US_ITEM_TYPES.HELMET + US_ITEM_TYPES.LEGS
     },
-    [42] = {
+    [35] = {
         name = "Explosion on Kill",
         minLevel = 20,
         combatType = US_TYPES.TRIGGER,
@@ -717,7 +639,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_ANY
     },
-    [43] = {
+    [36] = {
         name = "Health on Kill",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.KILL,
@@ -731,7 +653,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE,
         chance = 25
     },
-    [44] = {
+    [37] = {
         name = "Mana on Kill",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.KILL,
@@ -745,7 +667,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.WEAPON_ANY + US_ITEM_TYPES.RING + US_ITEM_TYPES.NECKLACE,
         chance = 25
     },
-    [45] = {
+    [38] = {
         name = "Mana Steal",
         combatType = US_TYPES.OFFENSIVE,
         VALUES_PER_LEVEL = 0.1,
@@ -755,7 +677,7 @@ US_ENCHANTMENTS = {
         itemType = US_ITEM_TYPES.WEAPON_WAND + US_ITEM_TYPES.WEAPON_DISTANCE,
         chance = 10
     },
-    [46] = {
+    [39] = {
         name = "Full HP on Kill",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.KILL,
@@ -772,7 +694,7 @@ US_ENCHANTMENTS = {
         minLevel = 20,
         chance = 5
     },
-    [47] = {
+    [40] = {
         name = "Full MP on Kill",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.KILL,
@@ -789,7 +711,7 @@ US_ENCHANTMENTS = {
         minLevel = 20,
         chance = 5
     },
-    [48] = {
+    [41] = {
         name = "Mass Healing on Attack",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.HIT,
@@ -810,7 +732,7 @@ US_ENCHANTMENTS = {
         minLevel = 10,
         chance = 15
     },
-    [49] = {
+    [42] = {
         name = "Increased Healing",
         VALUES_PER_LEVEL = 0.35,
         format = function(value)
@@ -820,7 +742,7 @@ US_ENCHANTMENTS = {
         minLevel = 25,
         chance = 20
     },
-    [50] = {
+    [43] = {
         name = "Additonal Gold",
         VALUES_PER_LEVEL = 0.5,
         format = function(value)
@@ -830,7 +752,7 @@ US_ENCHANTMENTS = {
         minLevel = 10,
         chance = 30
     },
-    [51] = {
+    [44] = {
         name = "Double Damage",
         combatType = US_TYPES.OFFENSIVE,
         combatDamage = COMBAT_ENERGYDAMAGE + COMBAT_EARTHDAMAGE + COMBAT_FIREDAMAGE + COMBAT_ICEDAMAGE +
@@ -843,7 +765,7 @@ US_ENCHANTMENTS = {
         minLevel = 80,
         chance = 5
     },
-    [52] = {
+    [45] = {
         name = "Revive on death",
         VALUES_PER_LEVEL = 0.05,
         format = function(value)
@@ -853,7 +775,7 @@ US_ENCHANTMENTS = {
         minLevel = 50,
         chance = 30
     },
-    [53] = {
+    [46] = {
         name = "Damage Buff",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.KILL,
@@ -885,7 +807,7 @@ US_ENCHANTMENTS = {
         minLevel = 30,
         chance = 10
     },
-    [54] = {
+    [47] = {
         name = "Max HP Buff",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.KILL,
@@ -924,7 +846,7 @@ US_ENCHANTMENTS = {
         minLevel = 30,
         chance = 10
     },
-    [55] = {
+    [48] = {
         name = "Max MP Buff",
         combatType = US_TYPES.TRIGGER,
         triggerType = US_TRIGGERS.KILL,
@@ -963,7 +885,7 @@ US_ENCHANTMENTS = {
         minLevel = 30,
         chance = 10
     },
-	[56] = {
+	[49] = {
         name = "Attack Speed",
         condition = CONDITION_ATTRIBUTES,
 		combatType = US_TYPES.OFFENSIVE,
@@ -975,7 +897,7 @@ US_ENCHANTMENTS = {
         end,
         itemType = US_ITEM_TYPES.WEAPON_MELEE + US_ITEM_TYPES.WEAPON_DISTANCE + US_ITEM_TYPES.WEAPON_WAND
     },
-    [57] = {
+    [50] = {
         name = "Critical Chance",
         condition = CONDITION_ATTRIBUTES,
         combatType = US_TYPES.OFFENSIVE,

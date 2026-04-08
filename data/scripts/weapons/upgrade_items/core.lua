@@ -730,7 +730,7 @@ function us_CheckCorpse(monsterType, corpsePosition, killerId)
         end
     end
     local iLvl = monsterType:calculateItemLevel()
-    if iLvl >= US_CONFIG.CRYSTAL_FOSSIL_DROP_LEVEL then
+    --[[ if iLvl >= US_CONFIG.CRYSTAL_FOSSIL_DROP_LEVEL then
         if math.random(US_CONFIG.CRYSTAL_FOSSIL_DROP_CHANCE) == 1 then
             corpse:addItem(US_CONFIG.CRYSTAL_FOSSIL, 1)
 
@@ -744,7 +744,7 @@ function us_CheckCorpse(monsterType, corpsePosition, killerId)
                 end
             end
         end
-    end
+    end ]]
     for i = 0, corpse:getCapacity() do
         local item = corpse:getItem(i)
         if item then

@@ -1,9 +1,10 @@
-anvil_network = {}
-anvil_network.OPCODE = 69
-anvil_network.ITEM_UPGRADE_CRYSTAL = 2149
-anvil_network.SOCKET_STONE_ID = 7759
+anvil = {}
+anvil.OPCODE = 69
+anvil.ITEM_UPGRADE_CRYSTAL = 74
+anvil.SOCKET_STONE_ID = 192
+anvil.OBJECT_ID = 2001
 
-anvil_network.ACTION = {
+anvil.ACTION = {
     OPEN = 1,
     CLOSE = 2,
     RESULT = 3,
@@ -14,43 +15,30 @@ anvil_network.ACTION = {
     SOCKET_STONE_RESULT = 8
 }
 
-local clientIdMap = {}
-
-function anvil_network.clientIdToServerId(clientId)
-    if clientIdMap[clientId] then
-        return clientIdMap[clientId]
-    end
-    
-    -- Iterate and find
-    for serverId = 100, 35000 do
-        local itemType = ItemType(serverId)
-        if itemType and itemType:getClientId() == clientId then
-            clientIdMap[clientId] = serverId
-            return serverId
-        end
-    end
-    return 0
-end
-
-local handler = PacketHandler(anvil_network.OPCODE)
+local handler = PacketHandler(anvil.OPCODE)
 
 function handler.onReceive(player, msg)
     local action = msg:getByte()
-    
-    if action == anvil_network.ACTION.UPGRADE then
-        anvil_network.handleUpgrade(player, msg)
-    elseif action == anvil_network.ACTION.SOCKET then
-        anvil_network.handleSocket(player, msg)
-    elseif action == anvil_network.ACTION.SOCKET_STONE then
-        anvil_network.handleSocketStone(player, msg)
+
+    if action == anvil.ACTION.CLOSE then
+        player:sendAnvilClose()
+    elseif action == anvil.ACTION.UPGRADE then
+        anvil.handleUpgrade(player, msg)
+    elseif action == anvil.ACTION.SOCKET then
+        anvil.handleSocket(player, msg)
+    elseif action == anvil.ACTION.SOCKET_STONE then
+        anvil.handleSocketStone(player, msg)
     end
 end
 
 -- Configuration
-anvil_network.LUCKY_SLOT_BONUS = 15 -- Extra % chance if player matches lucky slot
+anvil.LUCKY_SLOT_BONUS = 15 -- Extra % chance if player matches lucky slot
+anvil.SUCCESS_EFFECT_ID = 174
+
+local activeAnvilPositions = {}
 
 -- Get item from position (handles inventory, containers, and ground)
-function anvil_network.getItemFromPosition(player, x, y, z, stackpos, expectedItemId)
+function anvil.getItemFromPosition(player, x, y, z, stackpos, expectedItemId)
     local pos = Position(x, y, z)
 
     -- Check if it's an inventory/container position (x = 0xFFFF)
@@ -87,37 +75,39 @@ function anvil_network.getItemFromPosition(player, x, y, z, stackpos, expectedIt
     return nil
 end
 
+function anvil.sendSuccessEffect(player)
+    local position = activeAnvilPositions[player:getId()]
+    if not position then
+        return
+    end
+
+    position:sendMagicEffect(anvil.SUCCESS_EFFECT_ID)
+end
+
 -- Handle upgrade request
-function anvil_network.handleUpgrade(player, msg)
+function anvil.handleUpgrade(player, msg)
     -- Read weapon position and ID
     local weaponPosX = msg:getU16()
     local weaponPosY = msg:getU16()
     local weaponPosZ = msg:getByte()
     local weaponStackPos = msg:getByte()
-    local weaponClientId = msg:getU16()
+    local weaponId = msg:getU16()
     local itemCount = msg:getByte()
 
-    if not weaponClientId or weaponClientId == 0 then
+    if not weaponId or weaponId == 0 then
         player:sendTextMessage(MESSAGE_STATUS_SMALL, "Invalid weapon.")
-        return
-    end
-
-    local weaponServerId = anvil_network.clientIdToServerId(weaponClientId)
-
-    if weaponServerId == 0 then
-        player:sendTextMessage(MESSAGE_STATUS_SMALL, "Unknown weapon type.")
         return
     end
 
     -- Get the weapon - try position-based first, then fallback
     local weapon = nil
     if weaponPosX ~= 0xFFFF or weaponPosY ~= 0 or weaponPosZ ~= 0 then
-        weapon = anvil_network.getItemFromPosition(player, weaponPosX, weaponPosY, weaponPosZ, weaponStackPos, weaponServerId)
+        weapon = anvil.getItemFromPosition(player, weaponPosX, weaponPosY, weaponPosZ, weaponStackPos, weaponId)
     end
 
     -- Fallback to search by item ID
     if not weapon then
-        weapon = player:getItemById(weaponServerId, true)
+        weapon = player:getItemById(weaponId, true)
     end
 
     if not weapon then
@@ -125,9 +115,7 @@ function anvil_network.handleUpgrade(player, msg)
         return
     end
 
-    -- Calculate Crystal Client ID
-    local crystalServerId = anvil_network.ITEM_UPGRADE_CRYSTAL
-    local crystalClientId = ItemType(crystalServerId):getClientId()
+    local crystalId = anvil.ITEM_UPGRADE_CRYSTAL
 
     local upgradeItems = {}
     local playerSlots = {} -- Track which slots (1-9) the player used
@@ -137,7 +125,7 @@ function anvil_network.handleUpgrade(player, msg)
         local itemPosX = msg:getU16()
         local itemPosY = msg:getU16()
         local itemPosZ = msg:getByte()
-        local count = msg:getByte()
+        local count = math.min(msg:getByte(), 1)
 
         -- Track player slot
         if slotIndex >= 1 and slotIndex <= 9 then
@@ -158,7 +146,7 @@ function anvil_network.handleUpgrade(player, msg)
         return
     end
 
-    if player:getItemCount(crystalServerId) < crystalCount then
+    if player:getItemCount(crystalId) < crystalCount then
         player:sendTextMessage(MESSAGE_STATUS_SMALL, "Not enough upgrade crystals.")
         return
     end
@@ -185,7 +173,7 @@ function anvil_network.handleUpgrade(player, msg)
     local upgrade = weapon:getUpgradeLevel()
     if upgrade >= US_CONFIG.MAX_UPGRADE_LEVEL then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "Maximum upgrade level reached!")
-        player:sendAnvilResult(false, weaponClientId, upgrade, 0, false)
+        player:sendAnvilResult(false, weaponId, upgrade, 0, false)
         return
     end
 
@@ -201,12 +189,12 @@ function anvil_network.handleUpgrade(player, msg)
         end
     end
 
-    player:removeItem(crystalServerId, crystalCount)
+    player:removeItem(crystalId, crystalCount)
 
     upgrade = upgrade + 1
 
     -- Calculate success chance with potential bonus
-    local bonusChance = matched and anvil_network.LUCKY_SLOT_BONUS or 0
+    local bonusChance = matched and anvil.LUCKY_SLOT_BONUS or 0
 
     if upgrade >= US_CONFIG.UPGRADE_LEVEL_DESTROY then
         local destroyChance = US_CONFIG.UPGRADE_DESTROY_CHANCE[upgrade] + bonusChance
@@ -214,7 +202,7 @@ function anvil_network.handleUpgrade(player, msg)
             if player:getItemCount(US_CONFIG.ITEM_UPGRADE_CATALYST) > 0 then
                 player:removeItem(US_CONFIG.ITEM_UPGRADE_CATALYST, 1)
                -- player:getPosition():sendMagicEffect(CONST_ME_GROUNDSHAKER)
-                player:sendAnvilResult(false, weaponClientId, weapon:getUpgradeLevel(), luckySlot, matched)
+                player:sendAnvilResult(false, weaponId, weapon:getUpgradeLevel(), luckySlot, matched)
                 return
             end
             weapon:remove(1)
@@ -227,7 +215,7 @@ function anvil_network.handleUpgrade(player, msg)
         if math.random(100) > successChance then
             weapon:reduceUpgradeLevel()
             -- player:getPosition():sendMagicEffect(CONST_ME_GROUNDSHAKER)
-            player:sendAnvilResult(false, weaponClientId, weapon:getUpgradeLevel(), luckySlot, matched)
+            player:sendAnvilResult(false, weaponId, weapon:getUpgradeLevel(), luckySlot, matched)
             return
         end
     end
@@ -241,34 +229,29 @@ function anvil_network.handleUpgrade(player, msg)
         weapon:setItemLevel(1, true)
     end
 
-    player:sendAnvilResult(true, weaponClientId, upgrade, luckySlot, matched)
+    anvil.sendSuccessEffect(player)
+    player:sendAnvilResult(true, weaponId, upgrade, luckySlot, matched)
 end
 
-function anvil_network.handleSocket(player, msg)
+function anvil.handleSocket(player, msg)
     local weaponPosX = msg:getU16()
     local weaponPosY = msg:getU16()
     local weaponPosZ = msg:getByte()
     local weaponStackPos = msg:getByte()
-    local weaponClientId = msg:getU16()
+    local weaponId = msg:getU16()
     local itemCount = msg:getByte()
 
-    if not weaponClientId or weaponClientId == 0 then
+    if not weaponId or weaponId == 0 then
         player:sendTextMessage(MESSAGE_STATUS_SMALL, "Invalid item.")
-        return
-    end
-
-    local weaponServerId = anvil_network.clientIdToServerId(weaponClientId)
-    if weaponServerId == 0 then
-        player:sendTextMessage(MESSAGE_STATUS_SMALL, "Unknown item type.")
         return
     end
 
     local weapon = nil
     if weaponPosX ~= 0xFFFF or weaponPosY ~= 0 or weaponPosZ ~= 0 then
-        weapon = anvil_network.getItemFromPosition(player, weaponPosX, weaponPosY, weaponPosZ, weaponStackPos, weaponServerId)
+        weapon = anvil.getItemFromPosition(player, weaponPosX, weaponPosY, weaponPosZ, weaponStackPos, weaponId)
     end
     if not weapon then
-        weapon = player:getItemById(weaponServerId, true)
+        weapon = player:getItemById(weaponId, true)
     end
 
     if not weapon then
@@ -279,33 +262,31 @@ function anvil_network.handleSocket(player, msg)
     local weaponItemType = ItemType(weapon.itemid)
     if not weaponItemType:isUpgradable() then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "This item cannot have sockets.")
-        player:sendAnvilSocketResult(false, weaponClientId, 0, "Not sockettable")
+        player:sendAnvilSocketResult(false, weaponId, 0, "Not sockettable")
         return
     end
 
     if weapon:isUnidentified() then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "Identify the item first.")
-        player:sendAnvilSocketResult(false, weaponClientId, 0, "Unidentified")
+        player:sendAnvilSocketResult(false, weaponId, 0, "Unidentified")
         return
     end
 
     local maxSockets = weapon:getMaxSockets()
     if maxSockets == 0 then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "This item has no socket slots.")
-        player:sendAnvilSocketResult(false, weaponClientId, 0, "No sockets")
+        player:sendAnvilSocketResult(false, weaponId, 0, "No sockets")
         return
     end
 
     local emptySocket = weapon:getFirstEmptySocket()
     if not emptySocket then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "All socket slots are filled.")
-        player:sendAnvilSocketResult(false, weaponClientId, 0, "Full")
+        player:sendAnvilSocketResult(false, weaponId, 0, "Full")
         return
     end
 
     local skullItem = nil
-    local skullClientId = 0
-    local skullSlotIndex = 0
 
     for i = 1, itemCount do
         local slotIndex = msg:getByte()
@@ -313,16 +294,13 @@ function anvil_network.handleSocket(player, msg)
         local itemPosY = msg:getU16()
         local itemPosZ = msg:getByte()
         local count = msg:getByte()
-        local slotClientId = msg:getU16()
+        local slotId = msg:getU16()
 
-        if slotClientId and slotClientId > 0 then
-            local slotServerId = anvil_network.clientIdToServerId(slotClientId)
-            if slotServerId > 0 and JEWEL_SKULL_CONFIG and JEWEL_SKULL_CONFIG.RARITY_BY_ID[slotServerId] then
-                local foundSkull = player:getItemById(slotServerId, true)
+        if count > 0 and slotId and slotId > 0 then
+            if JEWEL_SKULL_CONFIG and JEWEL_SKULL_CONFIG.RARITY_BY_ID[slotId] then
+                local foundSkull = player:getItemById(slotId, true)
                 if foundSkull and foundSkull:isJewelSkull() then
                     skullItem = foundSkull
-                    skullClientId = slotClientId
-                    skullSlotIndex = slotIndex
                     break
                 end
             end
@@ -331,14 +309,14 @@ function anvil_network.handleSocket(player, msg)
 
     if not skullItem then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "Place a Jewel Skull in one of the slots.")
-        player:sendAnvilSocketResult(false, weaponClientId, 0, "No skull")
+        player:sendAnvilSocketResult(false, weaponId, 0, "No skull")
         return
     end
 
     local bonuses = skullItem:getJewelSkullBonuses()
     if not bonuses or #bonuses == 0 then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "This skull has no attributes.")
-        player:sendAnvilSocketResult(false, weaponClientId, 0, "Empty skull")
+        player:sendAnvilSocketResult(false, weaponId, 0, "Empty skull")
         return
     end
 
@@ -346,82 +324,109 @@ function anvil_network.handleSocket(player, msg)
         local skullConfig = skullItem:getJewelSkullConfig()
         local skullName = skullConfig and skullConfig.name or "Jewel"
         skullItem:remove(1)
-        player:getPosition():sendMagicEffect(CONST_ME_GIFT_WRAPS)
+        anvil.sendSuccessEffect(player)
         player:sendTextMessage(MESSAGE_INFO_DESCR, skullName .. " Skull socketed into slot " .. emptySocket .. "!")
-        player:sendAnvilSocketResult(true, weaponClientId, emptySocket, skullName)
+        player:sendAnvilSocketResult(true, weaponId, emptySocket, skullName)
     else
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "Failed to socket Jewel Skull.")
-        player:sendAnvilSocketResult(false, weaponClientId, 0, "Failed")
+        player:sendAnvilSocketResult(false, weaponId, 0, "Failed")
     end
 end
 
-function Player:sendAnvilSocketResult(success, itemClientId, socketIndex, message)
+function Player:sendAnvilOpen()
     local msg = NetworkMessage()
-    msg:addByte(anvil_network.OPCODE)
-    msg:addByte(anvil_network.ACTION.SOCKET_RESULT)
+    msg:addByte(anvil.OPCODE)
+    msg:addByte(anvil.ACTION.OPEN)
+    msg:sendToPlayer(self)
+end
+
+function Player:sendAnvilClose()
+    activeAnvilPositions[self:getId()] = nil
+    local msg = NetworkMessage()
+    msg:addByte(anvil.OPCODE)
+    msg:addByte(anvil.ACTION.CLOSE)
+    msg:sendToPlayer(self)
+end
+
+function Player:sendAnvilResult(success, itemId, upgradeLevel, luckySlot, matched)
+    local msg = NetworkMessage()
+    msg:addByte(anvil.OPCODE)
+    msg:addByte(anvil.ACTION.RESULT)
     msg:addByte(success and 1 or 0)
-    msg:addU16(itemClientId)
+    msg:addU16(itemId or 0)
+    msg:addByte(upgradeLevel or 0)
+    msg:addByte(luckySlot or 0)
+    msg:addByte(matched and 1 or 0)
+    msg:sendToPlayer(self)
+end
+
+function Player:sendAnvilSocketResult(success, itemId, socketIndex, message)
+    local msg = NetworkMessage()
+    msg:addByte(anvil.OPCODE)
+    msg:addByte(anvil.ACTION.SOCKET_RESULT)
+    msg:addByte(success and 1 or 0)
+    msg:addU16(itemId or 0)
     msg:addByte(socketIndex)
     msg:addString(message or "")
     msg:sendToPlayer(self)
 end
 
-function anvil_network.handleSocketStone(player, msg)
+function anvil.handleSocketStone(player, msg)
     local weaponPosX = msg:getU16()
     local weaponPosY = msg:getU16()
     local weaponPosZ = msg:getByte()
     local weaponStackPos = msg:getByte()
-    local weaponClientId = msg:getU16()
-    local stoneCount = msg:getByte()
-    
-    if not weaponClientId or weaponClientId == 0 then
+    local weaponId = msg:getU16()
+    local stoneCount = math.min(msg:getByte(), 1)
+
+    if not weaponId or weaponId == 0 then
         player:sendTextMessage(MESSAGE_STATUS_SMALL, "Invalid item.")
         return
     end
-    
-    local weaponServerId = anvil_network.clientIdToServerId(weaponClientId)
-    if weaponServerId == 0 then
-        player:sendTextMessage(MESSAGE_STATUS_SMALL, "Unknown item type.")
-        return
-    end
-    
+
     local weapon = nil
     if weaponPosX ~= 0xFFFF or weaponPosY ~= 0 or weaponPosZ ~= 0 then
-        weapon = anvil_network.getItemFromPosition(player, weaponPosX, weaponPosY, weaponPosZ, weaponStackPos, weaponServerId)
+        weapon = anvil.getItemFromPosition(player, weaponPosX, weaponPosY, weaponPosZ, weaponStackPos, weaponId)
     end
     if not weapon then
-        weapon = player:getItemById(weaponServerId, true)
+        weapon = player:getItemById(weaponId, true)
     end
-    
+
     if not weapon then
         player:sendTextMessage(MESSAGE_STATUS_SMALL, "You do not have this item.")
         return
     end
-    
+
     local weaponItemType = ItemType(weapon.itemid)
     if not weaponItemType:isUpgradable() then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "This item cannot have sockets.")
-        player:sendSocketStoneResult(false, weaponClientId, 0, "Not upgradable", nil)
+        player:sendSocketStoneResult(false, weaponId, 0, "Not upgradable", nil)
         return
     end
-    
+
     if weapon:isUnidentified() then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "Identify the item first.")
-        player:sendSocketStoneResult(false, weaponClientId, 0, "Unidentified", nil)
+        player:sendSocketStoneResult(false, weaponId, 0, "Unidentified", nil)
         return
     end
-    
+
+    if stoneCount == 0 then
+        player:sendTextMessage(MESSAGE_STATUS_WARNING, "You need a Socket Stone.")
+        player:sendSocketStoneResult(false, weaponId, 0, "No stone", nil)
+        return
+    end
+
     -- Check player has socket stone
-    local stoneServerId = anvil_network.SOCKET_STONE_ID
+    local stoneServerId = anvil.SOCKET_STONE_ID
     if player:getItemCount(stoneServerId) < 1 then
         player:sendTextMessage(MESSAGE_STATUS_WARNING, "You need a Socket Stone.")
-        player:sendSocketStoneResult(false, weaponClientId, 0, "No stone", nil)
+        player:sendSocketStoneResult(false, weaponId, 0, "No stone", nil)
         return
     end
-    
+
     local currentSockets = weapon:getMaxSockets()
     local hasFilledSockets = false
-    
+
     -- Only check for socketed jewel skulls, NOT native bonuses (Slot{i})
     for i = 1, currentSockets do
         if weapon:getSocketedSkull(i) then
@@ -429,19 +434,19 @@ function anvil_network.handleSocketStone(player, msg)
             break
         end
     end
-    
+
     -- Determine max sockets for re-roll based on unique status
     local maxRerollSockets = weapon:isUnique() and 4 or 3
-    
+
     if currentSockets == 0 then
         -- CASE 1: No sockets - create random sockets
         weapon:generateRandomSockets()
         local newSockets = weapon:getMaxSockets()
         player:removeItem(stoneServerId, 1)
-        player:getPosition():sendMagicEffect(CONST_ME_MAGIC_GREEN)
+        anvil.sendSuccessEffect(player)
         player:sendTextMessage(MESSAGE_INFO_DESCR, "Created " .. newSockets .. " socket slots!")
-        player:sendSocketStoneResult(true, weaponClientId, newSockets, "Sockets created", nil)
-        
+        player:sendSocketStoneResult(true, weaponId, newSockets, "Sockets created", nil)
+
     elseif not hasFilledSockets then
         -- CASE 2: Has sockets but all are empty - re-roll
         local usItemType = weapon:getItemType()
@@ -449,16 +454,16 @@ function anvil_network.handleSocketStone(player, msg)
         local newSockets = math.random(1, math.min(baseMax, maxRerollSockets))
         weapon:setMaxSockets(newSockets)
         player:removeItem(stoneServerId, 1)
-        player:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
+        anvil.sendSuccessEffect(player)
         player:sendTextMessage(MESSAGE_INFO_DESCR, "Re-rolled to " .. newSockets .. " socket slots!")
-        player:sendSocketStoneResult(true, weaponClientId, newSockets, "Sockets re-rolled", nil)
-        
+        player:sendSocketStoneResult(true, weaponId, newSockets, "Sockets re-rolled", nil)
+
     else
         -- CASE 3: Has filled sockets - extract last item with 50% burn chance
         local extractedSlot = 0
         local extractedItem = nil
         local burned = false
-        
+
         for i = currentSockets, 1, -1 do
             local skullId = weapon:getSocketedSkull(i)
             if skullId then
@@ -484,32 +489,43 @@ function anvil_network.handleSocketStone(player, msg)
             end
             -- NOTE: Native bonuses (Slot{i}) are permanent and should NEVER be removed by socket operations
         end
-        
+
         player:removeItem(stoneServerId, 1)
-        
+
         if burned then
             player:getPosition():sendMagicEffect(CONST_ME_FIREAREA)
             player:sendTextMessage(MESSAGE_STATUS_WARNING, "The socketed item was burned during extraction!")
-            player:sendSocketStoneResult(true, weaponClientId, extractedSlot, "Burned", nil)
+            player:sendSocketStoneResult(true, weaponId, extractedSlot, "Burned", nil)
         else
-            player:getPosition():sendMagicEffect(CONST_ME_MAGIC_GREEN)
+            anvil.sendSuccessEffect(player)
             player:sendTextMessage(MESSAGE_INFO_DESCR, "Successfully extracted item from socket " .. extractedSlot .. "!")
-            local extractedClientId = extractedItem and ItemType(extractedItem:getId()):getClientId() or 0
-            player:sendSocketStoneResult(true, weaponClientId, extractedSlot, "Extracted", extractedClientId)
+            local extractedId = extractedItem and extractedItem:getId() or 0
+            player:sendSocketStoneResult(true, weaponId, extractedSlot, "Extracted", extractedId)
         end
     end
 end
 
-function Player:sendSocketStoneResult(success, itemClientId, sockets, action, extractedClientId)
+function Player:sendSocketStoneResult(success, itemId, sockets, action, extractedItemId)
     local msg = NetworkMessage()
-    msg:addByte(anvil_network.OPCODE)
-    msg:addByte(anvil_network.ACTION.SOCKET_STONE_RESULT)
+    msg:addByte(anvil.OPCODE)
+    msg:addByte(anvil.ACTION.SOCKET_STONE_RESULT)
     msg:addByte(success and 1 or 0)
-    msg:addU16(itemClientId)
+    msg:addU16(itemId or 0)
     msg:addByte(sockets)
     msg:addString(action or "")
-    msg:addU16(extractedClientId or 0)
+    msg:addU16(extractedItemId or 0)
     msg:sendToPlayer(self)
 end
+
+local openAction = Action()
+
+function openAction.onUse(player, item, fromPosition, target, toPosition, isHotkey)
+    activeAnvilPositions[player:getId()] = item:getPosition()
+    player:sendAnvilOpen()
+    return true
+end
+
+openAction:id(anvil.OBJECT_ID)
+openAction:register()
 
 handler:register()
