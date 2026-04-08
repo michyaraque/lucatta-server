@@ -8,6 +8,7 @@
     "boost-lockfree",
     "boost-system",
     "boost-variant",
+    "boost-beast",
     "fmt",
     "protobuf",
     {

@@ -170,6 +170,16 @@ set(tfs_HDR
 
 set(tfs_MAIN ${CMAKE_CURRENT_LIST_DIR}/main.cpp PARENT_SCOPE)
 
+if (HTTP)
+	list(APPEND tfs_SRC
+		${CMAKE_CURRENT_LIST_DIR}/httpclient.cpp
+	)
+
+	list(APPEND tfs_HDR
+		${CMAKE_CURRENT_LIST_DIR}/httpclient.h
+	)
+endif ()
+
 add_subdirectory(protobuf)
 add_library(tfslib ${tfs_SRC})
 target_link_libraries(tfslib PRIVATE
@@ -179,6 +189,7 @@ target_link_libraries(tfslib PRIVATE
 	Boost::locale
 	appearances_proto
 	fmt::fmt
+	OpenSSL::SSL
 	OpenSSL::Crypto
 	pugixml::pugixml
 	ZLIB::ZLIB

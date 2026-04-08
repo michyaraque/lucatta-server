@@ -15,6 +15,7 @@
 #include "events.h"
 #include "globalevent.h"
 #include "housetile.h"
+#include "httpclient.h"
 #include "http/http.h"
 #include "inbox.h"
 #include "iologindata.h"
@@ -120,6 +121,7 @@ void Game::setGameState(GameState_t newState)
 			g_scheduler.stop();
 			g_databaseTasks.stop();
 			g_dispatcher.stop();
+			g_http.stop();
 #ifdef HTTP
 			tfs::http::stop();
 #endif
@@ -4832,6 +4834,7 @@ void Game::shutdown()
 	g_scheduler.shutdown();
 	g_databaseTasks.shutdown();
 	g_dispatcher.shutdown();
+	g_http.shutdown();
 	map.spawns.clear();
 
 	cleanup();
