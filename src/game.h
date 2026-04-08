@@ -11,9 +11,48 @@
 #include "position.h"
 #include "wildcardtree.h"
 
+#include <array>
+#include <memory>
+
 class Monster;
 class Npc;
 class ServiceManager;
+class TradeManager;
+
+enum class TradeSessionPhase : uint8_t
+{
+	Editing = 0,
+	Countdown = 1,
+	FinalConfirmation = 2,
+};
+
+struct TradeSnapshotItem
+{
+	const Item* item = nullptr;
+	uint8_t sourceContainer = 0xFF;
+	uint16_t sourceSlot = 0;
+	uint16_t quantity = 0;
+};
+
+struct TradeParticipantSnapshot
+{
+	uint32_t id = 0;
+	std::string name;
+	bool accepted = false;
+	uint32_t gold = 0;
+	std::array<TradeSnapshotItem, 9> items = {};
+};
+
+struct TradeSnapshot
+{
+	uint16_t tradeId = 0;
+	uint8_t slotCount = 9;
+	TradeSessionPhase phase = TradeSessionPhase::Editing;
+	uint8_t countdownSeconds = 0;
+	bool requiresFinalConfirmation = false;
+	TradeParticipantSnapshot self;
+	TradeParticipantSnapshot counter;
+};
 
 enum stackPosType_t
 {
@@ -71,6 +110,7 @@ class Game
 {
 public:
 	Game();
+	~Game();
 
 	// non-copyable
 	Game(const Game&) = delete;
@@ -104,6 +144,8 @@ public:
 	static void internalGetPosition(Item* item, Position& pos, uint8_t& stackpos);
 
 	static std::string getTradeErrorDescription(ReturnValue ret, Item* item);
+	const Item* getTradeSessionItem(const Player* viewer, uint16_t tradeId, uint8_t side, uint8_t slot) const;
+	bool hasTradeSession(const Player* player) const;
 
 	/**
 	 * Returns a creature based on the unique creature identifier
@@ -347,6 +389,16 @@ public:
 	void playerWrapItem(uint32_t playerId, const Position& position, uint8_t stackPos, const uint16_t spriteId);
 	void playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t stackPos, uint32_t tradePlayerId,
 	                        uint16_t spriteId);
+	void playerRequestTradeSession(uint32_t playerId, uint32_t tradePlayerId, const std::string& tradePlayerName);
+	void playerRespondTradeSession(uint32_t playerId, const std::string& requesterName, bool accept);
+	void playerMoveTradeSessionItem(uint32_t playerId, uint8_t fromContainer, uint16_t fromSlot, uint8_t toContainer,
+	                                uint16_t toSlot, uint16_t count);
+	void playerSetTradeSessionGold(uint32_t playerId, uint32_t amount);
+	void playerSetTradeSessionAccepted(uint32_t playerId, bool accepted);
+	void playerCancelTradeSession(uint32_t playerId, const std::string& message = "Trade cancelled.");
+	void playerTradeSessionMoved(Player* player);
+	void playerTradeSessionExited(Player* player);
+	void playerTradeSessionItemChanged(Player* player, const Item* item);
 	void playerAcceptTrade(uint32_t playerId);
 	void playerLookInTrade(uint32_t playerId, bool lookAtCounterOffer, uint8_t index);
 	void playerPurchaseItem(uint32_t playerId, uint16_t spriteId, uint8_t count, uint16_t amount,
@@ -525,6 +577,7 @@ private:
 
 	// list of items that are in trading state, mapped to the player
 	std::map<Item*, uint32_t> tradeItems;
+	std::unique_ptr<TradeManager> tradeManager;
 
 	std::map<uint32_t, BedItem*> bedSleepersMap;
 

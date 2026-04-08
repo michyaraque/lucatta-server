@@ -68,6 +68,10 @@ bool hasEquipmentVisualData(slots_t slot)
 	       slot == CONST_SLOT_CAPE;
 }
 
+constexpr uint8_t TRADE_REQUEST_RECEIVE = 1;
+constexpr uint8_t TRADE_CLOSE = 7;
+constexpr uint8_t TRADE_REQUEST_TIMEOUT = 13;
+
 uint8_t readItemRarity(const Item* item)
 {
 	if (!item) {
@@ -143,6 +147,26 @@ void appendPlayerSnapshot(NetworkMessage& msg, const Player* otherPlayer)
 		const auto [slot, _] = snapshotSlots[index];
 		msg.add<uint16_t>(item->getID());
 		appendEquipmentVisualData(msg, slot, item);
+	}
+}
+
+void appendTradeParticipantSnapshot(NetworkMessage& msg, const TradeParticipantSnapshot& participant)
+{
+	msg.add<uint32_t>(participant.id);
+	msg.addString(participant.name);
+	msg.addByte(participant.accepted ? 1 : 0);
+	msg.add<uint32_t>(participant.gold);
+
+	for (const TradeSnapshotItem& item : participant.items) {
+		msg.addByte(item.item ? 1 : 0);
+		if (!item.item) {
+			continue;
+		}
+
+		msg.addByte(item.sourceContainer);
+		msg.add<uint16_t>(item.sourceSlot);
+		msg.add<uint16_t>(item.quantity);
+		msg.addItem(item.item);
 	}
 }
 
@@ -846,6 +870,9 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 		case 0xE8:
 			parseDebugAssert(msg);
 			break;
+		case 0xE9:
+			parseTradeSession(msg);
+			break;
 		// case 0xEF: break; // request store coins transfer
 		case 0xF2:
 			parseRuleViolationReport(msg);
@@ -1461,6 +1488,59 @@ void ProtocolGame::parseRequestTrade(NetworkMessage& msg)
 	uint32_t playerId = msg.get<uint32_t>();
 	g_dispatcher.addTask(
 	    [=, playerID = player->getID()]() { g_game.playerRequestTrade(playerID, pos, stackpos, playerId, spriteId); });
+}
+
+void ProtocolGame::parseTradeSession(NetworkMessage& msg)
+{
+	const uint8_t action = msg.getByte();
+
+	switch (action) {
+		case 0x00: {
+			const uint32_t targetId = msg.get<uint32_t>();
+			const std::string targetName = msg.getString();
+			g_dispatcher.addTask([=, playerID = player->getID()]() {
+				g_game.playerRequestTradeSession(playerID, targetId, targetName);
+			});
+			break;
+		}
+		case 0x02:
+		case 0x03: {
+			const std::string requesterName = msg.getString();
+			const bool accept = action == 0x02;
+			g_dispatcher.addTask([=, playerID = player->getID()]() {
+				g_game.playerRespondTradeSession(playerID, requesterName, accept);
+			});
+			break;
+		}
+		case 0x08: {
+			const uint8_t fromContainer = msg.getByte();
+			const uint16_t fromSlot = msg.get<uint16_t>();
+			const uint8_t toContainer = msg.getByte();
+			const uint16_t toSlot = msg.get<uint16_t>();
+			const uint16_t count = msg.get<uint16_t>();
+			g_dispatcher.addTask([=, playerID = player->getID()]() {
+				g_game.playerMoveTradeSessionItem(playerID, fromContainer, fromSlot, toContainer, toSlot, count);
+			});
+			break;
+		}
+		case 0x09: {
+			const uint32_t amount = msg.get<uint32_t>();
+			g_dispatcher.addTask([=, playerID = player->getID()]() { g_game.playerSetTradeSessionGold(playerID, amount); });
+			break;
+		}
+		case 0x0A: {
+			const bool accepted = msg.getByte() != 0;
+			g_dispatcher.addTask([=, playerID = player->getID()]() {
+				g_game.playerSetTradeSessionAccepted(playerID, accepted);
+			});
+			break;
+		}
+		case 0x0B:
+			g_dispatcher.addTask([playerID = player->getID()]() { g_game.playerCancelTradeSession(playerID); });
+			break;
+		default:
+			break;
+	}
 }
 
 void ProtocolGame::parseLookInTrade(NetworkMessage& msg)
@@ -2498,6 +2578,60 @@ void ProtocolGame::sendCloseTrade()
 {
 	NetworkMessage msg;
 	msg.addByte(0x7F);
+	writeToOutputBuffer(msg);
+}
+
+void ProtocolGame::sendTradeSessionRequest(const std::string& fromName)
+{
+	NetworkMessage msg;
+	msg.addByte(0xE9);
+	msg.addByte(TRADE_REQUEST_RECEIVE);
+	msg.addString(fromName);
+	writeToOutputBuffer(msg);
+}
+
+void ProtocolGame::sendTradeSessionMessage(uint8_t action, const std::string& message)
+{
+	NetworkMessage msg;
+	msg.addByte(0xE9);
+	msg.addByte(action);
+	msg.addString(message);
+	writeToOutputBuffer(msg);
+}
+
+void ProtocolGame::sendTradeSessionUpdate(uint8_t action, const TradeSnapshot& snapshot)
+{
+	NetworkMessage msg;
+	msg.addByte(0xE9);
+	msg.addByte(action);
+	msg.add<uint16_t>(snapshot.tradeId);
+	msg.addByte(snapshot.slotCount);
+	msg.addByte(static_cast<uint8_t>(snapshot.phase));
+	msg.addByte(snapshot.countdownSeconds);
+	msg.addByte(snapshot.requiresFinalConfirmation ? 1 : 0);
+	appendTradeParticipantSnapshot(msg, snapshot.self);
+	appendTradeParticipantSnapshot(msg, snapshot.counter);
+	writeToOutputBuffer(msg);
+}
+
+void ProtocolGame::sendTradeSessionTimeout(const std::string& name)
+{
+	NetworkMessage msg;
+	msg.addByte(0xE9);
+	msg.addByte(TRADE_REQUEST_TIMEOUT);
+	msg.addString(name);
+	writeToOutputBuffer(msg);
+}
+
+void ProtocolGame::sendTradeSessionClose(bool isCompleted, const std::string& message,
+                                         const std::string& cancelledBy)
+{
+	NetworkMessage msg;
+	msg.addByte(0xE9);
+	msg.addByte(TRADE_CLOSE);
+	msg.addByte(isCompleted ? 1 : 0);
+	msg.addString(message);
+	msg.addString(cancelledBy);
 	writeToOutputBuffer(msg);
 }
 

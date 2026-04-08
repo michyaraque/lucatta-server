@@ -8,6 +8,7 @@
 #include "actions.h"
 #include "bed.h"
 #include "configmanager.h"
+#include "container.h"
 #include "creature.h"
 #include "creatureevent.h"
 #include "databasetasks.h"
@@ -21,6 +22,7 @@
 #include "iologindata.h"
 #include "iomarket.h"
 #include "items.h"
+#include "item.h"
 #include "monster.h"
 #include "movement.h"
 #include "npc.h"
@@ -37,6 +39,12 @@
 #include "weapons.h"
 #include "websocket.h"
 
+#include <boost/algorithm/string.hpp>
+#include <limits>
+#include <optional>
+#include <unordered_map>
+#include <vector>
+
 extern Actions* g_actions;
 extern Chat* g_chat;
 extern TalkActions* g_talkActions;
@@ -49,8 +57,1309 @@ extern MoveEvents* g_moveEvents;
 extern Weapons* g_weapons;
 extern Scripts* g_scripts;
 
+namespace {
+
+constexpr uint8_t TRADE_TOOLTIP_COUNTER = 1;
+constexpr uint8_t TRADE_INFO = 4;
+constexpr uint8_t TRADE_ERROR = 5;
+constexpr uint8_t TRADE_START = 6;
+constexpr uint8_t TRADE_STATE_SYNC = 12;
+
+constexpr uint8_t TRADE_SLOT_COUNT = 9;
+constexpr uint8_t TRADE_CONTAINER_INVENTORY = 0;
+constexpr uint8_t TRADE_CONTAINER_EQUIPMENT = 1;
+constexpr uint8_t TRADE_CONTAINER_TRADE = 3;
+
+constexpr uint32_t TRADE_REQUEST_TIMEOUT_MS = 30000;
+constexpr uint32_t TRADE_MAX_GOLD = 4000000000U;
+constexpr uint32_t TRADE_COUNTDOWN_SECONDS = 3;
+constexpr uint32_t TRADE_REQUEST_DISTANCE = 2;
+constexpr uint32_t TRADE_KEEPALIVE_DISTANCE = 6;
+constexpr uint32_t TRADE_FINAL_DISTANCE = 2;
+
+std::string normalizeTradeName(std::string value)
+{
+	boost::algorithm::trim(value);
+	return boost::algorithm::to_lower_copy(value);
+}
+
+bool isValidTradeSlot(uint16_t slot) { return slot < TRADE_SLOT_COUNT; }
+
+bool isValidEquipmentSlot(uint16_t slot) { return slot >= CONST_SLOT_FIRST && slot <= CONST_SLOT_LAST; }
+
+bool isSourceContainer(uint8_t container)
+{
+	return container == TRADE_CONTAINER_INVENTORY || container == TRADE_CONTAINER_EQUIPMENT;
+}
+
+bool isSameOrNested(const Item* lhs, const Item* rhs)
+{
+	if (!lhs || !rhs) {
+		return false;
+	}
+
+	if (lhs == rhs) {
+		return true;
+	}
+
+	const Thing* current = lhs->getParent();
+	while (current) {
+		const Item* item = current->getItem();
+		if (!item) {
+			break;
+		}
+
+		if (item == rhs) {
+			return true;
+		}
+
+		current = item->getParent();
+	}
+
+	current = rhs->getParent();
+	while (current) {
+		const Item* item = current->getItem();
+		if (!item) {
+			break;
+		}
+
+		if (item == lhs) {
+			return true;
+		}
+
+		current = item->getParent();
+	}
+
+	return false;
+}
+
+bool canTradeItem(const Item* item)
+{
+	return item && item->isPickupable() && !item->hasAttribute(ITEM_ATTRIBUTE_UNIQUEID);
+}
+
+uint32_t getTradeDistance(const Creature* first, const Creature* second)
+{
+	if (!first || !second) {
+		return std::numeric_limits<uint32_t>::max();
+	}
+
+	const Position& firstPos = first->getPosition();
+	const Position& secondPos = second->getPosition();
+	if (firstPos.z != secondPos.z) {
+		return std::numeric_limits<uint32_t>::max();
+	}
+
+	return std::max(firstPos.getDistanceX(secondPos), firstPos.getDistanceY(secondPos));
+}
+
+Item* getPrimaryContainerItem(Player* player, uint16_t slot)
+{
+	Container* container = player->getContainerByID(0);
+	if (!container) {
+		return nullptr;
+	}
+
+	if (!container->hasPagination() && player->getContainerIndex(0) == 0) {
+		return container->getItemBySlot(slot);
+	}
+
+	return container->getItemByIndex(player->getContainerIndex(0) + slot);
+}
+
+Item* resolveSourceItem(Player* player, uint8_t container, uint16_t slot)
+{
+	if (!player) {
+		return nullptr;
+	}
+
+	if (container == TRADE_CONTAINER_INVENTORY) {
+		return getPrimaryContainerItem(player, slot);
+	}
+
+	if (container == TRADE_CONTAINER_EQUIPMENT && isValidEquipmentSlot(slot)) {
+		return player->getInventoryItem(static_cast<slots_t>(slot));
+	}
+
+	return nullptr;
+}
+
+} // namespace
+
+class TradeManager
+{
+public:
+	explicit TradeManager(Game& game) : game(game) {}
+
+	void requestTrade(Player* requester, uint32_t targetId, const std::string& targetName);
+	void respondToTradeRequest(Player* responder, const std::string& requesterName, bool accept);
+	void moveItem(Player* player, uint8_t fromContainer, uint16_t fromSlot, uint8_t toContainer, uint16_t toSlot,
+	              uint16_t count);
+	void setGold(Player* player, uint32_t amount);
+	void setAccepted(Player* player, bool accepted);
+	void cancelTrade(Player* player, const std::string& message);
+
+	void handlePlayerMove(Player* player);
+	void handlePlayerExit(Player* player);
+	void handleItemChange(Player* player, const Item* item);
+
+	const Item* getTradeItem(const Player* viewer, uint16_t tradeId, uint8_t side, uint8_t slot) const;
+	bool hasSession(const Player* player) const;
+
+private:
+	struct PendingRequest
+	{
+		uint32_t requesterId = 0;
+		uint32_t targetId = 0;
+		uint32_t eventId = 0;
+		std::string requesterName;
+		std::string targetName;
+	};
+
+	struct OfferedItem
+	{
+		uint8_t sourceContainer = TRADE_CONTAINER_INVENTORY;
+		uint16_t sourceSlot = 0;
+		uint16_t quantity = 0;
+		Item* item = nullptr;
+	};
+
+	struct ParticipantState
+	{
+		uint32_t playerId = 0;
+		bool accepted = false;
+		uint32_t gold = 0;
+		std::array<std::optional<OfferedItem>, TRADE_SLOT_COUNT> items = {};
+	};
+
+	struct ItemRollback
+	{
+		Item* item = nullptr;
+		Thing* sourceParent = nullptr;
+		int32_t sourceIndex = INDEX_WHEREEVER;
+	};
+
+	struct GoldRollback
+	{
+		Player* source = nullptr;
+		Player* target = nullptr;
+		uint32_t amount = 0;
+	};
+
+	struct TradeSession
+	{
+		TradeManager& owner;
+		uint16_t id;
+		std::array<ParticipantState, 2> participants;
+		TradeSessionPhase phase = TradeSessionPhase::Editing;
+		uint8_t countdownSeconds = 0;
+		uint32_t countdownEvent = 0;
+		bool closed = false;
+		bool finalizing = false;
+
+		TradeSession(TradeManager& owner, uint16_t id, Player& first, Player& second);
+		~TradeSession();
+
+		bool hasPlayer(uint32_t playerId) const;
+		size_t participantIndex(uint32_t playerId) const;
+		ParticipantState* getParticipant(uint32_t playerId);
+		Player* getPlayer(size_t index) const;
+
+		void clearCountdown();
+		void scheduleCountdownTick();
+		void handleCountdownTick();
+		void finish(bool completed, const std::string& message, const std::string& cancelledBy);
+		void cancel(const std::string& message, const std::string& cancelledBy = {});
+		void resetAcceptances(bool returnToEditing);
+		const Item* getTradeItem(uint32_t viewerId, uint8_t side, uint8_t slot) const;
+		TradeParticipantSnapshot buildParticipantSnapshot(size_t index, bool includeSource) const;
+		TradeSnapshot buildSnapshot(uint32_t viewerId) const;
+		void sendState(uint8_t action);
+		uint32_t getOfferedAmount(const ParticipantState& participant, uint8_t container, uint16_t slot,
+		                          std::optional<uint16_t> excludeSlot = std::nullopt) const;
+		bool moveFromTrade(ParticipantState& participant, uint16_t fromSlot, uint8_t toContainer, uint16_t toSlot);
+		bool moveItem(uint32_t playerId, uint8_t fromContainer, uint16_t fromSlot, uint8_t toContainer, uint16_t toSlot,
+		              uint16_t count);
+		void setGold(uint32_t playerId, uint32_t amount);
+		void startCountdown();
+		bool testMoneyTransfer(Player* player, uint32_t amount) const;
+		bool rollbackItems(std::vector<ItemRollback>& rollbacks);
+		void rollbackGold(std::vector<GoldRollback>& rollbacks);
+		bool finalize();
+		void setAccepted(uint32_t playerId, bool accepted);
+		bool cancelIfTooFar();
+		bool handleItemChange(const Item* item);
+	};
+
+	Game& game;
+	uint16_t nextTradeId = 1;
+	std::unordered_map<uint16_t, std::unique_ptr<TradeSession>> sessions;
+	std::unordered_map<uint32_t, uint16_t> sessionByPlayer;
+	std::unordered_map<uint32_t, std::shared_ptr<PendingRequest>> pendingByRequester;
+	std::unordered_map<uint32_t, std::shared_ptr<PendingRequest>> pendingByTarget;
+
+	Player* resolveTarget(uint32_t targetId, const std::string& targetName) const;
+	bool isBusy(Player* player) const;
+	void sendInfo(Player* player, const std::string& message) const;
+	void sendError(Player* player, const std::string& message) const;
+	TradeSession* getSessionByPlayer(uint32_t playerId) const;
+	void removeSession(uint16_t id);
+	void clearPendingRequest(const std::shared_ptr<PendingRequest>& request);
+	void clearPendingForPlayer(Player* player);
+	void handleRequestTimeout(uint32_t requesterId);
+	uint16_t allocateTradeId();
+	bool createSession(Player* first, Player* second);
+};
+
+TradeManager::TradeSession::TradeSession(TradeManager& owner, uint16_t id, Player& first, Player& second) :
+    owner(owner), id(id)
+{
+	participants[0].playerId = first.getID();
+	participants[1].playerId = second.getID();
+	first.setTradeSessionId(id);
+	second.setTradeSessionId(id);
+	sendState(TRADE_START);
+}
+
+TradeManager::TradeSession::~TradeSession() { clearCountdown(); }
+
+bool TradeManager::TradeSession::hasPlayer(uint32_t playerId) const
+{
+	return participants[0].playerId == playerId || participants[1].playerId == playerId;
+}
+
+size_t TradeManager::TradeSession::participantIndex(uint32_t playerId) const
+{
+	return participants[0].playerId == playerId ? 0 : 1;
+}
+
+TradeManager::ParticipantState* TradeManager::TradeSession::getParticipant(uint32_t playerId)
+{
+	if (!hasPlayer(playerId)) {
+		return nullptr;
+	}
+	return &participants[participantIndex(playerId)];
+}
+
+Player* TradeManager::TradeSession::getPlayer(size_t index) const
+{
+	return owner.game.getPlayerByID(participants[index].playerId);
+}
+
+void TradeManager::TradeSession::clearCountdown()
+{
+	if (countdownEvent != 0) {
+		g_scheduler.stopEvent(countdownEvent);
+		countdownEvent = 0;
+	}
+}
+
+void TradeManager::TradeSession::scheduleCountdownTick()
+{
+	clearCountdown();
+	countdownEvent = g_scheduler.addEvent(createSchedulerTask(1000, [this]() { handleCountdownTick(); }));
+}
+
+void TradeManager::TradeSession::handleCountdownTick()
+{
+	countdownEvent = 0;
+	if (closed || phase != TradeSessionPhase::Countdown) {
+		return;
+	}
+
+	if (countdownSeconds > 1) {
+		--countdownSeconds;
+		sendState(TRADE_STATE_SYNC);
+		scheduleCountdownTick();
+		return;
+	}
+
+	phase = TradeSessionPhase::FinalConfirmation;
+	countdownSeconds = 0;
+	for (ParticipantState& participant : participants) {
+		participant.accepted = false;
+	}
+	sendState(TRADE_STATE_SYNC);
+}
+
+void TradeManager::TradeSession::finish(bool completed, const std::string& message, const std::string& cancelledBy)
+{
+	if (closed) {
+		return;
+	}
+
+	closed = true;
+	finalizing = false;
+	clearCountdown();
+
+	for (const ParticipantState& participant : participants) {
+		if (Player* player = owner.game.getPlayerByID(participant.playerId)) {
+			player->setTradeSessionId(0);
+			player->sendTradeSessionClose(completed, message, cancelledBy);
+		}
+	}
+
+	const uint16_t tradeId = id;
+	g_dispatcher.addTask([manager = &owner, tradeId]() { manager->removeSession(tradeId); });
+}
+
+void TradeManager::TradeSession::cancel(const std::string& message, const std::string& cancelledBy)
+{
+	finish(false, message, cancelledBy);
+}
+
+void TradeManager::TradeSession::resetAcceptances(bool returnToEditing)
+{
+	clearCountdown();
+	if (returnToEditing) {
+		phase = TradeSessionPhase::Editing;
+		countdownSeconds = 0;
+	}
+
+	for (ParticipantState& participant : participants) {
+		participant.accepted = false;
+	}
+}
+
+const Item* TradeManager::TradeSession::getTradeItem(uint32_t viewerId, uint8_t side, uint8_t slot) const
+{
+	if (!hasPlayer(viewerId) || !isValidTradeSlot(slot)) {
+		return nullptr;
+	}
+
+	const size_t selfIndex = participantIndex(viewerId);
+	const size_t resolvedIndex = side == TRADE_TOOLTIP_COUNTER ? (selfIndex == 0 ? 1 : 0) : selfIndex;
+	const auto& offer = participants[resolvedIndex].items[slot];
+	return offer ? offer->item : nullptr;
+}
+
+TradeParticipantSnapshot TradeManager::TradeSession::buildParticipantSnapshot(size_t index, bool includeSource) const
+{
+	TradeParticipantSnapshot snapshot;
+	snapshot.id = participants[index].playerId;
+	snapshot.accepted = participants[index].accepted;
+	snapshot.gold = participants[index].gold;
+
+	if (const Player* player = getPlayer(index)) {
+		snapshot.name = player->getName();
+	}
+
+	for (size_t slot = 0; slot < TRADE_SLOT_COUNT; ++slot) {
+		const auto& offer = participants[index].items[slot];
+		if (!offer) {
+			continue;
+		}
+
+		snapshot.items[slot].item = offer->item;
+		snapshot.items[slot].quantity = offer->quantity;
+		if (includeSource) {
+			snapshot.items[slot].sourceContainer = offer->sourceContainer;
+			snapshot.items[slot].sourceSlot = offer->sourceSlot;
+		}
+	}
+
+	return snapshot;
+}
+
+TradeSnapshot TradeManager::TradeSession::buildSnapshot(uint32_t viewerId) const
+{
+	const size_t selfIndex = participantIndex(viewerId);
+	const size_t counterIndex = selfIndex == 0 ? 1 : 0;
+
+	TradeSnapshot snapshot;
+	snapshot.tradeId = id;
+	snapshot.slotCount = TRADE_SLOT_COUNT;
+	snapshot.phase = phase;
+	snapshot.countdownSeconds = countdownSeconds;
+	snapshot.requiresFinalConfirmation = phase == TradeSessionPhase::FinalConfirmation;
+	snapshot.self = buildParticipantSnapshot(selfIndex, true);
+	snapshot.counter = buildParticipantSnapshot(counterIndex, false);
+	return snapshot;
+}
+
+void TradeManager::TradeSession::sendState(uint8_t action)
+{
+	for (const ParticipantState& participant : participants) {
+		if (Player* player = owner.game.getPlayerByID(participant.playerId)) {
+			player->sendTradeSessionUpdate(action, buildSnapshot(player->getID()));
+		}
+	}
+}
+
+uint32_t TradeManager::TradeSession::getOfferedAmount(const ParticipantState& participant, uint8_t container,
+                                                      uint16_t slot, std::optional<uint16_t> excludeSlot) const
+{
+	uint32_t amount = 0;
+	for (uint16_t tradeSlot = 0; tradeSlot < TRADE_SLOT_COUNT; ++tradeSlot) {
+		if (excludeSlot && *excludeSlot == tradeSlot) {
+			continue;
+		}
+
+		const auto& offer = participant.items[tradeSlot];
+		if (!offer) {
+			continue;
+		}
+
+		if (offer->sourceContainer == container && offer->sourceSlot == slot) {
+			amount += offer->quantity;
+		}
+	}
+	return amount;
+}
+
+bool TradeManager::TradeSession::moveFromTrade(ParticipantState& participant, uint16_t fromSlot, uint8_t toContainer,
+                                               uint16_t toSlot)
+{
+	if (!isValidTradeSlot(fromSlot) || !participant.items[fromSlot]) {
+		return false;
+	}
+
+	if (toContainer == TRADE_CONTAINER_TRADE && isValidTradeSlot(toSlot)) {
+		if (fromSlot == toSlot) {
+			return true;
+		}
+
+		std::swap(participant.items[fromSlot], participant.items[toSlot]);
+	} else {
+		participant.items[fromSlot].reset();
+	}
+
+	resetAcceptances(true);
+	sendState(TRADE_STATE_SYNC);
+	return true;
+}
+
+bool TradeManager::TradeSession::moveItem(uint32_t playerId, uint8_t fromContainer, uint16_t fromSlot,
+                                          uint8_t toContainer, uint16_t toSlot, uint16_t count)
+{
+	if (closed || finalizing) {
+		return false;
+	}
+
+	Player* player = owner.game.getPlayerByID(playerId);
+	ParticipantState* participant = getParticipant(playerId);
+	if (!player || !participant) {
+		return false;
+	}
+
+	if (fromContainer == TRADE_CONTAINER_TRADE) {
+		return moveFromTrade(*participant, fromSlot, toContainer, toSlot);
+	}
+
+	if (toContainer != TRADE_CONTAINER_TRADE) {
+		player->sendTradeSessionMessage(TRADE_ERROR, "Invalid trade move.");
+		return false;
+	}
+
+	if (!isSourceContainer(fromContainer)) {
+		player->sendTradeSessionMessage(TRADE_ERROR, "You can only offer items from the main container or equipment.");
+		return false;
+	}
+
+	if (!isValidTradeSlot(toSlot)) {
+		player->sendTradeSessionMessage(TRADE_ERROR, "Invalid trade slot.");
+		return false;
+	}
+
+	Item* sourceItem = resolveSourceItem(player, fromContainer, fromSlot);
+	if (!sourceItem) {
+		player->sendTradeSessionMessage(TRADE_ERROR, "Item not found.");
+		return false;
+	}
+
+	if (!canTradeItem(sourceItem)) {
+		player->sendTradeSessionMessage(TRADE_ERROR, "This item cannot be traded.");
+		return false;
+	}
+
+	for (uint16_t slot = 0; slot < TRADE_SLOT_COUNT; ++slot) {
+		if (slot == toSlot) {
+			continue;
+		}
+
+		const auto& existing = participant->items[slot];
+		if (!existing || existing->item == sourceItem) {
+			continue;
+		}
+
+		if (isSameOrNested(existing->item, sourceItem)) {
+			player->sendTradeSessionMessage(TRADE_ERROR, "Nested items cannot be offered together.");
+			return false;
+		}
+	}
+
+	const bool stackable = sourceItem->isStackable();
+	const uint32_t alreadyOffered = getOfferedAmount(*participant, fromContainer, fromSlot, toSlot);
+	if (!stackable && alreadyOffered > 0) {
+		player->sendTradeSessionMessage(TRADE_ERROR, "This item is already offered.");
+		return false;
+	}
+
+	const uint32_t sourceAmount = std::max<uint16_t>(1, sourceItem->getItemCount());
+	if (alreadyOffered >= sourceAmount) {
+		player->sendTradeSessionMessage(TRADE_ERROR, "No quantity is available to offer.");
+		return false;
+	}
+
+	const uint16_t requestedQuantity = std::max<uint16_t>(1, count);
+	const uint16_t quantity =
+	    stackable ? static_cast<uint16_t>(std::min<uint32_t>(requestedQuantity, sourceAmount - alreadyOffered)) : 1;
+	if (quantity == 0) {
+		player->sendTradeSessionMessage(TRADE_ERROR, "Invalid quantity.");
+		return false;
+	}
+
+	participant->items[toSlot] = OfferedItem{fromContainer, fromSlot, quantity, sourceItem};
+	resetAcceptances(true);
+	sendState(TRADE_STATE_SYNC);
+	return true;
+}
+
+void TradeManager::TradeSession::setGold(uint32_t playerId, uint32_t amount)
+{
+	if (closed || finalizing) {
+		return;
+	}
+
+	Player* player = owner.game.getPlayerByID(playerId);
+	ParticipantState* participant = getParticipant(playerId);
+	if (!player || !participant) {
+		return;
+	}
+
+	participant->gold = std::min<uint64_t>(std::min<uint64_t>(amount, TRADE_MAX_GOLD), player->getMoney());
+	resetAcceptances(true);
+	sendState(TRADE_STATE_SYNC);
+}
+
+void TradeManager::TradeSession::startCountdown()
+{
+	phase = TradeSessionPhase::Countdown;
+	countdownSeconds = TRADE_COUNTDOWN_SECONDS;
+	sendState(TRADE_STATE_SYNC);
+	scheduleCountdownTick();
+}
+
+bool TradeManager::TradeSession::testMoneyTransfer(Player* player, uint32_t amount) const
+{
+	if (!player || amount == 0) {
+		return true;
+	}
+
+	uint64_t remaining = amount;
+	for (const auto& entry : Item::items.currencyItems) {
+		const uint64_t worth = entry.first;
+		uint32_t coinCount = remaining / worth;
+		if (coinCount == 0) {
+			continue;
+		}
+
+		remaining -= static_cast<uint64_t>(coinCount) * worth;
+		while (coinCount > 0) {
+			const uint16_t stackCount = std::min<uint32_t>(ITEM_STACK_SIZE, coinCount);
+			Item* probe = Item::CreateItem(entry.second, stackCount);
+			const ReturnValue ret = owner.game.internalAddItem(player, probe, INDEX_WHEREEVER, 0, true);
+			owner.game.ReleaseItem(probe);
+			if (ret != RETURNVALUE_NOERROR) {
+				return false;
+			}
+
+			coinCount -= stackCount;
+		}
+	}
+
+	return remaining == 0;
+}
+
+bool TradeManager::TradeSession::rollbackItems(std::vector<ItemRollback>& rollbacks)
+{
+	bool success = true;
+	for (auto it = rollbacks.rbegin(); it != rollbacks.rend(); ++it) {
+		if (!it->item || it->item->isRemoved()) {
+			continue;
+		}
+
+		Thing* currentParent = it->item->getParent();
+		if (!currentParent || !it->sourceParent) {
+			success = false;
+			continue;
+		}
+
+		const ReturnValue ret = owner.game.internalMoveItem(currentParent, it->sourceParent, it->sourceIndex, it->item,
+		                                                    it->item->getItemCount(), nullptr, 0);
+		if (ret != RETURNVALUE_NOERROR) {
+			success = false;
+		}
+	}
+
+	rollbacks.clear();
+	return success;
+}
+
+void TradeManager::TradeSession::rollbackGold(std::vector<GoldRollback>& rollbacks)
+{
+	for (auto it = rollbacks.rbegin(); it != rollbacks.rend(); ++it) {
+		if (!it->source || !it->target || it->amount == 0) {
+			continue;
+		}
+
+		if (owner.game.removeMoney(it->target, it->amount)) {
+			owner.game.addMoney(it->source, it->amount);
+		}
+	}
+
+	rollbacks.clear();
+}
+
+bool TradeManager::TradeSession::finalize()
+{
+	Player* first = getPlayer(0);
+	Player* second = getPlayer(1);
+	if (!first || !second) {
+		cancel("Trade partner disconnected.");
+		return false;
+	}
+
+	if (getTradeDistance(first, second) > TRADE_FINAL_DISTANCE ||
+	    !owner.game.canThrowObjectTo(first->getPosition(), second->getPosition(), true, true)) {
+		cancel("Trade cancelled: players are too far away.");
+		return false;
+	}
+
+	for (ParticipantState& participant : participants) {
+		Player* player = owner.game.getPlayerByID(participant.playerId);
+		if (!player) {
+			cancel("Trade partner disconnected.");
+			return false;
+		}
+
+		std::unordered_map<Item*, uint32_t> offeredByItem;
+		std::vector<Item*> uniqueItems;
+
+		for (const auto& offer : participant.items) {
+			if (!offer) {
+				continue;
+			}
+
+			Item* sourceItem = resolveSourceItem(player, offer->sourceContainer, offer->sourceSlot);
+			if (sourceItem != offer->item || !canTradeItem(sourceItem)) {
+				cancel("Trade validation failed. Review the offers and try again.");
+				return false;
+			}
+
+			for (Item* existing : uniqueItems) {
+				if (existing != sourceItem && isSameOrNested(existing, sourceItem)) {
+					cancel("Trade validation failed. Review the offers and try again.");
+					return false;
+				}
+			}
+
+			if (offeredByItem.find(sourceItem) == offeredByItem.end()) {
+				uniqueItems.push_back(sourceItem);
+			}
+
+			offeredByItem[sourceItem] += offer->quantity;
+			if ((!sourceItem->isStackable() && offeredByItem[sourceItem] > 1) ||
+			    offeredByItem[sourceItem] > sourceItem->getItemCount()) {
+				cancel("Trade validation failed. Review the offers and try again.");
+				return false;
+			}
+		}
+
+		if (participant.gold > player->getMoney()) {
+			cancel("Trade validation failed. Review the offers and try again.");
+			return false;
+		}
+	}
+
+	finalizing = true;
+
+	std::vector<ItemRollback> itemRollbacks;
+	std::vector<GoldRollback> goldRollbacks;
+
+	for (size_t index = 0; index < participants.size(); ++index) {
+		Player* sourcePlayer = getPlayer(index);
+		Player* targetPlayer = getPlayer(index == 0 ? 1 : 0);
+		if (!sourcePlayer || !targetPlayer) {
+			finalizing = false;
+			rollbackGold(goldRollbacks);
+			rollbackItems(itemRollbacks);
+			cancel("Trade partner disconnected.");
+			return false;
+		}
+
+		for (const auto& offer : participants[index].items) {
+			if (!offer) {
+				continue;
+			}
+
+			if (!offer->item || !offer->item->getParent()) {
+				finalizing = false;
+				rollbackGold(goldRollbacks);
+				rollbackItems(itemRollbacks);
+				cancel("Trade validation failed. Review the offers and try again.");
+				return false;
+			}
+
+			Thing* sourceParent = offer->item->getParent();
+			const int32_t sourceIndex = sourceParent->getThingIndex(offer->item);
+			if (sourceIndex == -1) {
+				finalizing = false;
+				rollbackGold(goldRollbacks);
+				rollbackItems(itemRollbacks);
+				cancel("Trade validation failed. Review the offers and try again.");
+				return false;
+			}
+
+			Item* movedItem = nullptr;
+			const ReturnValue ret =
+			    owner.game.internalMoveItem(sourceParent, targetPlayer, INDEX_WHEREEVER, offer->item, offer->quantity,
+			                                &movedItem, FLAG_IGNOREAUTOSTACK);
+			if (ret != RETURNVALUE_NOERROR) {
+				finalizing = false;
+				rollbackGold(goldRollbacks);
+				rollbackItems(itemRollbacks);
+				cancel(Game::getTradeErrorDescription(ret, offer->item));
+				return false;
+			}
+
+			itemRollbacks.push_back(ItemRollback{movedItem, sourceParent, sourceIndex});
+		}
+	}
+
+	for (size_t index = 0; index < participants.size(); ++index) {
+		Player* sourcePlayer = getPlayer(index);
+		Player* targetPlayer = getPlayer(index == 0 ? 1 : 0);
+		const uint32_t gold = participants[index].gold;
+		if (!sourcePlayer || !targetPlayer || gold == 0) {
+			continue;
+		}
+
+		if (!testMoneyTransfer(targetPlayer, gold)) {
+			finalizing = false;
+			rollbackGold(goldRollbacks);
+			rollbackItems(itemRollbacks);
+			cancel("Trade could not be completed: not enough room for gold.");
+			return false;
+		}
+
+		if (!owner.game.removeMoney(sourcePlayer, gold)) {
+			finalizing = false;
+			rollbackGold(goldRollbacks);
+			rollbackItems(itemRollbacks);
+			cancel("Trade validation failed. Review the offers and try again.");
+			return false;
+		}
+
+		owner.game.addMoney(targetPlayer, gold);
+		goldRollbacks.push_back(GoldRollback{sourcePlayer, targetPlayer, gold});
+	}
+
+	first->sendResourceBalance(RESOURCE_GOLD_EQUIPPED, first->getMoney());
+	second->sendResourceBalance(RESOURCE_GOLD_EQUIPPED, second->getMoney());
+
+	finish(true, "Trade completed.", {});
+	return true;
+}
+
+void TradeManager::TradeSession::setAccepted(uint32_t playerId, bool accepted)
+{
+	if (closed || finalizing) {
+		return;
+	}
+
+	ParticipantState* participant = getParticipant(playerId);
+	if (!participant) {
+		return;
+	}
+
+	if (phase == TradeSessionPhase::Countdown && !accepted) {
+		participant->accepted = false;
+		resetAcceptances(true);
+		sendState(TRADE_STATE_SYNC);
+		return;
+	}
+
+	if (participant->accepted == accepted) {
+		return;
+	}
+
+	participant->accepted = accepted;
+	sendState(TRADE_STATE_SYNC);
+
+	if (!(participants[0].accepted && participants[1].accepted)) {
+		return;
+	}
+
+	if (phase == TradeSessionPhase::Editing) {
+		startCountdown();
+		return;
+	}
+
+	if (phase == TradeSessionPhase::FinalConfirmation) {
+		finalize();
+	}
+}
+
+bool TradeManager::TradeSession::cancelIfTooFar()
+{
+	if (closed || finalizing) {
+		return false;
+	}
+
+	Player* first = getPlayer(0);
+	Player* second = getPlayer(1);
+	if (!first || !second) {
+		cancel("Trade partner disconnected.");
+		return true;
+	}
+
+	if (getTradeDistance(first, second) > TRADE_KEEPALIVE_DISTANCE) {
+		cancel("Trade cancelled: players are too far away.");
+		return true;
+	}
+
+	return false;
+}
+
+bool TradeManager::TradeSession::handleItemChange(const Item* item)
+{
+	if (closed || finalizing || !item) {
+		return false;
+	}
+
+	for (const ParticipantState& participant : participants) {
+		for (const auto& offer : participant.items) {
+			if (!offer) {
+				continue;
+			}
+
+			if (!offer->item || offer->item->isRemoved()) {
+				cancel("Trade validation failed. Review the offers and try again.");
+				return true;
+			}
+
+			if (offer->item == item && offer->item->isStackable() && offer->item->getItemCount() < offer->quantity) {
+				cancel("Trade validation failed. Review the offers and try again.");
+				return true;
+			}
+
+			if (isSameOrNested(offer->item, item)) {
+				cancel("Trade validation failed. Review the offers and try again.");
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+Player* TradeManager::resolveTarget(uint32_t targetId, const std::string& targetName) const
+{
+	if (targetId != 0) {
+		if (Player* player = game.getPlayerByID(targetId)) {
+			return player;
+		}
+	}
+
+	if (!targetName.empty()) {
+		return game.getPlayerByName(targetName);
+	}
+
+	return nullptr;
+}
+
+bool TradeManager::isBusy(Player* player) const
+{
+	return player && (player->hasClassicTrade() || hasSession(player));
+}
+
+void TradeManager::sendInfo(Player* player, const std::string& message) const
+{
+	if (player) {
+		player->sendTradeSessionMessage(TRADE_INFO, message);
+	}
+}
+
+void TradeManager::sendError(Player* player, const std::string& message) const
+{
+	if (player) {
+		player->sendTradeSessionMessage(TRADE_ERROR, message);
+	}
+}
+
+TradeManager::TradeSession* TradeManager::getSessionByPlayer(uint32_t playerId) const
+{
+	const auto it = sessionByPlayer.find(playerId);
+	if (it == sessionByPlayer.end()) {
+		return nullptr;
+	}
+
+	const auto sessionIt = sessions.find(it->second);
+	return sessionIt != sessions.end() ? sessionIt->second.get() : nullptr;
+}
+
+bool TradeManager::hasSession(const Player* player) const
+{
+	return player && sessionByPlayer.find(player->getID()) != sessionByPlayer.end();
+}
+
+void TradeManager::removeSession(uint16_t id)
+{
+	auto it = sessions.find(id);
+	if (it == sessions.end()) {
+		return;
+	}
+
+	for (const auto& participant : it->second->participants) {
+		sessionByPlayer.erase(participant.playerId);
+
+		if (Player* player = game.getPlayerByID(participant.playerId)) {
+			if (player->getTradeSessionId() == id) {
+				player->setTradeSessionId(0);
+			}
+		}
+	}
+
+	sessions.erase(it);
+}
+
+void TradeManager::clearPendingRequest(const std::shared_ptr<PendingRequest>& request)
+{
+	if (!request) {
+		return;
+	}
+
+	if (request->eventId != 0) {
+		g_scheduler.stopEvent(request->eventId);
+		request->eventId = 0;
+	}
+
+	auto requesterIt = pendingByRequester.find(request->requesterId);
+	if (requesterIt != pendingByRequester.end() && requesterIt->second == request) {
+		pendingByRequester.erase(requesterIt);
+	}
+
+	auto targetIt = pendingByTarget.find(request->targetId);
+	if (targetIt != pendingByTarget.end() && targetIt->second == request) {
+		pendingByTarget.erase(targetIt);
+	}
+}
+
+void TradeManager::clearPendingForPlayer(Player* player)
+{
+	if (!player) {
+		return;
+	}
+
+	const auto outgoing = pendingByRequester.find(player->getID());
+	if (outgoing != pendingByRequester.end()) {
+		const auto request = outgoing->second;
+		clearPendingRequest(request);
+		if (Player* target = game.getPlayerByID(request->targetId)) {
+			target->sendTradeSessionTimeout(player->getName());
+		}
+	}
+
+	const auto incoming = pendingByTarget.find(player->getID());
+	if (incoming != pendingByTarget.end()) {
+		const auto request = incoming->second;
+		clearPendingRequest(request);
+		if (Player* requester = game.getPlayerByID(request->requesterId)) {
+			requester->sendTradeSessionTimeout(player->getName());
+		}
+	}
+}
+
+void TradeManager::handleRequestTimeout(uint32_t requesterId)
+{
+	const auto it = pendingByRequester.find(requesterId);
+	if (it == pendingByRequester.end()) {
+		return;
+	}
+
+	const auto request = it->second;
+	clearPendingRequest(request);
+
+	if (Player* requester = game.getPlayerByID(request->requesterId)) {
+		requester->sendTradeSessionTimeout(request->targetName);
+	}
+
+	if (Player* target = game.getPlayerByID(request->targetId)) {
+		target->sendTradeSessionTimeout(request->requesterName);
+	}
+}
+
+uint16_t TradeManager::allocateTradeId()
+{
+	for (size_t attempts = 0; attempts < std::numeric_limits<uint16_t>::max(); ++attempts) {
+		if (nextTradeId == 0) {
+			nextTradeId = 1;
+		}
+
+		const uint16_t candidate = nextTradeId++;
+		if (sessions.find(candidate) == sessions.end()) {
+			return candidate;
+		}
+	}
+
+	return 0;
+}
+
+bool TradeManager::createSession(Player* first, Player* second)
+{
+	if (!first || !second || isBusy(first) || isBusy(second)) {
+		return false;
+	}
+
+	const uint16_t tradeId = allocateTradeId();
+	if (tradeId == 0) {
+		return false;
+	}
+
+	auto session = std::make_unique<TradeSession>(*this, tradeId, *first, *second);
+	sessionByPlayer[first->getID()] = tradeId;
+	sessionByPlayer[second->getID()] = tradeId;
+	sessions.emplace(tradeId, std::move(session));
+	return true;
+}
+
+void TradeManager::requestTrade(Player* requester, uint32_t targetId, const std::string& targetName)
+{
+	if (!requester) {
+		return;
+	}
+
+	Player* target = resolveTarget(targetId, targetName);
+	if (!target || target == requester) {
+		sendError(requester, "Select a valid player to trade with.");
+		return;
+	}
+
+	if (isBusy(requester)) {
+		sendError(requester, "You are already trading.");
+		return;
+	}
+
+	if (isBusy(target)) {
+		sendError(requester, fmt::format("{:s} is already trading.", target->getName()));
+		return;
+	}
+
+	if (getTradeDistance(requester, target) > TRADE_REQUEST_DISTANCE) {
+		sendError(requester, fmt::format("{:s} is too far away to trade.", target->getName()));
+		return;
+	}
+
+	const auto reverseIt = pendingByTarget.find(requester->getID());
+	if (reverseIt != pendingByTarget.end() && reverseIt->second->requesterId == target->getID()) {
+		clearPendingRequest(reverseIt->second);
+		if (!createSession(target, requester)) {
+			sendError(requester, "Unable to start trade right now.");
+		}
+		return;
+	}
+
+	if (pendingByRequester.find(requester->getID()) != pendingByRequester.end()) {
+		sendError(requester, "You already have a pending trade request.");
+		return;
+	}
+
+	if (pendingByTarget.find(target->getID()) != pendingByTarget.end()) {
+		sendError(requester, fmt::format("{:s} already has a pending trade request.", target->getName()));
+		return;
+	}
+
+	auto request = std::make_shared<PendingRequest>();
+	request->requesterId = requester->getID();
+	request->targetId = target->getID();
+	request->requesterName = requester->getName();
+	request->targetName = target->getName();
+	request->eventId =
+	    g_scheduler.addEvent(createSchedulerTask(TRADE_REQUEST_TIMEOUT_MS, [this, requesterId = requester->getID()]() {
+		    handleRequestTimeout(requesterId);
+	    }));
+
+	pendingByRequester[requester->getID()] = request;
+	pendingByTarget[target->getID()] = request;
+
+	sendInfo(requester, fmt::format("Trade request sent to {:s}.", target->getName()));
+	target->sendTradeSessionRequest(requester->getName());
+}
+
+void TradeManager::respondToTradeRequest(Player* responder, const std::string& requesterName, bool accept)
+{
+	if (!responder) {
+		return;
+	}
+
+	const auto it = pendingByTarget.find(responder->getID());
+	if (it == pendingByTarget.end()) {
+		sendError(responder, "You have no pending trade requests.");
+		return;
+	}
+
+	const auto request = it->second;
+	Player* requester = game.getPlayerByID(request->requesterId);
+	if (!requester) {
+		clearPendingRequest(request);
+		sendError(responder, "The trade requester is no longer online.");
+		return;
+	}
+
+	if (!requesterName.empty() && normalizeTradeName(requester->getName()) != normalizeTradeName(requesterName)) {
+		sendError(responder, "Trade request mismatch.");
+		return;
+	}
+
+	clearPendingRequest(request);
+
+	if (!accept) {
+		sendInfo(responder, fmt::format("You declined {:s}'s trade request.", requester->getName()));
+		sendInfo(requester, fmt::format("{:s} declined your trade request.", responder->getName()));
+		return;
+	}
+
+	if (isBusy(responder)) {
+		sendError(responder, "You are already trading.");
+		return;
+	}
+
+	if (isBusy(requester)) {
+		sendError(responder, fmt::format("{:s} is already trading.", requester->getName()));
+		sendError(requester, "You are already trading.");
+		return;
+	}
+
+	if (getTradeDistance(requester, responder) > TRADE_REQUEST_DISTANCE) {
+		sendError(responder, fmt::format("{:s} is too far away to trade.", requester->getName()));
+		sendError(requester, fmt::format("{:s} is too far away to trade.", responder->getName()));
+		return;
+	}
+
+	if (!createSession(requester, responder)) {
+		sendError(responder, "Unable to start trade right now.");
+		sendError(requester, "Unable to start trade right now.");
+		return;
+	}
+
+	sendInfo(requester, fmt::format("{:s} accepted your trade request.", responder->getName()));
+	sendInfo(responder, fmt::format("Trade started with {:s}.", requester->getName()));
+}
+
+void TradeManager::moveItem(Player* player, uint8_t fromContainer, uint16_t fromSlot, uint8_t toContainer,
+                            uint16_t toSlot, uint16_t count)
+{
+	if (!player) {
+		return;
+	}
+
+	TradeSession* session = getSessionByPlayer(player->getID());
+	if (!session) {
+		sendError(player, "You are not currently trading.");
+		return;
+	}
+
+	session->moveItem(player->getID(), fromContainer, fromSlot, toContainer, toSlot, count);
+}
+
+void TradeManager::setGold(Player* player, uint32_t amount)
+{
+	if (!player) {
+		return;
+	}
+
+	TradeSession* session = getSessionByPlayer(player->getID());
+	if (!session) {
+		sendError(player, "You are not currently trading.");
+		return;
+	}
+
+	session->setGold(player->getID(), amount);
+}
+
+void TradeManager::setAccepted(Player* player, bool accepted)
+{
+	if (!player) {
+		return;
+	}
+
+	TradeSession* session = getSessionByPlayer(player->getID());
+	if (!session) {
+		sendError(player, "You are not currently trading.");
+		return;
+	}
+
+	session->setAccepted(player->getID(), accepted);
+}
+
+void TradeManager::cancelTrade(Player* player, const std::string& message)
+{
+	if (!player) {
+		return;
+	}
+
+	TradeSession* session = getSessionByPlayer(player->getID());
+	if (!session) {
+		sendError(player, "You are not currently trading.");
+		return;
+	}
+
+	session->cancel(message, player->getName());
+}
+
+void TradeManager::handlePlayerMove(Player* player)
+{
+	if (!player) {
+		return;
+	}
+
+	if (TradeSession* session = getSessionByPlayer(player->getID())) {
+		session->cancelIfTooFar();
+	}
+}
+
+void TradeManager::handlePlayerExit(Player* player)
+{
+	if (!player) {
+		return;
+	}
+
+	if (TradeSession* session = getSessionByPlayer(player->getID())) {
+		session->cancel("Trade partner disconnected.", player->getName());
+	}
+
+	clearPendingForPlayer(player);
+}
+
+void TradeManager::handleItemChange(Player* player, const Item* item)
+{
+	if (!player || !item) {
+		return;
+	}
+
+	if (TradeSession* session = getSessionByPlayer(player->getID())) {
+		session->handleItemChange(item);
+	}
+}
+
+const Item* TradeManager::getTradeItem(const Player* viewer, uint16_t tradeId, uint8_t side, uint8_t slot) const
+{
+	if (!viewer) {
+		return nullptr;
+	}
+
+	const auto sessionIt = sessions.find(tradeId);
+	if (sessionIt == sessions.end()) {
+		return nullptr;
+	}
+
+	return sessionIt->second->getTradeItem(viewer->getID(), side, slot);
+}
+
 Game::Game()
 {
+	tradeManager = std::make_unique<TradeManager>(*this);
 	offlineTrainingWindow.defaultEnterButton = 0;
 	offlineTrainingWindow.defaultEscapeButton = 1;
 	offlineTrainingWindow.choices.emplace_back("Sword Fighting and Shielding", SKILL_SWORD);
@@ -62,6 +1371,8 @@ Game::Game()
 	offlineTrainingWindow.buttons.emplace_back("Cancel", offlineTrainingWindow.defaultEscapeButton);
 	offlineTrainingWindow.priority = true;
 }
+
+Game::~Game() = default;
 
 void Game::start(ServiceManager* manager)
 {
@@ -76,6 +1387,16 @@ void Game::start(ServiceManager* manager)
 GameState_t Game::getGameState() const { return gameState; }
 
 void Game::setWorldType(WorldType_t type) { worldType = type; }
+
+const Item* Game::getTradeSessionItem(const Player* viewer, uint16_t tradeId, uint8_t side, uint8_t slot) const
+{
+	return tradeManager ? tradeManager->getTradeItem(viewer, tradeId, side, slot) : nullptr;
+}
+
+bool Game::hasTradeSession(const Player* player) const
+{
+	return tradeManager && tradeManager->hasSession(player);
+}
 
 void Game::setGameState(GameState_t newState)
 {
@@ -183,6 +1504,10 @@ void Game::loadMap(const std::string& path, bool isCalledByLua) { map.loadMap(pa
 
 Thing* Game::internalGetThing(Player* player, const Position& pos) const
 {
+	if (pos.x == 0xFFFE) {
+		return const_cast<Item*>(getTradeSessionItem(player, pos.y, pos.z, 0));
+	}
+
 	if (pos.x != 0xFFFF) {
 		return map.getTile(pos);
 	}
@@ -200,6 +1525,10 @@ Thing* Game::internalGetThing(Player* player, const Position& pos) const
 Thing* Game::internalGetThing(Player* player, const Position& pos, int32_t index, uint32_t spriteId,
                               stackPosType_t type) const
 {
+	if (pos.x == 0xFFFE) {
+		return const_cast<Item*>(getTradeSessionItem(player, pos.y, pos.z, index));
+	}
+
 	if (pos.x != 0xFFFF) {
 		Tile* tile = map.getTile(pos);
 		if (!tile) {
@@ -2665,6 +3994,16 @@ void Game::playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t st
 		return;
 	}
 
+	if (hasTradeSession(player)) {
+		player->sendCancelMessage(RETURNVALUE_YOUAREALREADYTRADING);
+		return;
+	}
+
+	if (hasTradeSession(tradePartner)) {
+		player->sendCancelMessage(RETURNVALUE_THISPLAYERISALREADYTRADING);
+		return;
+	}
+
 	if (!tradePartner->getPosition().isInRange(player->getPosition(), 2, 2, 0)) {
 		player->sendCancelMessage(RETURNVALUE_DESTINATIONOUTOFREACH);
 		return;
@@ -2770,6 +4109,88 @@ void Game::playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t st
 	}
 
 	internalStartTrade(player, tradePartner, tradeItem);
+}
+
+void Game::playerRequestTradeSession(uint32_t playerId, uint32_t tradePlayerId, const std::string& tradePlayerName)
+{
+	Player* player = getPlayerByID(playerId);
+	if (!player || !tradeManager) {
+		return;
+	}
+
+	tradeManager->requestTrade(player, tradePlayerId, tradePlayerName);
+}
+
+void Game::playerRespondTradeSession(uint32_t playerId, const std::string& requesterName, bool accept)
+{
+	Player* player = getPlayerByID(playerId);
+	if (!player || !tradeManager) {
+		return;
+	}
+
+	tradeManager->respondToTradeRequest(player, requesterName, accept);
+}
+
+void Game::playerMoveTradeSessionItem(uint32_t playerId, uint8_t fromContainer, uint16_t fromSlot, uint8_t toContainer,
+                                      uint16_t toSlot, uint16_t count)
+{
+	Player* player = getPlayerByID(playerId);
+	if (!player || !tradeManager) {
+		return;
+	}
+
+	tradeManager->moveItem(player, fromContainer, fromSlot, toContainer, toSlot, count);
+}
+
+void Game::playerSetTradeSessionGold(uint32_t playerId, uint32_t amount)
+{
+	Player* player = getPlayerByID(playerId);
+	if (!player || !tradeManager) {
+		return;
+	}
+
+	tradeManager->setGold(player, amount);
+}
+
+void Game::playerSetTradeSessionAccepted(uint32_t playerId, bool accepted)
+{
+	Player* player = getPlayerByID(playerId);
+	if (!player || !tradeManager) {
+		return;
+	}
+
+	tradeManager->setAccepted(player, accepted);
+}
+
+void Game::playerCancelTradeSession(uint32_t playerId, const std::string& message)
+{
+	Player* player = getPlayerByID(playerId);
+	if (!player || !tradeManager) {
+		return;
+	}
+
+	tradeManager->cancelTrade(player, message);
+}
+
+void Game::playerTradeSessionMoved(Player* player)
+{
+	if (player && tradeManager) {
+		tradeManager->handlePlayerMove(player);
+	}
+}
+
+void Game::playerTradeSessionExited(Player* player)
+{
+	if (player && tradeManager) {
+		tradeManager->handlePlayerExit(player);
+	}
+}
+
+void Game::playerTradeSessionItemChanged(Player* player, const Item* item)
+{
+	if (player && tradeManager && item) {
+		tradeManager->handleItemChange(player, item);
+	}
 }
 
 bool Game::internalStartTrade(Player* player, Player* tradePartner, Item* tradeItem)

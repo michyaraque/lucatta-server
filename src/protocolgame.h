@@ -15,6 +15,7 @@ class NetworkMessage;
 class Player;
 class ProtocolGame;
 class Tile;
+struct TradeSnapshot;
 
 enum SessionEndTypes_t : uint8_t
 {
@@ -132,6 +133,7 @@ private:
 	// trade methods
 	void parseRequestTrade(NetworkMessage& msg);
 	void parseLookInTrade(NetworkMessage& msg);
+	void parseTradeSession(NetworkMessage& msg);
 
 	// market methods
 	void parseMarketLeave();
@@ -210,6 +212,11 @@ private:
 	void sendMarketBrowseOwnHistory(const HistoryMarketOfferList& buyOffers, const HistoryMarketOfferList& sellOffers);
 	void sendTradeItemRequest(const std::string& traderName, const Item* item, bool ack);
 	void sendCloseTrade();
+	void sendTradeSessionRequest(const std::string& fromName);
+	void sendTradeSessionMessage(uint8_t action, const std::string& message);
+	void sendTradeSessionUpdate(uint8_t action, const TradeSnapshot& snapshot);
+	void sendTradeSessionTimeout(const std::string& name);
+	void sendTradeSessionClose(bool isCompleted, const std::string& message, const std::string& cancelledBy);
 
 	void sendTextWindow(uint32_t windowTextId, Item* item, uint16_t maxlen, bool canWrite);
 	void sendTextWindow(uint32_t windowTextId, uint32_t itemId, const std::string& text);

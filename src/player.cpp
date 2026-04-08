@@ -1118,6 +1118,10 @@ void Player::onUpdateTileItem(const Tile* tile, const Position& pos, const Item*
 			g_game.internalCloseTrade(this);
 		}
 	}
+
+	if (oldItem) {
+		g_game.playerTradeSessionItemChanged(this, oldItem);
+	}
 }
 
 void Player::onRemoveTileItem(const Tile* tile, const Position& pos, const ItemType& iType, const Item* item)
@@ -1133,6 +1137,10 @@ void Player::onRemoveTileItem(const Tile* tile, const Position& pos, const ItemT
 				g_game.internalCloseTrade(this);
 			}
 		}
+	}
+
+	if (item) {
+		g_game.playerTradeSessionItemChanged(this, item);
 	}
 }
 
@@ -1319,6 +1327,8 @@ void Player::onRemoveCreature(Creature* creature, bool isLogout)
 			g_game.internalCloseTrade(this);
 		}
 
+		g_game.playerTradeSessionExited(this);
+
 		closeShopWindow();
 
 		clearPartyInvitations();
@@ -1417,6 +1427,8 @@ void Player::onCreatureMove(Creature* creature, const Tile* newTile, const Posit
 		}
 	}
 
+	g_game.playerTradeSessionMoved(this);
+
 	// close modal windows
 	if (!modalWindows.empty()) {
 		// TODO: This shouldn't be hard-coded
@@ -1449,7 +1461,13 @@ void Player::onCreatureMove(Creature* creature, const Tile* newTile, const Posit
 }
 
 // container
-void Player::onAddContainerItem(const Item* item) { checkTradeState(item); }
+void Player::onAddContainerItem(const Item* item)
+{
+	checkTradeState(item);
+	if (item) {
+		g_game.playerTradeSessionItemChanged(this, item);
+	}
+}
 
 void Player::onUpdateContainerItem(const Container* container, const Item* oldItem, const Item* newItem)
 {
@@ -1459,6 +1477,13 @@ void Player::onUpdateContainerItem(const Container* container, const Item* oldIt
 
 	if (tradeState != TRADE_TRANSFER) {
 		checkTradeState(oldItem);
+	}
+
+	if (oldItem) {
+		g_game.playerTradeSessionItemChanged(this, oldItem);
+	}
+	if (newItem) {
+		g_game.playerTradeSessionItemChanged(this, newItem);
 	}
 }
 
@@ -1472,6 +1497,10 @@ void Player::onRemoveContainerItem(const Container* container, const Item* item)
 				g_game.internalCloseTrade(this);
 			}
 		}
+	}
+
+	if (item) {
+		g_game.playerTradeSessionItemChanged(this, item);
 	}
 }
 
@@ -1512,6 +1541,13 @@ void Player::onUpdateInventoryItem(Item* oldItem, Item* newItem)
 	if (tradeState != TRADE_TRANSFER) {
 		checkTradeState(oldItem);
 	}
+
+	if (oldItem) {
+		g_game.playerTradeSessionItemChanged(this, oldItem);
+	}
+	if (newItem) {
+		g_game.playerTradeSessionItemChanged(this, newItem);
+	}
 }
 
 void Player::onRemoveInventoryItem(Item* item)
@@ -1525,6 +1561,10 @@ void Player::onRemoveInventoryItem(Item* item)
 				g_game.internalCloseTrade(this);
 			}
 		}
+	}
+
+	if (item) {
+		g_game.playerTradeSessionItemChanged(this, item);
 	}
 }
 

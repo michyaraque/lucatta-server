@@ -21,6 +21,7 @@ class NetworkMessage;
 class Npc;
 class Party;
 class SchedulerTask;
+struct TradeSnapshot;
 
 enum skillsid_t
 {
@@ -384,6 +385,9 @@ public:
 	void setTradeState(tradestate_t state) { tradeState = state; }
 	tradestate_t getTradeState() const { return tradeState; }
 	Item* getTradeItem() { return tradeItem; }
+	bool hasClassicTrade() const { return tradeState != TRADE_NONE || tradeItem != nullptr || tradePartner != nullptr; }
+	uint16_t getTradeSessionId() const { return tradeSessionId; }
+	void setTradeSessionId(uint16_t id) { tradeSessionId = id; }
 
 	// shop functions
 	void setShopOwner(Npc* owner, int32_t onBuy, int32_t onSell)
@@ -1039,6 +1043,36 @@ public:
 			client->sendCloseTrade();
 		}
 	}
+	void sendTradeSessionRequest(const std::string& fromName) const
+	{
+		if (client) {
+			client->sendTradeSessionRequest(fromName);
+		}
+	}
+	void sendTradeSessionMessage(uint8_t action, const std::string& message) const
+	{
+		if (client) {
+			client->sendTradeSessionMessage(action, message);
+		}
+	}
+	void sendTradeSessionUpdate(uint8_t action, const TradeSnapshot& snapshot) const
+	{
+		if (client) {
+			client->sendTradeSessionUpdate(action, snapshot);
+		}
+	}
+	void sendTradeSessionTimeout(const std::string& name) const
+	{
+		if (client) {
+			client->sendTradeSessionTimeout(name);
+		}
+	}
+	void sendTradeSessionClose(bool isCompleted, const std::string& message, const std::string& cancelledBy) const
+	{
+		if (client) {
+			client->sendTradeSessionClose(isCompleted, message, cancelledBy);
+		}
+	}
 	void sendChannelsDialog()
 	{
 		if (client) {
@@ -1257,6 +1291,7 @@ private:
 	Group* group = nullptr;
 	Inbox_ptr inbox = nullptr;
 	Item* tradeItem = nullptr;
+	uint16_t tradeSessionId = 0;
 	Item* inventory[CONST_SLOT_LAST + 1] = {};
 	Item* writeItem = nullptr;
 	House* editHouse = nullptr;
