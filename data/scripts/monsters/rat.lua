@@ -18,7 +18,7 @@ monster.changeTarget = {
 }
 monster.flags = {
   attackable = true,
-  hostile = false,
+  hostile = true,
   targetDistance = 1,
 }
 monster.loot = {

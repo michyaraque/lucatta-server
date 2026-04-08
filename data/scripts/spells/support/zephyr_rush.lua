@@ -15,8 +15,8 @@ end
 
 spell:group("support")
 spell:id(39)
-spell:name("Strong Haste")
-spell:words("utani gran hur")
+spell:name("Zephyr Rush")
+spell:words("zephyr rush")
 spell:level(20)
 spell:mana(100)
 spell:isAggressive(false)

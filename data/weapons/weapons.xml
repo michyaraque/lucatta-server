@@ -4,7 +4,6 @@
 		<vocation name="Knight" />
 	</melee>
 	<melee id="61" level="1" unproperly="1">
-		<vocation name="Knight" />
 	</melee>
 	<melee id="62" level="3">
 		<vocation name="Knight" />
