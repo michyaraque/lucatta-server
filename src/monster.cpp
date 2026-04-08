@@ -849,6 +849,7 @@ void Monster::doAttacking(uint32_t interval)
 
 				minCombatValue = spellBlock.minCombatValue;
 				maxCombatValue = spellBlock.maxCombatValue;
+				g_game.addCreatureAttackAnimation(this, attackedCreature);
 				spellBlock.spell->castSpell(this, attackedCreature);
 
 				if (spellBlock.isMelee) {

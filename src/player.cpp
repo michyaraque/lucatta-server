@@ -3480,6 +3480,7 @@ void Player::doAttacking(uint32_t)
 		}
 
 		if (result) {
+			g_game.addCreatureAttackAnimation(this, attackedCreature);
 			lastAttack = OTSYS_TIME();
 		}
 	}

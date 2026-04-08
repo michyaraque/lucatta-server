@@ -4710,6 +4710,35 @@ void Game::addCreatureHealth(const SpectatorVec& spectators, const Creature* tar
 	}
 }
 
+void Game::addCreatureAttackAnimation(const Creature* attacker, const Creature* target)
+{
+	if (!attacker || !target) {
+		return;
+	}
+
+	const uint32_t attackerId = attacker->getID();
+	const uint32_t targetId = target->getID();
+	if (attackerId == 0 || targetId == 0 || attackerId == targetId) {
+		return;
+	}
+
+	NetworkMessage msg;
+	msg.addByte(0xCF);
+	msg.add<uint32_t>(attackerId);
+	msg.add<uint32_t>(targetId);
+
+	SpectatorVec spectators;
+	map.getSpectators(spectators, attacker->getPosition(), true, true);
+	for (Creature* spectator : spectators) {
+		Player* tmpPlayer = spectator->getPlayer();
+		if (!tmpPlayer || tmpPlayer->getOperatingSystem() < CLIENTOS_OTCLIENT_LINUX) {
+			continue;
+		}
+
+		tmpPlayer->sendNetworkMessage(msg);
+	}
+}
+
 void Game::addMagicEffect(const Position& pos, uint8_t effect)
 {
 	SpectatorVec spectators;

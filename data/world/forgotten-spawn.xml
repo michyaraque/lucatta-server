@@ -18,12 +18,6 @@
 	<spawn centerx="59" centery="10" centerz="7" radius="0">
 		<monster name="Eye" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
-	<spawn centerx="65" centery="10" centerz="7" radius="0">
-		<monster name="Spectre" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
-	<spawn centerx="77" centery="10" centerz="7" radius="0">
-		<monster name="Spectre" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
 	<spawn centerx="30" centery="11" centerz="7" radius="0">
 		<monster name="Spectre" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
@@ -42,9 +36,6 @@
 	<spawn centerx="7" centery="13" centerz="7" radius="0">
 		<monster name="Spectre" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
-	<spawn centerx="71" centery="13" centerz="7" radius="0">
-		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
 	<spawn centerx="102" centery="13" centerz="7" radius="0">
 		<monster name="Eye" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
@@ -59,12 +50,6 @@
 	</spawn>
 	<spawn centerx="62" centery="17" centerz="7" radius="0">
 		<monster name="Spectre" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
-	<spawn centerx="69" centery="17" centerz="7" radius="0">
-		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
-	<spawn centerx="73" centery="17" centerz="7" radius="0">
-		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 	<spawn centerx="84" centery="18" centerz="7" radius="0">
 		<monster name="Eye" x="0" y="0" z="0" spawntime="60"></monster>
@@ -2843,5 +2828,20 @@
 	</spawn>
 	<spawn centerx="34" centery="201" centerz="7" radius="0">
 		<monster name="Villager" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="65" centery="10" centerz="6" radius="0">
+		<monster name="Spectre" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="77" centery="10" centerz="6" radius="0">
+		<monster name="Spectre" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="71" centery="13" centerz="6" radius="0">
+		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="69" centery="17" centerz="6" radius="0">
+		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="73" centery="17" centerz="6" radius="0">
+		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 </spawns>
