@@ -1820,7 +1820,7 @@ void ProtocolGame::sendClientFeatures()
 	// can report bugs?
 	msg.addByte(player->getAccountType() >= ACCOUNT_TYPE_TUTOR ? 0x01 : 0x00);
 
-	msg.addByte(0x00); // can change pvp framing option
+	msg.addByte(static_cast<uint8_t>(player->getAccountType()));
 	msg.addByte(0x00); // expert mode button enabled
 
 	msg.add<uint16_t>(0x00); // store images url (string or u16 0x00)
