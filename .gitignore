@@ -187,3 +187,4 @@ pip-log.txt
 /config.lua
 
 db/*
+data/world/rlmap/canary.lbm
