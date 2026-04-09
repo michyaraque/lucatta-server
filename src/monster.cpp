@@ -120,7 +120,7 @@ void Monster::onCreatureAppear(Creature* creature, bool, MagicEffectClasses)
 
 		updateTargetList();
 		updateIdleStatus();
-	} else {
+	} else if (canSee(creature->getPosition())) {
 		onCreatureEnter(creature);
 	}
 
@@ -238,6 +238,9 @@ void Monster::onCreatureMove(Creature* creature, const Tile* newTile, const Posi
 			onCreatureEnter(creature);
 		} else if (!canSeeNewPos && canSeeOldPos) {
 			onCreatureLeave(creature);
+		} else if (canSeeNewPos && isOpponent(creature) &&
+		           std::find(targetList.begin(), targetList.end(), creature) == targetList.end()) {
+			onCreatureFound(creature, true);
 		}
 
 		if (canSeeNewPos && isSummon() && getMaster() == creature) {
