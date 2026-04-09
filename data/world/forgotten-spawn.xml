@@ -405,9 +405,6 @@
 	<spawn centerx="60" centery="113" centerz="7" radius="0">
 		<monster name="Snake" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
-	<spawn centerx="153" centery="113" centerz="7" radius="0">
-		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
 	<spawn centerx="48" centery="114" centerz="7" radius="0">
 		<monster name="Snake" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
@@ -437,9 +434,6 @@
 	</spawn>
 	<spawn centerx="69" centery="117" centerz="7" radius="0">
 		<monster name="Snake" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
-	<spawn centerx="156" centery="117" centerz="7" radius="0">
-		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 	<spawn centerx="13" centery="118" centerz="7" radius="0">
 		<monster name="Skeleton" x="0" y="0" z="0" spawntime="60"></monster>
@@ -2843,5 +2837,11 @@
 	</spawn>
 	<spawn centerx="73" centery="17" centerz="6" radius="0">
 		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="16" centery="138" centerz="8" radius="0">
+		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="19" centery="142" centerz="8" radius="0">
+		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 </spawns>
