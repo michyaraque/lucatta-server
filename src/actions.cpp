@@ -209,9 +209,13 @@ ReturnValue Actions::internalUseItem(Player* player, const Position& pos, uint8_
 
 		// depot container
 		if (DepotLocker* depot = container->getDepotLocker()) {
-			DepotLocker& myDepotLocker = player->getDepotLocker();
-			myDepotLocker.setParent(depot->getParent()->getTile());
-			openContainer = &myDepotLocker;
+			const auto& depotChest = player->getDepotChest(depot->getDepotId(), true);
+			if (!depotChest) {
+				return RETURNVALUE_NOTPOSSIBLE;
+			}
+
+			depotChest->setParent(depot);
+			openContainer = depotChest.get();
 		} else {
 			openContainer = container;
 		}

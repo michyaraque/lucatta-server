@@ -164,6 +164,10 @@ Item* getPrimaryContainerItem(Player* player, uint16_t slot)
 		return container->getItemBySlot(slot);
 	}
 
+	if (container->usesPagedSlotBitmap()) {
+		return container->getItemBySlot(player->getContainerIndex(0) + slot);
+	}
+
 	return container->getItemByIndex(player->getContainerIndex(0) + slot);
 }
 
@@ -1624,6 +1628,10 @@ Thing* Game::internalGetThing(Player* player, const Position& pos, int32_t index
 			return parentContainer->getItemBySlot(slot);
 		}
 
+		if (parentContainer->usesPagedSlotBitmap()) {
+			return parentContainer->getItemBySlot(player->getContainerIndex(fromCid) + slot);
+		}
+
 		return parentContainer->getItemByIndex(player->getContainerIndex(fromCid) + slot);
 	} else if (pos.y == 0 && pos.z == 0) {
 		const ItemType& it = Item::items.getItemTypeByAppearanceId(spriteId);
@@ -1664,7 +1672,7 @@ void Game::internalGetPosition(Item* item, Position& pos, uint8_t& stackpos)
 			Container* container = dynamic_cast<Container*>(item->getParent());
 			if (container) {
 				pos.y = static_cast<uint16_t>(0x40) | static_cast<uint16_t>(player->getContainerID(container));
-				pos.z = container->getThingIndex(item);
+				pos.z = container->getSlotByItem(item);
 				stackpos = pos.z;
 			} else {
 				pos.y = player->getThingIndex(item);
@@ -2391,10 +2399,16 @@ void Game::playerMoveItem(Player* player, const Position& fromPos, uint16_t spri
 		return;
 	}
 
-	uint8_t toIndex = 0;
+	int32_t toIndex = 0;
 	if (toPos.x == 0xFFFF) {
 		if (toPos.y & 0x40) {
+			uint8_t toCid = toPos.y & 0x0F;
 			toIndex = toPos.z;
+			if (Container* toContainer = player->getContainerByID(toCid)) {
+				if (toContainer->hasPagination()) {
+					toIndex += player->getContainerIndex(toCid);
+				}
+			}
 		} else {
 			toIndex = static_cast<uint8_t>(toPos.y);
 		}
@@ -3450,7 +3464,7 @@ void Game::playerUseItemEx(uint32_t playerId, const Position& fromPos, uint8_t f
 	}
 
 	Item* item = thing->getItem();
-	if (!item || !item->isUseable() || item->getID() != fromSpriteId) {
+	if (!item || !item->isMultiUse() || item->getID() != fromSpriteId) {
 		player->sendCancelMessage(RETURNVALUE_CANNOTUSETHISOBJECT);
 		return;
 	}
@@ -3537,7 +3551,7 @@ void Game::playerUseItem(uint32_t playerId, const Position& pos, uint8_t stackPo
 	}
 
 	Item* item = thing->getItem();
-	if (!item || item->isUseable() || item->getID() != spriteId) {
+	if (!item || item->isMultiUse() || item->getID() != spriteId) {
 		player->sendCancelMessage(RETURNVALUE_CANNOTUSETHISOBJECT);
 		return;
 	}
@@ -3610,7 +3624,7 @@ void Game::playerUseWithCreature(uint32_t playerId, const Position& fromPos, uin
 	}
 
 	Item* item = thing->getItem();
-	if (!item || !item->isUseable() || item->getID() != spriteId) {
+	if (!item || !item->isMultiUse() || item->getID() != spriteId) {
 		player->sendCancelMessage(RETURNVALUE_CANNOTUSETHISOBJECT);
 		return;
 	}
@@ -3916,7 +3930,9 @@ void Game::playerSeekInContainer(uint32_t playerId, uint8_t containerId, uint16_
 		return;
 	}
 
-	if ((index % container->capacity()) != 0 || index >= container->size()) {
+	const uint16_t paginationStep = std::max<uint16_t>(1, container->getPaginationStep());
+	const uint32_t maxIndex = container->usesPagedSlotBitmap() ? container->capacity() : container->size();
+	if ((index % paginationStep) != 0 || index >= maxIndex) {
 		return;
 	}
 

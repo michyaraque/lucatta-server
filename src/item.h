@@ -841,6 +841,7 @@ public:
 	bool isMoveable() const { return items[id].moveable; }
 	bool isPickupable() const { return items[id].pickupable; }
 	bool isUseable() const { return items[id].useable; }
+	bool isMultiUse() const { return items[id].multiUse; }
 	bool isHangable() const { return items[id].isHangable; }
 	bool isRotatable() const
 	{

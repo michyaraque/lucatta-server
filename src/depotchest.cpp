@@ -7,6 +7,10 @@
 
 #include "tools.h"
 
+namespace {
+constexpr uint16_t DEPOT_PAGE_SLOT_COUNT = 42;
+}
+
 DepotChest::DepotChest(uint16_t type, bool paginated /*= true*/) :
     Container{type, items[type].maxItems, true, paginated}
 {}
@@ -41,6 +45,16 @@ ReturnValue DepotChest::queryAdd(int32_t index, const Thing& thing, uint32_t cou
 	}
 
 	return Container::queryAdd(index, thing, count, flags, actor);
+}
+
+uint16_t DepotChest::getClientCapacity() const
+{
+	return std::min<uint16_t>(static_cast<uint16_t>(capacity()), DEPOT_PAGE_SLOT_COUNT);
+}
+
+uint16_t DepotChest::getPaginationStep() const
+{
+	return getClientCapacity();
 }
 
 void DepotChest::postAddNotification(Thing* thing, const Thing* oldParent, int32_t index, ReceiverLink_t)

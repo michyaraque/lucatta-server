@@ -168,6 +168,16 @@ void Container::updateItemWeight(int32_t diff)
 
 uint32_t Container::getWeight() const { return Item::getWeight() + totalWeight; }
 
+uint16_t Container::getClientCapacity() const
+{
+	return static_cast<uint16_t>(std::min<uint32_t>(capacity(), std::numeric_limits<uint8_t>::max()));
+}
+
+uint16_t Container::getPaginationStep() const
+{
+	return getClientCapacity();
+}
+
 Item* Container::getItemByIndex(size_t index) const
 {
 	if (index >= size()) {
@@ -760,13 +770,20 @@ void Container::removeThing(Thing* thing, uint32_t count)
 
 		ammoCount -= item->getItemCount();
 
+		const bool usesPagedSlotSnapshot = usesPagedSlotBitmap();
+		if (usesPagedSlotSnapshot) {
+			itemlist.erase(itemlist.begin() + index);
+		}
+
 		// send change to client
 		if (hasParent()) {
 			onRemoveContainerItem(slot, item);
 		}
 
 		item->setParent(nullptr);
-		itemlist.erase(itemlist.begin() + index);
+		if (!usesPagedSlotSnapshot) {
+			itemlist.erase(itemlist.begin() + index);
+		}
 	}
 }
 

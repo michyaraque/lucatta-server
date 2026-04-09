@@ -18,6 +18,9 @@ public:
 
 	ReturnValue queryAdd(int32_t index, const Thing& thing, uint32_t count, uint32_t flags,
 	                     Creature* actor = nullptr) const override;
+	uint16_t getClientCapacity() const override;
+	uint16_t getPaginationStep() const override;
+	bool usesPagedSlotBitmap() const override { return true; }
 
 	void postAddNotification(Thing* thing, const Thing* oldParent, int32_t index,
 	                         ReceiverLink_t link = LINK_OWNER) override;

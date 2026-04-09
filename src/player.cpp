@@ -828,13 +828,8 @@ DepotChest_ptr Player::getDepotChest(uint32_t depotId, bool autoCreate)
 		return nullptr;
 	}
 
-	uint16_t depotItemId = getDepotBoxId(depotId);
-	if (depotItemId == 0) {
-		return nullptr;
-	}
-
 	const DepotChest_ptr& depotChest =
-	    depotChests.emplace(depotId, std::make_shared<DepotChest>(depotItemId)).first->second;
+	    depotChests.emplace(depotId, std::make_shared<DepotChest>(ITEM_DEPOT)).first->second;
 	depotChest->setMaxDepotItems(getMaxDepotItems());
 	return depotChest;
 }
@@ -843,18 +838,6 @@ DepotLocker& Player::getDepotLocker()
 {
 	if (!depotLocker) {
 		depotLocker = std::make_shared<DepotLocker>(ITEM_LOCKER);
-		depotLocker->internalAddThing(Item::CreateItem(ITEM_MARKET));
-		depotLocker->internalAddThing(getInbox().get());
-
-		DepotChest* depotChest = new DepotChest(ITEM_DEPOT, false);
-		// adding in reverse to align them from first to last
-		for (int16_t depotId = depotChest->capacity(); depotId >= 0; --depotId) {
-			if (const auto& box = getDepotChest(depotId, true)) {
-				depotChest->internalAddThing(box.get());
-			}
-		}
-
-		depotLocker->internalAddThing(depotChest);
 	}
 	return *depotLocker;
 }
@@ -974,6 +957,11 @@ void Player::sendAddContainerItem(const Container* container, const Item* item)
 			continue;
 		}
 
+		if (container->usesPagedSlotBitmap()) {
+			sendContainer(it.first, container, openContainer.index);
+			continue;
+		}
+
 		uint16_t slot = openContainer.index;
 		if (!container->hasPagination() && openContainer.index == 0) {
 			const int32_t itemSlot = container->getSlotByItem(item);
@@ -1012,6 +1000,11 @@ void Player::sendUpdateContainerItem(const Container* container, uint16_t slot, 
 			continue;
 		}
 
+		if (container->usesPagedSlotBitmap()) {
+			sendContainer(it.first, container, openContainer.index);
+			continue;
+		}
+
 		if (slot < openContainer.index) {
 			continue;
 		}
@@ -1034,6 +1027,11 @@ void Player::sendRemoveContainerItem(const Container* container, uint16_t slot)
 	for (auto& it : openContainers) {
 		OpenContainer& openContainer = it.second;
 		if (openContainer.container != container) {
+			continue;
+		}
+
+		if (container->usesPagedSlotBitmap()) {
+			sendContainer(it.first, container, openContainer.index);
 			continue;
 		}
 

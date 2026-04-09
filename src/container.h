@@ -82,6 +82,9 @@ public:
 
 	bool isUnlocked() const { return unlocked; }
 	bool hasPagination() const { return pagination; }
+	virtual uint16_t getClientCapacity() const;
+	virtual uint16_t getPaginationStep() const;
+	virtual bool usesPagedSlotBitmap() const { return false; }
 
 	virtual ReturnValue queryAdd(int32_t index, const Thing& thing, uint32_t count, uint32_t flags,
 	                             Creature* actor = nullptr) const override;

@@ -288,6 +288,7 @@ public:
 	bool isPodium() const { return (type == ITEM_TYPE_PODIUM); }
 	bool isPickupable() const { return (allowPickupable || pickupable); }
 	bool isUseable() const { return (useable); }
+	bool isMultiUse() const { return (multiUse); }
 	bool hasSubType() const { return (isFluidContainer() || isSplash() || stackable || charges != 0); }
 	bool isSupply() const { return supply; }
 
@@ -404,6 +405,7 @@ public:
 	bool pickupable = false;
 	bool rotatable = false;
 	bool useable = false;
+	bool multiUse = false;
 	bool moveable = false;
 	bool alwaysOnTop = false;
 	bool canReadText = false;

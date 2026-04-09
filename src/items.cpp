@@ -314,6 +314,7 @@ void applyAppearanceMetadata(const AppearanceItemMetadata& metadata, ItemType& i
 	itemType.stackable = metadata.stackable;
 	itemType.isAnimation = metadata.isAnimation;
 	itemType.useable = metadata.useable || metadata.multiUse;
+	itemType.multiUse = metadata.multiUse;
 	itemType.forceUse = metadata.forceUse;
 	itemType.hasHeight = metadata.hasHeight;
 	itemType.blockSolid = metadata.blockSolid;
