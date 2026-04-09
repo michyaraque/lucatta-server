@@ -4,7 +4,7 @@ function event.onLogin(player)
 	local worldTime = Game.getWorldTime()
 	player:sendWorldTime(worldTime)
 
-	local worldLightColor, worldLightLevel = Game.getWorldLight()
+	local worldLightLevel, worldLightColor = Game.getWorldLight()
 	player:sendWorldLight(worldLightColor, worldLightLevel)
 	return true
 end
