@@ -720,12 +720,6 @@
 	<spawn centerx="127" centery="293" centerz="7" radius="0">
 		<npc name="Scientist" x="0" y="0" z="0" spawntime="60"></npc>
 	</spawn>
-	<spawn centerx="154" centery="308" centerz="7" radius="0">
-		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
-	<spawn centerx="157" centery="308" centerz="7" radius="0">
-		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
 	<spawn centerx="35" centery="319" centerz="7" radius="0">
 		<monster name="Sea Snake" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
@@ -2842,6 +2836,12 @@
 		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 	<spawn centerx="19" centery="142" centerz="8" radius="0">
+		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="79" centery="208" centerz="8" radius="0">
+		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
+	</spawn>
+	<spawn centerx="82" centery="208" centerz="8" radius="0">
 		<monster name="Rat" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 </spawns>

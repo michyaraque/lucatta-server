@@ -1045,5 +1045,12 @@
 		<attribute key="type" value="teleport" />
 		<attribute key="effect" value="teleport" />
 	</item>
-	<item id="90018" name="Tree" />
+
+	<item id="11506" article="a" name="wooden closed door">
+		<attribute key="type" value="door" />
+		<attribute key="blockprojectile" value="true" />
+	</item>
+	<item id="11507" article="a" name="wooden open door">
+		<attribute key="type" value="door" />
+	</item>
 </items>
