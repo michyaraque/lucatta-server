@@ -189,20 +189,11 @@
 	<spawn centerx="86" centery="49" centerz="7" radius="0">
 		<monster name="Eye" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
-	<spawn centerx="150" centery="51" centerz="7" radius="0">
-		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
 	<spawn centerx="155" centery="53" centerz="7" radius="0">
 		<monster name="Skeleton King" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 	<spawn centerx="92" centery="54" centerz="7" radius="0">
 		<monster name="Spectre" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
-	<spawn centerx="151" centery="55" centerz="7" radius="0">
-		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
-	</spawn>
-	<spawn centerx="158" centery="55" centerz="7" radius="0">
-		<monster name="Death Knight" x="0" y="0" z="0" spawntime="60"></monster>
 	</spawn>
 	<spawn centerx="48" centery="57" centerz="7" radius="0">
 		<npc name="Desertnpc" x="0" y="0" z="0" spawntime="60"></npc>
