@@ -52,8 +52,15 @@ local function findLootBag(position, token)
 	return nil
 end
 
-local function itemQualifiesForHighlight(item)
+local HIGHLIGHT_MAX_DEPTH = 8
+
+local function itemQualifiesForHighlight(item, depth)
 	if not item then
+		return false
+	end
+
+	depth = depth or 0
+	if depth > HIGHLIGHT_MAX_DEPTH then
 		return false
 	end
 
@@ -78,7 +85,7 @@ local function itemQualifiesForHighlight(item)
 	end
 
 	for index = 0, item:getSize() - 1 do
-		if itemQualifiesForHighlight(item:getItem(index)) then
+		if itemQualifiesForHighlight(item:getItem(index), depth + 1) then
 			return true
 		end
 	end
@@ -147,30 +154,20 @@ local function canCollectLootBag(player, bag)
 	return party:getLeader():getId() == ownerId or owner:getParty() == party
 end
 
+local COLLECT_FLAGS = FLAG_IGNORENOTMOVEABLE
+
 local function collectLootBag(player, bag)
+	local backpack = player:getSlotItem(CONST_SLOT_BACKPACK)
+	if not backpack or not backpack:isContainer() then
+		return RETURNVALUE_NOTENOUGHROOM
+	end
+
+	if backpack:getEmptySlots(true) == 0 then
+		return RETURNVALUE_NOTENOUGHROOM
+	end
+
 	local lastError = RETURNVALUE_NOERROR
 	local movedAny = false
-	local backpack = player:getSlotItem(CONST_SLOT_BACKPACK)
-
-	local function ensureBackpack()
-		if backpack and backpack:isContainer() then
-			return backpack
-		end
-
-		local newBackpack = Game.createItem(LOOT_BAG_ITEM_ID, 1)
-		if not newBackpack then
-			return nil
-		end
-
-		local result = player:addItemEx(newBackpack, true, CONST_SLOT_BACKPACK)
-		if result ~= RETURNVALUE_NOERROR then
-			newBackpack:remove()
-			return nil
-		end
-
-		backpack = player:getSlotItem(CONST_SLOT_BACKPACK)
-		return backpack
-	end
 
 	local function collectItem(lootItem)
 		if not lootItem then
@@ -188,14 +185,12 @@ local function collectLootBag(player, bag)
 			return
 		end
 
-		local moved = lootItem:moveTo(player)
-		if not moved then
-			local targetBackpack = ensureBackpack()
-			if targetBackpack then
-				moved = lootItem:moveTo(targetBackpack)
-			end
+		if backpack:getEmptySlots(true) == 0 then
+			lastError = RETURNVALUE_NOTENOUGHROOM
+			return
 		end
 
+		local moved = lootItem:moveTo(backpack, COLLECT_FLAGS)
 		if moved then
 			movedAny = true
 		else
@@ -376,10 +371,9 @@ movedEvent.onItemMoved = function(player, item, count, fromPosition, toPosition,
 		return
 	end
 
-	for _, tileItem in ipairs(getTileItems(fromPosition)) do
-		if tileItem:isContainer() and tileItem:getActionId() == LOOT_BAG_ACTION_ID then
-			refreshLootBagHighlight(tileItem)
-		end
+	local bag = findLootBag(fromPosition)
+	if bag then
+		refreshLootBagHighlight(bag)
 	end
 end
 

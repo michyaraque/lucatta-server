@@ -5531,7 +5531,7 @@ void Game::combatGetTypeInfo(CombatType_t combatType, Creature* target, TextColo
 					break;
 				case RACE_FROST:
 					color = TEXTCOLOR_FROSTBLUE;
-					effect = CONST_ME_ICEATTACK;
+					effect = CONST_ME_ICEHIT;
 					break;
 				case RACE_INK:
 					color = TEXTCOLOR_DARKGREY;

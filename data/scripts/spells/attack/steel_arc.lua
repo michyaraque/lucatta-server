@@ -12,30 +12,25 @@ local effects = {
 	[DIRECTION_WEST] = 168
 }
 
-local combats = {}
+local combat = Combat()
+combat:setParameter(COMBAT_PARAM_TYPE, COMBAT_PHYSICALDAMAGE)
+combat:setParameter(COMBAT_PARAM_BLOCKARMOR, true)
+combat:setParameter(COMBAT_PARAM_USECHARGES, true)
+combat:setArea(area)
 
-for direction, effect in pairs(effects) do
-	local combat = Combat()
-	combat:setParameter(COMBAT_PARAM_TYPE, COMBAT_PHYSICALDAMAGE)
-	combat:setParameter(COMBAT_PARAM_EFFECT, effect)
-	combat:setParameter(COMBAT_PARAM_BLOCKARMOR, true)
-	combat:setParameter(COMBAT_PARAM_USECHARGES, true)
-	combat:setArea(area)
-
-	function onGetFormulaValues(player, skill, attack, factor)
-		local min = (player:getLevel() / 5) + (skill * attack * 0.02) + 6
-		local max = (player:getLevel() / 5) + (skill * attack * 0.035) + 11
-		return -min, -max
-	end
-
-	combat:setCallback(CALLBACK_PARAM_SKILLVALUE, "onGetFormulaValues")
-	combats[direction] = combat
+function onGetFormulaValues(player, skill, attack, factor)
+	local min = (player:getLevel() / 5) + (skill * attack * 0.02) + 6
+	local max = (player:getLevel() / 5) + (skill * attack * 0.035) + 11
+	return -min, -max
 end
+
+combat:setCallback(CALLBACK_PARAM_SKILLVALUE, "onGetFormulaValues")
 
 local spell = Spell(SPELL_INSTANT)
 
 function spell.onCastSpell(creature, variant)
-	local combat = combats[creature:getDirection()] or combats[DIRECTION_NORTH]
+	local direction = creature:getDirection()
+	creature:getPosition():sendMagicEffect(effects[direction] or effects[DIRECTION_NORTH])
 	return combat:execute(creature, variant)
 end
 
