@@ -65,10 +65,6 @@
 	<action itemid="9005" script="others/food.lua" />
 	<action itemid="9114" script="others/food.lua" />
 	<action itemid="9996" script="others/food.lua" />
-	<action itemid="10454" script="others/food.lua" />
-	<action itemid="11246" script="others/food.lua" />
-	<action itemid="11370" script="others/food.lua" />
-	<action itemid="11429" script="others/food.lua" />
 	<action fromid="12415" toid="12418" script="others/food.lua" />
 	<action fromid="12637" toid="12639" script="others/food.lua" />
 	<action itemid="13297" script="others/food.lua" />

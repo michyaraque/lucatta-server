@@ -10,6 +10,7 @@ local LOOT_BAG_EFFECT_INTERVAL_MS = 1250
 local LOOT_BAG_TOKEN_KEY = "loot_bag_token"
 local LOOT_BAG_HIGHLIGHT_KEY = "loot_bag_highlight"
 local LOOT_BAG_EFFECT_STARTED_KEY = "loot_bag_effect_started"
+local LOOT_BAG_INTERNAL_KEY = "loot_bag_internal"
 
 local lootBagTokenCounter = 0
 
@@ -148,24 +149,71 @@ end
 
 local function collectLootBag(player, bag)
 	local lastError = RETURNVALUE_NOERROR
+	local movedAny = false
+	local backpack = player:getSlotItem(CONST_SLOT_BACKPACK)
 
-	for index = bag:getSize() - 1, 0, -1 do
-		local lootItem = bag:getItem(index)
-		if lootItem then
-			local result = player:addItemEx(lootItem, false)
-			if result ~= RETURNVALUE_NOERROR then
-				lastError = result
+	local function ensureBackpack()
+		if backpack and backpack:isContainer() then
+			return backpack
+		end
+
+		local newBackpack = Game.createItem(LOOT_BAG_ITEM_ID, 1)
+		if not newBackpack then
+			return nil
+		end
+
+		local result = player:addItemEx(newBackpack, true, CONST_SLOT_BACKPACK)
+		if result ~= RETURNVALUE_NOERROR then
+			newBackpack:remove()
+			return nil
+		end
+
+		backpack = player:getSlotItem(CONST_SLOT_BACKPACK)
+		return backpack
+	end
+
+	local function collectItem(lootItem)
+		if not lootItem then
+			return
+		end
+
+		if lootItem:isContainer() and tonumber(lootItem:getCustomAttribute(LOOT_BAG_INTERNAL_KEY)) == 1 then
+			for nestedIndex = lootItem:getSize() - 1, 0, -1 do
+				collectItem(lootItem:getItem(nestedIndex))
+			end
+
+			if lootItem:getSize() == 0 then
+				lootItem:remove()
+			end
+			return
+		end
+
+		local moved = lootItem:moveTo(player)
+		if not moved then
+			local targetBackpack = ensureBackpack()
+			if targetBackpack then
+				moved = lootItem:moveTo(targetBackpack)
 			end
 		end
+
+		if moved then
+			movedAny = true
+		else
+			lastError = RETURNVALUE_NOTENOUGHROOM
+		end
+	end
+
+	for index = bag:getSize() - 1, 0, -1 do
+		collectItem(bag:getItem(index))
 	end
 
 	if bag:getSize() == 0 then
 		bag:remove()
-		return lastError
+		return movedAny and RETURNVALUE_NOERROR or lastError
 	end
 
 	refreshLootBagHighlight(bag)
-	return lastError
+	return movedAny and RETURNVALUE_NOERROR or lastError
 end
 
 local function moveLootToBag(sourceContainer, targetBag)
@@ -179,6 +227,7 @@ local function moveLootToBag(sourceContainer, targetBag)
 				if not nestedBag or not nestedBag:isContainer() then
 					return false
 				end
+				nestedBag:setCustomAttribute(LOOT_BAG_INTERNAL_KEY, 1)
 
 				if activeBag:addItemEx(nestedBag) ~= RETURNVALUE_NOERROR then
 					nestedBag:remove()
@@ -302,7 +351,12 @@ function pickupEvent.onStepIn(creature, item, position, fromPosition)
 	end
 
 	local player = Player(creature:getId())
-	if not player or not canCollectLootBag(player, item) then
+	if not player then
+		return true
+	end
+
+	if not canCollectLootBag(player, item) then
+		player:sendCancelMessage("This loot belongs to another player.")
 		return true
 	end
 
@@ -314,6 +368,7 @@ function pickupEvent.onStepIn(creature, item, position, fromPosition)
 	return true
 end
 
+pickupEvent:type("stepin")
 pickupEvent:aid(LOOT_BAG_ACTION_ID)
 
 movedEvent.onItemMoved = function(player, item, count, fromPosition, toPosition, fromCylinder, toCylinder)
