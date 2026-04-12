@@ -1469,6 +1469,7 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(L, CONST_ME_ICEAREA);
 	registerEnum(L, CONST_ME_ICETORNADO);
 	registerEnum(L, CONST_ME_ICEATTACK);
+	registerEnum(L, CONST_ME_ICEHIT);
 	registerEnum(L, CONST_ME_STONES);
 	registerEnum(L, CONST_ME_SMALLPLANTS);
 	registerEnum(L, CONST_ME_CARNIPHILA);

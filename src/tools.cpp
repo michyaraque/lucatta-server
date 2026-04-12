@@ -402,6 +402,7 @@ MagicEffectNames magicEffectNames = {
     {"icearea", CONST_ME_ICEAREA},
     {"icetornado", CONST_ME_ICETORNADO},
     {"iceattack", CONST_ME_ICEATTACK},
+    {"icehit", CONST_ME_ICEHIT},
     {"stones", CONST_ME_STONES},
     {"smallplants", CONST_ME_SMALLPLANTS},
     {"carniphila", CONST_ME_CARNIPHILA},
