@@ -1,7 +1,248 @@
-local event = Event()
+local dropEvent = Event()
+local pickupEvent = MoveEvent()
+local movedEvent = Event()
 
-event.onDropLoot = function(self, corpse)
-	if configManager.getNumber(configKeys.RATE_LOOT) == 0 then
+local LOOT_BAG_ITEM_ID = 37
+local LOOT_BAG_ACTION_ID = 47001
+local LOOT_BAG_DURATION_MS = 60 * 1000
+local LOOT_BAG_EFFECT_ID = 146
+local LOOT_BAG_EFFECT_INTERVAL_MS = 1250
+local LOOT_BAG_TOKEN_KEY = "loot_bag_token"
+local LOOT_BAG_HIGHLIGHT_KEY = "loot_bag_highlight"
+local LOOT_BAG_EFFECT_STARTED_KEY = "loot_bag_effect_started"
+
+local lootBagTokenCounter = 0
+
+if not Item.setTimedDecay then
+	function Item.setTimedDecay(self, durationMs, decayTo)
+		if not self or durationMs <= 0 then
+			return false
+		end
+
+		self:setAttribute(ITEM_ATTRIBUTE_DECAYTO, decayTo or 0)
+		self:setAttribute(ITEM_ATTRIBUTE_DURATION, durationMs)
+		self:decay()
+		return true
+	end
+end
+
+local function clonePosition(position)
+	return Position(position.x, position.y, position.z)
+end
+
+local function nextLootBagToken()
+	lootBagTokenCounter = lootBagTokenCounter + 1
+	return ("loot_bag_%d"):format(lootBagTokenCounter)
+end
+
+local function getTileItems(position)
+	local tile = Tile(position)
+	return tile and tile:getItems() or {}
+end
+
+local function findLootBag(position, token)
+	for _, tileItem in ipairs(getTileItems(position)) do
+		if tileItem:isContainer() and tileItem:getActionId() == LOOT_BAG_ACTION_ID then
+			if not token or tileItem:getCustomAttribute(LOOT_BAG_TOKEN_KEY) == token then
+				return tileItem
+			end
+		end
+	end
+	return nil
+end
+
+local function itemQualifiesForHighlight(item)
+	if not item then
+		return false
+	end
+
+	if item.hasItemUniqueName and item:hasItemUniqueName() then
+		return true
+	end
+
+	if item.getUnique and item:getUnique() then
+		return true
+	end
+
+	if item.isSuperior and item:isSuperior() then
+		return true
+	end
+
+	if item.getRarityId and item:getRarityId() >= EPIC then
+		return true
+	end
+
+	if not item:isContainer() then
+		return false
+	end
+
+	for index = 0, item:getSize() - 1 do
+		if itemQualifiesForHighlight(item:getItem(index)) then
+			return true
+		end
+	end
+
+	return false
+end
+
+local function scheduleLootBagEffect(position, token)
+	addEvent(function()
+		local bag = findLootBag(position, token)
+		if not bag then
+			return
+		end
+
+		if tonumber(bag:getCustomAttribute(LOOT_BAG_HIGHLIGHT_KEY)) ~= 1 then
+			return
+		end
+
+		position:sendMagicEffect(LOOT_BAG_EFFECT_ID)
+		scheduleLootBagEffect(clonePosition(position), token)
+	end, LOOT_BAG_EFFECT_INTERVAL_MS)
+end
+
+local function refreshLootBagHighlight(bag)
+	if not bag or not bag:isContainer() or bag:getActionId() ~= LOOT_BAG_ACTION_ID then
+		return false
+	end
+
+	local shouldHighlight = itemQualifiesForHighlight(bag)
+	bag:setCustomAttribute(LOOT_BAG_HIGHLIGHT_KEY, shouldHighlight and 1 or 0)
+
+	if not shouldHighlight then
+		return false
+	end
+
+	local token = bag:getCustomAttribute(LOOT_BAG_TOKEN_KEY)
+	if not token then
+		token = nextLootBagToken()
+		bag:setCustomAttribute(LOOT_BAG_TOKEN_KEY, token)
+	end
+
+	if tonumber(bag:getCustomAttribute(LOOT_BAG_EFFECT_STARTED_KEY)) ~= 1 then
+		bag:setCustomAttribute(LOOT_BAG_EFFECT_STARTED_KEY, 1)
+		scheduleLootBagEffect(clonePosition(bag:getPosition()), token)
+	end
+
+	return true
+end
+
+local function canCollectLootBag(player, bag)
+	local ownerId = bag:getCorpseOwner()
+	if ownerId == 0 or ownerId == player:getId() then
+		return true
+	end
+
+	local party = player:getParty()
+	if not party then
+		return false
+	end
+
+	local owner = Player(ownerId)
+	if not owner then
+		return false
+	end
+
+	return party:getLeader():getId() == ownerId or owner:getParty() == party
+end
+
+local function collectLootBag(player, bag)
+	local lastError = RETURNVALUE_NOERROR
+
+	for index = bag:getSize() - 1, 0, -1 do
+		local lootItem = bag:getItem(index)
+		if lootItem then
+			local result = player:addItemEx(lootItem, false)
+			if result ~= RETURNVALUE_NOERROR then
+				lastError = result
+			end
+		end
+	end
+
+	if bag:getSize() == 0 then
+		bag:remove()
+		return lastError
+	end
+
+	refreshLootBagHighlight(bag)
+	return lastError
+end
+
+local function moveLootToBag(sourceContainer, targetBag)
+	local activeBag = targetBag
+
+	for index = sourceContainer:getSize() - 1, 0, -1 do
+		local lootItem = sourceContainer:getItem(index)
+		if lootItem then
+			while activeBag:getSize() >= activeBag:getCapacity() do
+				local nestedBag = Game.createItem(LOOT_BAG_ITEM_ID, 1)
+				if not nestedBag or not nestedBag:isContainer() then
+					return false
+				end
+
+				if activeBag:addItemEx(nestedBag) ~= RETURNVALUE_NOERROR then
+					nestedBag:remove()
+					return false
+				end
+
+				activeBag = nestedBag
+			end
+
+			if activeBag:addItemEx(lootItem) ~= RETURNVALUE_NOERROR then
+				return false
+			end
+		end
+	end
+
+	return true
+end
+
+local function normalizeLootBag(corpse)
+	if not corpse or not corpse:isContainer() then
+		return nil
+	end
+
+	if corpse:getId() == LOOT_BAG_ITEM_ID then
+		return corpse
+	end
+
+	local bag = Game.createItem(LOOT_BAG_ITEM_ID, 1, corpse:getPosition())
+	if not bag or not bag:isContainer() then
+		return corpse
+	end
+
+	bag:setAttribute(ITEM_ATTRIBUTE_CORPSEOWNER, corpse:getCorpseOwner())
+	if not moveLootToBag(corpse, bag) then
+		bag:remove()
+		return corpse
+	end
+
+	corpse:remove()
+	return bag
+end
+
+local function prepareLootBag(corpse)
+	local bag = normalizeLootBag(corpse)
+	if not bag or not bag:isContainer() then
+		return nil
+	end
+
+	if bag:getSize() == 0 then
+		bag:remove()
+		return nil
+	end
+
+	bag:setActionId(LOOT_BAG_ACTION_ID)
+	bag:setTimedDecay(LOOT_BAG_DURATION_MS)
+	refreshLootBagHighlight(bag)
+	return bag
+end
+
+dropEvent.onDropLoot = function(self, corpse)
+	if not corpse or configManager.getNumber(configKeys.RATE_LOOT) == 0 then
+		if corpse then
+			corpse:remove()
+		end
 		return
 	end
 
@@ -31,13 +272,17 @@ event.onDropLoot = function(self, corpse)
 		tryDropJewelSkull(mType, corpse, player)
 	end
 
+	local lootBag = prepareLootBag(corpse)
+	local lootDescription = lootBag and lootBag:getContentDescription() or "nothing"
+
 	if player then
 		local text
-		if doCreateLoot then
-			text = ("Loot of %s: %s."):format(mType:getNameDescription(), corpse:getContentDescription())
-		else
+		if not doCreateLoot and lootDescription == "nothing" then
 			text = ("Loot of %s: nothing (due to low stamina)."):format(mType:getNameDescription())
+		else
+			text = ("Loot of %s: %s."):format(mType:getNameDescription(), lootDescription)
 		end
+
 		local party = player:getParty()
 		if party then
 			party:broadcastPartyLoot(text)
@@ -47,4 +292,42 @@ event.onDropLoot = function(self, corpse)
 	end
 end
 
-event:register()
+function pickupEvent.onStepIn(creature, item, position, fromPosition)
+	if not creature or not creature:isPlayer() then
+		return true
+	end
+
+	if not item or not item:isContainer() or item:getActionId() ~= LOOT_BAG_ACTION_ID then
+		return true
+	end
+
+	local player = Player(creature:getId())
+	if not player or not canCollectLootBag(player, item) then
+		return true
+	end
+
+	local result = collectLootBag(player, item)
+	if result ~= RETURNVALUE_NOERROR then
+		player:sendTextMessage(MESSAGE_STATUS_SMALL, Game.getReturnMessage(result))
+	end
+
+	return true
+end
+
+pickupEvent:aid(LOOT_BAG_ACTION_ID)
+
+movedEvent.onItemMoved = function(player, item, count, fromPosition, toPosition, fromCylinder, toCylinder)
+	if fromPosition.x == CONTAINER_POSITION then
+		return
+	end
+
+	for _, tileItem in ipairs(getTileItems(fromPosition)) do
+		if tileItem:isContainer() and tileItem:getActionId() == LOOT_BAG_ACTION_ID then
+			refreshLootBagHighlight(tileItem)
+		end
+	end
+end
+
+dropEvent:register()
+pickupEvent:register()
+movedEvent:register()

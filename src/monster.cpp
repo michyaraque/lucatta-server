@@ -1882,6 +1882,10 @@ void Monster::death(Creature*)
 Item* Monster::getCorpse(Creature* lastHitCreature, Creature* mostDamageCreature)
 {
 	Item* corpse = Creature::getCorpse(lastHitCreature, mostDamageCreature);
+	if (!corpse) {
+		corpse = Item::CreateItem(37); // Bag
+	}
+
 	if (corpse) {
 		if (mostDamageCreature) {
 			if (mostDamageCreature->getPlayer()) {
