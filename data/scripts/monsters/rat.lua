@@ -2,7 +2,7 @@ local mType = Game.createMonsterType("Rat")
 local monster = {}
 
 monster.name = "Rat"
-monster.experience = 1000
+monster.experience = 1000000
 monster.outfit = {
 	lookType = 29,
 }
@@ -31,7 +31,6 @@ monster.loot = {
 	{ id = 80,  chance = 5000,   maxCount = 1 },
 	{ id = 92,  chance = 100000, maxCount = 5 },
 	{ id = 61,  chance = 100000, maxCount = 1 },
-	{ id = 128, chance = 100000, maxCount = 1 },
 }
 
 monster.attacks = {

@@ -1,164 +1,156 @@
--- =============================================================================
--- ITEM UNIQUE MAP - Crypto-themed unique item names
--- =============================================================================
--- Maps item names to possible unique names that can drop from monsters
--- Each item can have one or more unique names to randomly choose from
-
 ITEM_UNIQUE_MAP = {
     -- =============================================================================
     -- SWORDS
     -- =============================================================================
-    ["sword"]              = {"Faketoshi"},
-    ["spike sword"]        = {"Blue Chip"},
-    ["two handed sword"]   = {"Acyclic Graph"},
-    ["serpent sword"]      = {"Volcanic Miner"},
-    ["bright sword"]       = {"Satoshi's Nephew"},
-    ["fire sword"]         = {"Saylormoon"},
-    ["ice rapier"]         = {"Broccolish Fury"},
-    ["giant sword"]        = {"Inevitable"},
-    ["magic sword"]        = {"Non Fungible Token"},
-    ["havoc blade"]        = {"The Grandfather"},
-    ["templar sword"]      = {"Panic Sell"},
-    ["dragon slayer"]      = {"Balerion the Black Dread"},
-    ["mystic blade"]       = {"Moon Boy"},
-    ["christmas sword"]    = {"HO HO HO"},
-    ["crystal sword"]      = {"The Maximalist"},
-    
+    ["sword"] = {"Faketoshi"},
+    ["sapphire sword"] = {"Blue Chip"},
+    ["executioner sword"] = {"Acyclic Graph"},
+    ["emerald sword"] = {"Volcanic Miner"},
+    ["golden sword"] = {"Satoshi's Nephew"},
+    ["red sword"] = {"Saylormoon"},
+    ["magic sword"] = {"Non Fungible Token"},
+    ["moon sword"] = {"Inevitable"},
+    ["immortal sword"] = {"The Grandfather"},
+    ["templar sword"] = {"Panic Sell"},
+    ["dragon sword"] = {"Balerion the Black Dread"},
+    ["mystical sword"] = {"Moon Boy"},
+    ["christmas sword"] = {"HO HO HO"},
+    ["diamond sword"] = {"The Maximalist"},
+
     -- =============================================================================
     -- AXES
     -- =============================================================================
-    ["axe"]                = {"NonDisclosure Agreement"},
-    ["battle axe"]         = {"Block Latte"},
-    ["halberd"]            = {"Feeless Cutter"},
-    ["great axe"]          = {"PoS4QoS"},
-    ["headchopper"]        = {"Peer to Peer Digital Cash"},
-    ["knight axe"]         = {"Blue Moon"},
-    ["fire axe"]           = {"Trustable"},
-    ["stonecutter axe"]    = {"crypto 4 year cycle"},
-    ["christmas axe"]      = {"Candy cane"},
-    ["noble axe"]          = {"Wind Turbine"},
-    
+    ["axe"] = {"NonDisclosure Agreement"},
+    ["frozen axe"] = {"Block Latte"},
+    ["spike glaive"] = {"Feeless Cutter"},
+    ["demon axe"] = {"PoS4QoS"},
+    ["minotaur axe"] = {"Peer to Peer Digital Cash"},
+    ["paladin axe"] = {"Wind Turbine"},
+    ["moon hatchet"] = {"Trustable"},
+    ["demon sickle"] = {"crypto 4 year cycle"},
+    ["christmas hatchet"] = {"Candy cane"},
+    ["immortarion, the timeless cleaver"] = {"crypto 4 year cycle"},
+
     -- =============================================================================
     -- CLUBS / MACES
     -- =============================================================================
-    ["club"]               = {"Mining at a loss"},
-    ["mace"]               = {"$€Ӿ¥!"},
-    ["battle hammer"]      = {"Self Custody"},
-    ["thunder hammer"]     = {"return to Dust"},
-    ["war hammer"]         = {"dark face"},
-    ["clerical mace"]      = {"Eggnog"},
-    ["cranial basher"]     = {"WAGMI"},
-    ["blessed sceptre"]    = {"Ethereum Killer"},
-    ["christmas mace"]     = {"Midnight"},
-    
+    ["wirt's leg"] = {"Mining at a loss"},
+    ["morning star"] = {"$€X¥!"},
+    ["frozen morning star"] = {"Self Custody"},
+    ["hell hammer"] = {"return to Dust"},
+    ["maul"] = {"dark face"},
+    ["moon maul"] = {"Eggnog"},
+    ["demon maul"] = {"WAGMI"},
+    ["christmas maul"] = {"Midnight"},
+
     -- =============================================================================
     -- DAGGERS
     -- =============================================================================
-    ["dagger"]             = {"Long-term Security"},
-    ["throwing knife"]     = {"Satoshi Nakamoto"},
-    ["assassin dagger"]    = {"Least Error & Latency will Win"},
-    
+    ["dagger"] = {"Long-term Security"},
+    ["eclypse dagger"] = {"Least Error & Latency will Win"},
+    ["mystical dagger"] = {"Least Error & Latency will Win"},
+    ["immortal dagger"] = {"Least Error & Latency will Win"},
+
     -- =============================================================================
     -- HELMETS
     -- =============================================================================
-    ["leather helmet"]     = {"Point of Sale"},
-    ["chain helmet"]       = {"Bull Run"},
-    ["steel helmet"]       = {"Roadmap"},
-    ["brass helmet"]       = {"Community"},
-    ["golden helmet"]      = {"IOU"},
-    ["viking helmet"]      = {"This is Huge"},
-    ["horned helmet"]      = {"Only Up From Here"},
-    ["crusader helmet"]    = {"Human Psychology"},
-    ["crown helmet"]       = {"New Listing"},
-    ["royal helmet"]       = {"Code Proposal"},
-    ["demon helmet"]       = {"10 Cents on the Dollar"},
-    ["dragon scale helmet"]= {"Captcha Distribution"},
-    ["devil helmet"]       = {"Debt Ceiling"},
-    ["skull helmet"]       = {"Return on Investment"},
-    ["warrior helmet"]     = {"Gingerbread"},
-    ["dark helmet"]        = {"Chapter 9"},
-    ["mystic turban"]      = {"Crystal Ball"},
-    ["winged helmet"]      = {"Update The System"},
-    ["amazon helmet"]      = {"Safe Heaven"},
-    ["bonelord helmet"]    = {"Clownbase"},
-    ["strange helmet"]     = {"CVE-2023-40234"},
-    
+    ["cloth helmet"] = {"Point of Sale"},
+    ["leather helmet"] = {"Point of Sale"},
+    ["mail helmet"] = {"Bull Run"},
+    ["plate helmet"] = {"Roadmap"},
+    ["red helmet"] = {"Community"},
+    ["golden helmet"] = {"IOU"},
+    ["frozen helmet"] = {"This is Huge"},
+    ["horned helmet"] = {"Only Up From Here"},
+    ["emerald helmet"] = {"Human Psychology"},
+    ["templar helmet"] = {"Human Psychology"},
+    ["sapphire helmet"] = {"New Listing"},
+    ["diamond helmet"] = {"Code Proposal"},
+    ["demon helmet"] = {"10 Cents on the Dollar"},
+    ["dragon helmet"] = {"Captcha Distribution"},
+    ["executioner helmet"] = {"Gingerbread"},
+    ["moon helmet"] = {"Chapter 9"},
+    ["mystical helmet"] = {"Crystal Ball"},
+    ["immortal helmet"] = {"Update The System"},
+    ["paladin helmet"] = {"Safe Heaven"},
+    ["clown helmet"] = {"Clownbase"},
+    ["special event pumpkin helmet"] = {"Gingerbread"},
+    ["christmas helmet"] = {"Gingerbread"},
+
     -- =============================================================================
     -- ARMORS
     -- =============================================================================
-    ["leather armor"]      = {"Representative"},
-    ["chain armor"]        = {"ForeX Guard"},
-    ["plate armor"]        = {"Green Alternative"},
-    ["scale armor"]        = {"Appia's Road"},
-    ["golden armor"]       = {"Store of Value"},
-    ["knight armor"]       = {"Firano's Hide"},
-    ["noble armor"]        = {"RaiBlocks"},
-    ["crown armor"]        = {"Wall of Encrypted Energy"},
-    ["blue robe"]          = {"Zero-knowledge Proof"},
-    ["dragon scale mail"]  = {"Jungle Warcry"},
-    ["demon armor"]        = {"133 Club"},
-    ["magic plate armor"]  = {"BlackRock"},
-    ["dwarven armor"]      = {"To The Moon Mars"},
-    ["paladin armor"]      = {"Santa Claus"},
-    ["dark armor"]         = {"Explorer's Block"},
-    ["amazon armor"]       = {"Rug Pull"},
-    ["fire armor"]         = {"Fear Of Missing Out (FOMO)"},
-    ["ice armor"]          = {"Deploying More Capital"},
-    
+    ["cloth armor"] = {"Representative"},
+    ["leather armor"] = {"Representative"},
+    ["mail armor"] = {"ForeX Guard"},
+    ["plate armor"] = {"Green Alternative"},
+    ["ruby armor"] = {"Appia's Road"},
+    ["golden armor"] = {"Store of Value"},
+    ["horned armor"] = {"Firano's Hide"},
+    ["sapphire armor"] = {"Wall of Encrypted Energy"},
+    ["frozen armor"] = {"Deploying More Capital"},
+    ["diamond armor"] = {"BlackRock"},
+    ["emerald armor"] = {"Jungle Warcry"},
+    ["templar armor"] = {"Santa Claus"},
+    ["dragon armor"] = {"Jungle Warcry"},
+    ["demon armor"] = {"133 Club"},
+    ["moon armor"] = {"Explorer's Block"},
+    ["mystical armor"] = {"Zero-knowledge Proof"},
+    ["immortal armor"] = {"To The Moon Mars"},
+    ["paladin armor"] = {"Santa Claus"},
+    ["christmas armor"] = {"Santa Claus"},
+
     -- =============================================================================
     -- SHIELDS
     -- =============================================================================
-    ["wooden shield"]      = {"Liquidity Provider"},
-    ["studded shield"]     = {"Bearer Token"},
-    ["plate shield"]       = {"King Louie"},
-    ["brass shield"]       = {"Marstronaut"},
-    ["golden shield"]      = {"1 Ban = 1 Ban"},
-    ["battle shield"]      = {"Cold Storage"},
-    ["tower shield"]       = {"Do Klost"},
-    ["castle shield"]      = {"Probably Nothing"},
-    ["medusa shield"]      = {"Diamond Hands"},
-    ["amazon shield"]      = {"PermaBear"},
-    ["vampire shield"]     = {"Inverse Cramer"},
-    ["crown shield"]       = {"NanoStrategy"},
-    ["dragon shield"]      = {"Airdrop"},
-    ["dark shield"]        = {"Fear Uncertainty Doubt (FUD)"},
-    ["blessed shield"]     = {"Snowflake"},
-    ["mastermind shield"]  = {"Developer Fund"},
-    ["demon shield"]       = {"ORV > POW"},
-    ["guardian shield"]    = {"Vote Hinting"},
-    ["great shield"]       = {"Mining Farms"},
-    
+    ["wood shield"] = {"Liquidity Provider"},
+    ["iron shield"] = {"Bearer Token"},
+    ["plate shield"] = {"King Louie"},
+    ["red shield"] = {"Marstronaut"},
+    ["golden shield"] = {"1 Ban = 1 Ban"},
+    ["frozen shield"] = {"Cold Storage"},
+    ["horned shield"] = {"Do Klost"},
+    ["sapphire shield"] = {"Probably Nothing"},
+    ["diamond shield"] = {"Mining Farms"},
+    ["emerald shield"] = {"Vote Hinting"},
+    ["templar shield"] = {"Vote Hinting"},
+    ["executioner shield"] = {"Snowflake"},
+    ["mystical shield"] = {"Developer Fund"},
+    ["dragon shield"] = {"Airdrop"},
+    ["demon shield"] = {"ORV > POW"},
+    ["moon shield"] = {"Diamond Hands"},
+    ["paladin shield"] = {"NanoStrategy"},
+    ["immortal shield"] = {"Inverse Cramer"},
+    ["christmas shield"] = {"PermaBear"},
+
     -- =============================================================================
     -- CAPES / ACCESSORIES
     -- =============================================================================
-    ["red cape"]           = {"Cloak of Levitation"},
-    
+    ["cape high"] = {"Cloak of Levitation"},
+
     -- =============================================================================
     -- BELTS / LEGS
     -- =============================================================================
-    ["leather legs"]       = {"Proof of Wear"},
-    ["plate legs"]         = {"Hodler"},
-    ["brass legs"]         = {"Spam Resistor"},
-    ["crown legs"]         = {"Dee-Fye"},
-    ["knight legs"]        = {"Election scheduler"},
-    ["golden legs"]        = {"TaaC"},
-    ["dragon scale legs"]  = {"CBDC"},
-    ["demon legs"]         = {"Attack Vector"},
-    ["amazon legs"]        = {"99 on Huobi"},
-    ["blue legs"]          = {"Commercial Grade"},
-    ["zaoan legs"]         = {"1000 CPS"},
-    ["dwarven legs"]       = {"Horizontal Scaling"},
-    ["paladin legs"]       = {"Slava Ukraini"},
-    ["magma legs"]         = {"Zero Inflation"},
-    ["grasshopper legs"]   = {"Goldwrap"},
+    ["leather belt"] = {"Proof of Wear"},
+    ["plated belt"] = {"Hodler"},
+    ["sapphire belt"] = {"Spam Resistor"},
+    ["diamond belt"] = {"Dee-Fye"},
+    ["minotaur belt"] = {"Election scheduler"},
+    ["horned belt"] = {"TaaC"},
+    ["emerald belt"] = {"CBDC"},
+    ["mystical belt"] = {"Commercial Grade"},
+    ["templar belt"] = {"1000 CPS"},
+    ["demon belt"] = {"Attack Vector"},
+    ["moon belt"] = {"99 on Huobi"},
+    ["executioner belt"] = {"Zero Inflation"},
+    ["goldwrap"] = {"Goldwrap"},
+    ["paladin belt"] = {"Slava Ukraini"},
+    ["immortal belt"] = {"Horizontal Scaling"},
+    ["christmas belt"] = {"TaaC"},
 }
 
--- =============================================================================
--- CONFIGURATION
--- =============================================================================
 ITEM_UNIQUE_CONFIG = {
-    ENABLED = true,              -- Enable/disable the system
-    DROP_CHANCE = 500,           -- 1 in X chance for an item to become unique (500 = 0.2%)
-    ANNOUNCE_UNIQUE = true,      -- Announce to spectators when a unique drops
-    ANNOUNCE_MESSAGE = "Unique item discovered!",
+    ENABLED = true,
+    ANNOUNCE_SUPER_UNIQUE = true,
+    ANNOUNCE_MESSAGE = "Super Unique item discovered!",
 }

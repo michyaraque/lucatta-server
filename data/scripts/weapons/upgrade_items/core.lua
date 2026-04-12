@@ -571,19 +571,6 @@ function us_onDamaged(creature, attacker, primaryDamage, primaryType, secondaryD
 end
 
 function DeathEvent.onDeath(creature, corpse, lasthitkiller, mostdamagekiller, lasthitunjustified, mostdamageunjustified)
-    if not lasthitkiller or not creature:isMonster() or not corpse or corpse.itemid == 0 or not corpse:isContainer() then
-        return true
-    end
-    if not lasthitkiller:isPlayer() and not lasthitkiller:getMaster() then
-        return true
-    end
-    addEvent(
-        us_CheckCorpse,
-        10,
-        creature:getType(),
-        corpse:getPosition(),
-        lasthitkiller:getMaster() and lasthitkiller:getMaster():getId() or lasthitkiller:getId()
-    )
     return true
 end
 
@@ -672,106 +659,8 @@ GainExperienceEvent:register()
 function us_CheckCorpse(monsterType, corpsePosition, killerId)
     local killer = Player(killerId)
     local corpse = Tile(corpsePosition):getTopDownItem()
-    if killer and killer:isPlayer() and corpse and corpse:isContainer() then
-        for slot = CONST_SLOT_HEAD, CONST_SLOT_PET do
-            local item = killer:getSlotItem(slot)
-            if item then
-                local values = item:getAllEquippedBonuses()
-                if values then
-                    for key, value in pairs(values) do
-                        local attr = US_ENCHANTMENTS[value[1]]
-                        if attr then
-                            if attr.name == "Additonal Gold" then
-                                local cc, plat, gold = 0, 0, 0
-                                for i = 0, corpse:getSize() do
-                                    local item = corpse:getItem(i)
-                                    if item then
-                                        if item.itemid == 2160 then
-                                            gold = gold + (item:getCount() * 10000)
-                                        elseif item.itemid == 2152 then
-                                            gold = gold + (item:getCount() * 100)
-                                        elseif item.itemid == 2148 then
-                                            gold = gold + item:getCount()
-                                        end
-                                    end
-                                end
-
-                                gold = math.floor(gold * value[2] / 100)
-
-                                while gold >= 10000 do
-                                    gold = gold / 10000
-                                    cc = cc + 1
-                                end
-
-                                if cc > 0 then
-                                    local crystalCoin = Game.createItem(2160, cc)
-                                    corpse:addItemEx(crystalCoin)
-                                end
-
-                                while gold >= 100 do
-                                    gold = gold / 100
-                                    plat = plat + 1
-                                end
-
-                                if plat > 0 then
-                                    local platinumCoin = Game.createItem(2152, plat)
-                                    corpse:addItemEx(platinumCoin)
-                                end
-
-                                if gold > 0 then
-                                    local goldCoin = Game.createItem(2148, gold)
-                                    corpse:addItemEx(goldCoin)
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    local iLvl = monsterType:calculateItemLevel()
-    --[[ if iLvl >= US_CONFIG.CRYSTAL_FOSSIL_DROP_LEVEL then
-        if math.random(US_CONFIG.CRYSTAL_FOSSIL_DROP_CHANCE) == 1 then
-            corpse:addItem(US_CONFIG.CRYSTAL_FOSSIL, 1)
-
-            -- Use corpse position if available, or just killer position for safety
-            local pos = corpse:getPosition()
-            local specs = Game.getSpectators(pos, false, true, 9, 9, 8, 8)
-            if #specs > 0 then
-                for i = 1, #specs do
-                    local player = specs[i]
-                    player:say("Crystal Fossil!", TALKTYPE_MONSTER_SAY, false, player, pos)
-                end
-            end
-        end
-    end ]]
-    for i = 0, corpse:getCapacity() do
-        local item = corpse:getItem(i)
-        if item then
-            local itemType = item:getType()
-            if itemType then
-                if itemType:canHaveItemLevel() then
-                    item:setItemLevel(math.min(US_CONFIG.MAX_ITEM_LEVEL, math.random(math.max(1, iLvl - 5), iLvl)), true)
-                end
-                if itemType:isUpgradable() then
-                    if not US_CONFIG.ALWAYS_IDENTIFIED and math.random(US_CONFIG.UNIDENTIFIED_DROP_CHANCE) == 1 then
-                        item:unidentify()
-                    else
-                        item:rollRarity()
-                        local levelVar = math.random(math.max(1, iLvl - 2), iLvl + 2)
-                        item:setItemLevel(math.min(US_CONFIG.MAX_ITEM_LEVEL, levelVar), true)
-                        item:generateRandomSockets()
-
-                        if US_CONFIG.ALWAYS_IDENTIFIED and item:getMaxSockets() > 0 then
-                            item:rollAttribute(killer, itemType, itemType:getWeaponType(), true)
-                        end
-
-                        -- Try to apply item-specific unique name
-                        item:tryApplyUnique(corpsePosition)
-                    end
-                end
-            end
-        end
+    if applyDropLootQuality and killer and killer:isPlayer() and corpse and corpse:isContainer() then
+        applyDropLootQuality(monsterType, corpse, killer)
     end
 end
 
@@ -816,8 +705,17 @@ LookEvent.onLook = function(player, thing, position, distance, description)
                 if thing:getArticle():len() > 0 and thing:getRarity().name == "epic" and thing:getArticle() ~= "an" then
                     description = description:gsub("You see (" .. thing:getArticle() .. "%S?)", "You see an")
                 end
-                if thing:isUnique() then
-                    description = description:gsub("Item Level: " .. itemLevel, thing:getUniqueName() .. "\n%1")
+                local qualityLines = {}
+                if thing:isSuperior() then
+                    table.insert(qualityLines, "Superior")
+                end
+                if thing:hasItemUniqueName() then
+                    table.insert(qualityLines, "Super Unique: " .. thing:getUniqueName())
+                elseif thing:getUnique() then
+                    table.insert(qualityLines, "Unique: " .. thing:getUniqueName())
+                end
+                if #qualityLines > 0 then
+                    description = description:gsub("Item Level: " .. itemLevel, table.concat(qualityLines, "\n") .. "\n%1")
                 end
                 for i = thing:getMaxSockets(), 1, -1 do
                     -- Check for socketed jewel skull bonuses first
@@ -1312,12 +1210,10 @@ function Item.isUnique(self)
 end
 
 function Item.getUniqueName(self)
-    -- First check for item-specific unique name
     local itemUniqueName = self:getCustomAttribute("item_unique_name")
     if itemUniqueName then
         return itemUniqueName
     end
-    -- Fall back to legacy US_UNIQUES system
     local uniqueId = self:getUnique()
     if uniqueId and US_UNIQUES and US_UNIQUES[uniqueId] then
         return US_UNIQUES[uniqueId].name
@@ -1325,7 +1221,7 @@ function Item.getUniqueName(self)
     return nil
 end
 
--- Item-specific unique name functions (for crypto-themed uniques from ITEM_UNIQUE_MAP)
+-- Item-specific unique name functions
 function Item.setItemUniqueName(self, uniqueName)
     self:setCustomAttribute("item_unique_name", uniqueName)
 end
@@ -1338,9 +1234,7 @@ function Item.hasItemUniqueName(self)
     return self:getCustomAttribute("item_unique_name") and true or false
 end
 
--- Try to apply a unique crypto-themed name from ITEM_UNIQUE_MAP
--- Returns true if unique was applied, false otherwise
-function Item.tryApplyUnique(self, corpsePosition)
+function Item.applyRandomUniqueName(self, corpsePosition)
     if not ITEM_UNIQUE_MAP or not ITEM_UNIQUE_CONFIG or not ITEM_UNIQUE_CONFIG.ENABLED then
         return false
     end
@@ -1352,16 +1246,15 @@ function Item.tryApplyUnique(self, corpsePosition)
         return false
     end
 
-    if math.random(ITEM_UNIQUE_CONFIG.DROP_CHANCE) ~= 1 then
-        return false
-    end
-
-    -- Apply the unique name
     local uniqueName = uniqueNames[math.random(#uniqueNames)]
     self:setItemUniqueName(uniqueName)
 
-    -- Announce to nearby players if enabled
-    if ITEM_UNIQUE_CONFIG.ANNOUNCE_UNIQUE then
+    local announceEnabled = ITEM_UNIQUE_CONFIG.ANNOUNCE_SUPER_UNIQUE
+    if announceEnabled == nil then
+        announceEnabled = ITEM_UNIQUE_CONFIG.ANNOUNCE_UNIQUE
+    end
+
+    if announceEnabled then
         local specs = Game.getSpectators(corpsePosition, false, true, 9, 9, 8, 8)
         for i = 1, #specs do
             local player = specs[i]
@@ -1370,6 +1263,44 @@ function Item.tryApplyUnique(self, corpsePosition)
     end
 
     return true
+end
+
+function Item.tryApplyUnique(self, corpsePosition)
+    return self:applyRandomUniqueName(corpsePosition)
+end
+
+function Item.setSuperior(self, enabled)
+    if enabled == false then
+        self:removeCustomAttribute("superior")
+        return
+    end
+
+    if self:isSuperior() then
+        return
+    end
+
+    local itemType = self:getType()
+    if itemType:getAttack() > 0 then
+        self:setAttribute(ITEM_ATTRIBUTE_ATTACK, math.max(itemType:getAttack(), self:getAttribute(ITEM_ATTRIBUTE_ATTACK)) + 1)
+    end
+    if itemType:getDefense() > 0 then
+        self:setAttribute(ITEM_ATTRIBUTE_DEFENSE, math.max(itemType:getDefense(), self:getAttribute(ITEM_ATTRIBUTE_DEFENSE)) + 1)
+    end
+    if itemType:getExtraDefense() > 0 then
+        self:setAttribute(ITEM_ATTRIBUTE_EXTRADEFENSE, math.max(itemType:getExtraDefense(), self:getAttribute(ITEM_ATTRIBUTE_EXTRADEFENSE)) + 1)
+    end
+    if itemType:getArmor() > 0 then
+        self:setAttribute(ITEM_ATTRIBUTE_ARMOR, math.max(itemType:getArmor(), self:getAttribute(ITEM_ATTRIBUTE_ARMOR)) + 1)
+    end
+    if itemType:getHitChance() > 0 then
+        self:setAttribute(ITEM_ATTRIBUTE_HITCHANCE, math.max(itemType:getHitChance(), self:getAttribute(ITEM_ATTRIBUTE_HITCHANCE)) + 1)
+    end
+
+    self:setCustomAttribute("superior", true)
+end
+
+function Item.isSuperior(self)
+    return self:getCustomAttribute("superior") and true or false
 end
 
 function Item.setMemory(self, value)

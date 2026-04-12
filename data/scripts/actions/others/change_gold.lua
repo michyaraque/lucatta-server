@@ -17,11 +17,17 @@ function changeGold.onUse(player, item, fromPosition, target, toPosition, isHotk
 end
 
 local currencyItems = Game.getCurrencyItems()
+local registeredCurrencyIds = 0
 for index, currency in pairs(currencyItems) do
 	local back, to = currencyItems[index - 1], currencyItems[index + 1]
 	local currencyId = currency:getId()
 	config[currencyId] = { changeBack = back and back:getId(), changeTo = to and to:getId() }
 	changeGold:id(currencyId)
+	registeredCurrencyIds = registeredCurrencyIds + 1
 end
 
-changeGold:register()
+if registeredCurrencyIds > 0 then
+	changeGold:register()
+else
+	print("[Warning - change_gold.lua] No currency ids found, action not registered.")
+end

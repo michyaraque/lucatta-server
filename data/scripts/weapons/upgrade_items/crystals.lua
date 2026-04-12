@@ -181,8 +181,14 @@ function CrystalsAction.onUse(player, item, fromPosition, target, toPosition, is
                 end
             end
         end
-        if target:isUnique() then
+        if target:getUnique() then
             copy:setCustomAttribute("unique", target:getUnique())
+        end
+        if target:hasItemUniqueName() then
+            copy:setItemUniqueName(target:getItemUniqueName())
+        end
+        if target:isSuperior() then
+            copy:setCustomAttribute("superior", true)
         end
         if target:isLimitless() then
             copy:setLimitless(true)

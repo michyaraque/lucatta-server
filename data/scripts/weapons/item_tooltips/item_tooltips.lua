@@ -262,8 +262,15 @@ function Item:buildTooltip()
       if self:isMirrored() then
         item_data.mirrored = true
       end
-      if self:isUnique() then
+      if self:hasItemUniqueName() then
+        item_data.superUnique = true
         item_data.uniqueName = self:getUniqueName()
+      elseif self:getUnique() then
+        item_data.unique = true
+        item_data.uniqueName = self:getUniqueName()
+      end
+      if self:isSuperior() then
+        item_data.superior = true
       end
       item_data.rarityId = self:getRarityId()
       item_data.maxAttr = self:getMaxSockets()
@@ -339,6 +346,14 @@ function Item:buildTooltip()
       end
 
       -- Add regular attributes first, then trigger attributes
+      if self:isSuperior() then
+        table.insert(item_data.attr, "Superior")
+      end
+      if self:hasItemUniqueName() then
+        table.insert(item_data.attr, "Super Unique")
+      elseif self:getUnique() then
+        table.insert(item_data.attr, "Unique")
+      end
       for _, attrText in ipairs(regularAttrs) do
         table.insert(item_data.attr, attrText)
       end
