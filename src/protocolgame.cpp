@@ -1778,7 +1778,8 @@ void ProtocolGame::sendCreatureLight(const Creature* creature)
 	msg.add<uint32_t>(creature->getID());
 
 	auto&& [level, color] = creature->getCreatureLight();
-	msg.addByte((player->isAccessPlayer() ? 0xFF : level));
+	msg.addByte(level);
+	//msg.addByte((player->isAccessPlayer() ? 0xFF : level)); // This makes GOD Account not receive current light
 	msg.addByte(color);
 	writeToOutputBuffer(msg);
 }
@@ -3697,7 +3698,8 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 	}
 
 	LightInfo lightInfo = creature->getCreatureLight();
-	msg.addByte(player->isAccessPlayer() ? 0xFF : lightInfo.level);
+	msg.addByte(lightInfo.level);
+	//msg.addByte(player->isAccessPlayer() ? 0xFF : lightInfo.level);
 	msg.addByte(lightInfo.color);
 
 	msg.add<uint16_t>(creature->getStepSpeed() / 2);

@@ -15637,6 +15637,8 @@ int LuaScriptInterface::luaMonsterTypeRace(lua_State* L)
 				monsterType->info.race = RACE_FIRE;
 			} else if (race == "energy") {
 				monsterType->info.race = RACE_ENERGY;
+			} else if (race == "frost") {
+				monsterType->info.race = RACE_FROST;
 			} else {
 				std::cout << "[Warning - Monsters::loadMonster] Unknown race type " << race << ".\n";
 				lua_pushnil(L);

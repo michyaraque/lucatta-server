@@ -226,6 +226,7 @@ const std::unordered_map<std::string, tileflags_t> TileStatesMap = {
 const std::unordered_map<std::string, RaceType_t> RaceTypesMap = {
     {"venom", RACE_VENOM}, {"blood", RACE_BLOOD},   {"undead", RACE_UNDEAD},
     {"fire", RACE_FIRE},   {"energy", RACE_ENERGY}, {"ink", RACE_INK},
+	{"frost", RACE_FROST},
 };
 
 const std::unordered_map<std::string, WeaponType_t> WeaponTypesMap = {

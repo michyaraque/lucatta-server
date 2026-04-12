@@ -10,7 +10,7 @@ monster.outfit = {
 }
 monster.health = 2700
 monster.maxHealth = 2700
-monster.race = "blood"
+monster.race = "energy"
 monster.speed = 187
 monster.runHealth = 0
 monster.flags = {

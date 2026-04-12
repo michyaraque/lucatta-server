@@ -6,7 +6,6 @@ monster.experience = 1000000
 monster.outfit = {
 	lookType = 29,
 }
-monster.corpse = 37
 monster.health = 23
 monster.maxHealth = 23
 monster.race = "blood"

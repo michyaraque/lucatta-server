@@ -10,7 +10,7 @@ monster.outfit = {
 }
 monster.health = 138
 monster.maxHealth = 138
-monster.race = "blood"
+monster.race = "undead"
 monster.speed = 157
 monster.runHealth = 0
 monster.changeTarget = {

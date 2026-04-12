@@ -849,6 +849,8 @@ MonsterType* Monsters::loadMonster(const std::string& file, const std::string& m
 			mType->info.race = RACE_ENERGY;
 		} else if (tmpStrValue == "ink" || tmpInt == 6) {
 			mType->info.race = RACE_INK;
+		} else if (tmpStrValue == "frost" || tmpInt == 7) {
+			mType->info.race = RACE_FROST;
 		} else {
 			std::cout << "[Warning - Monsters::loadMonster] Unknown race type " << attr.as_string() << ". " << file
 			          << std::endl;

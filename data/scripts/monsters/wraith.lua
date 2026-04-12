@@ -5,6 +5,7 @@ local monster = {}
 
 monster.name = "Wraith"
 monster.experience = 1850
+monster.race = "frost"
 monster.outfit = {
   lookType = 59,
 }
