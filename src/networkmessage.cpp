@@ -117,16 +117,16 @@ void NetworkMessage::addPosition(const Position& pos)
 	addByte(pos.z);
 }
 
-void NetworkMessage::addItem(uint16_t id, uint8_t count)
+void NetworkMessage::addItem(uint16_t id, uint16_t count)
 {
 	const ItemType& it = Item::items[id];
 
 	add<uint16_t>(it.id);
 
 	if (it.stackable) {
-		addByte(count);
+		add<uint16_t>(count);
 	} else if (it.isSplash() || it.isFluidContainer()) {
-		addByte(fluidMap[count & 7]);
+		add<uint16_t>(fluidMap[count & 7]);
 	} else if (it.isContainer()) {
 		addByte(0x00); // assigned loot container icon
 		addByte(0x00); // quiver ammo count
@@ -157,9 +157,9 @@ void NetworkMessage::addItem(const Item* item)
 	add<uint16_t>(it.id);
 
 	if (it.stackable) {
-		addByte(std::min<uint16_t>(0xFF, item->getItemCount()));
+		add<uint16_t>(item->getItemCount());
 	} else if (it.isSplash() || it.isFluidContainer()) {
-		addByte(fluidMap[item->getFluidType() & 7]);
+		add<uint16_t>(fluidMap[item->getFluidType() & 7]);
 	} else if (it.classification > 0) {
 		addByte(0x00); // item tier (0-10)
 	}

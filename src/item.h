@@ -893,7 +893,7 @@ public:
 
 	// get the number of items
 	uint16_t getItemCount() const { return count; }
-	void setItemCount(uint8_t n) { count = n; }
+	void setItemCount(uint16_t n) { count = n; }
 
 	static uint32_t countByType(const Item* i, int32_t subType)
 	{
@@ -964,7 +964,7 @@ private:
 
 	uint32_t referenceCounter = 0;
 
-	uint8_t count = 1; // number of stacked items
+	uint16_t count = 1; // number of stacked items
 
 	bool loadedFromMap = false;
 

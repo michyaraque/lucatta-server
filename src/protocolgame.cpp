@@ -1317,7 +1317,7 @@ void ProtocolGame::parseThrow(NetworkMessage& msg)
 	uint16_t spriteId = msg.get<uint16_t>();
 	uint8_t fromStackpos = msg.getByte();
 	Position toPos = msg.getPosition();
-	uint8_t count = msg.getByte();
+	uint16_t count = msg.get<uint16_t>();
 
 	if (toPos != fromPos) {
 		g_dispatcher.addTask(DISPATCHER_TASK_EXPIRATION, [=, playerID = player->getID()]() {

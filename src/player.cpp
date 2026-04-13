@@ -2782,7 +2782,7 @@ ReturnValue Player::queryMaxCount(int32_t index, const Thing& thing, uint32_t co
 					}
 				} else if (inventoryItem->isStackable() && item->equals(inventoryItem) &&
 				           inventoryItem->getItemCount() < ITEM_STACK_SIZE) {
-					uint32_t remainder = (100 - inventoryItem->getItemCount());
+					uint32_t remainder = (ITEM_STACK_SIZE - inventoryItem->getItemCount());
 
 					if (queryAdd(slotIndex, *item, remainder, flags) == RETURNVALUE_NOERROR) {
 						n += remainder;
@@ -2790,7 +2790,7 @@ ReturnValue Player::queryMaxCount(int32_t index, const Thing& thing, uint32_t co
 				}
 			} else if (queryAdd(slotIndex, *item, item->getItemCount(), flags) == RETURNVALUE_NOERROR) { // empty slot
 				if (item->isStackable()) {
-					n += 100;
+					n += ITEM_STACK_SIZE;
 				} else {
 					++n;
 				}
@@ -2808,13 +2808,13 @@ ReturnValue Player::queryMaxCount(int32_t index, const Thing& thing, uint32_t co
 
 		if (destItem) {
 			if (destItem->isStackable() && item->equals(destItem) && destItem->getItemCount() < ITEM_STACK_SIZE) {
-				maxQueryCount = 100 - destItem->getItemCount();
+				maxQueryCount = ITEM_STACK_SIZE - destItem->getItemCount();
 			} else {
 				maxQueryCount = 0;
 			}
 		} else if (queryAdd(index, *item, count, flags) == RETURNVALUE_NOERROR) { // empty slot
 			if (item->isStackable()) {
-				maxQueryCount = 100;
+				maxQueryCount = ITEM_STACK_SIZE;
 			} else {
 				maxQueryCount = 1;
 			}
@@ -3063,8 +3063,8 @@ void Player::removeThing(Thing* thing, uint32_t count)
 		return /*RETURNVALUE_NOTPOSSIBLE*/;
 	}
 
-	if (item->isStackable()) {
-		if (count == item->getItemCount()) {
+		if (item->isStackable()) {
+			if (count == item->getItemCount()) {
 			// send change to client
 			sendInventoryItem(static_cast<slots_t>(index), nullptr);
 
@@ -3074,7 +3074,7 @@ void Player::removeThing(Thing* thing, uint32_t count)
 			item->setParent(nullptr);
 			inventory[index] = nullptr;
 		} else {
-			uint8_t newCount = static_cast<uint8_t>(std::max<int32_t>(0, item->getItemCount() - count));
+			uint16_t newCount = static_cast<uint16_t>(std::max<int32_t>(0, item->getItemCount() - count));
 			item->setItemCount(newCount);
 
 			// send change to client

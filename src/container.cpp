@@ -757,7 +757,7 @@ void Container::removeThing(Thing* thing, uint32_t count)
 	const int32_t slot = getStoredSlot(item);
 
 	if (item->isStackable() && count != item->getItemCount()) {
-		uint8_t newCount = static_cast<uint8_t>(std::max<int32_t>(0, item->getItemCount() - count));
+		uint16_t newCount = static_cast<uint16_t>(std::max<int32_t>(0, item->getItemCount() - count));
 		const int32_t oldWeight = item->getWeight();
 
 		ammoCount -= (item->getItemCount() - newCount);

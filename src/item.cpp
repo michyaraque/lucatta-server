@@ -823,8 +823,14 @@ void Item::serializeAttr(PropWriteStream& propWriteStream) const
 {
 	const ItemType& it = items[id];
 	if (it.stackable || it.isFluidContainer() || it.isSplash()) {
-		propWriteStream.write<uint8_t>(ATTR_COUNT);
-		propWriteStream.write<uint8_t>(getSubType());
+		const uint16_t subType = getSubType();
+		if (it.stackable && subType > UINT8_MAX) {
+			propWriteStream.write<uint8_t>(ATTR_CHARGES);
+			propWriteStream.write<uint16_t>(subType);
+		} else {
+			propWriteStream.write<uint8_t>(ATTR_COUNT);
+			propWriteStream.write<uint8_t>(subType);
+		}
 	}
 
 	uint16_t charges = getCharges();

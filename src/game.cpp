@@ -1950,7 +1950,7 @@ void Game::executeDeath(uint32_t creatureId)
 }
 
 void Game::playerMoveThing(uint32_t playerId, const Position& fromPos, uint16_t spriteId, uint8_t fromStackPos,
-                           const Position& toPos, uint8_t count)
+                           const Position& toPos, uint16_t count)
 {
 	Player* player = getPlayerByID(playerId);
 	if (!player) {
@@ -2225,7 +2225,7 @@ ReturnValue Game::internalMoveCreature(Creature& creature, Tile& toTile, uint32_
 }
 
 void Game::playerMoveItemByPlayerID(uint32_t playerId, const Position& fromPos, uint16_t spriteId, uint8_t fromStackPos,
-                                    const Position& toPos, uint8_t count)
+                                    const Position& toPos, uint16_t count)
 {
 	Player* player = getPlayerByID(playerId);
 	if (!player) {
@@ -2235,7 +2235,7 @@ void Game::playerMoveItemByPlayerID(uint32_t playerId, const Position& fromPos, 
 }
 
 void Game::playerMoveItem(Player* player, const Position& fromPos, uint16_t spriteId, uint8_t fromStackPos,
-                          const Position& toPos, uint8_t count, Item* item, Thing* toThing)
+                          const Position& toPos, uint16_t count, Item* item, Thing* toThing)
 {
 	if (!player->canDoAction()) {
 		uint32_t delay = player->getNextActionTime();

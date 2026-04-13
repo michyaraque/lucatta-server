@@ -99,7 +99,7 @@ static constexpr int32_t RANGE_REQUEST_TRADE_INTERVAL = 400;
 
 static constexpr int32_t MAX_STACKPOS = 10;
 
-static constexpr uint8_t ITEM_STACK_SIZE = 100;
+static constexpr uint16_t ITEM_STACK_SIZE = 10000;
 
 /**
  * Main Game class.
@@ -350,15 +350,15 @@ public:
 
 	// Implementation of player invoked events
 	void playerMoveThing(uint32_t playerId, const Position& fromPos, uint16_t spriteId, uint8_t fromStackPos,
-	                     const Position& toPos, uint8_t count);
+	                     const Position& toPos, uint16_t count);
 	void playerMoveCreatureByID(uint32_t playerId, uint32_t movingCreatureId, const Position& movingCreatureOrigPos,
 	                            const Position& toPos);
 	void playerMoveCreature(Player* player, Creature* movingCreature, const Position& movingCreatureOrigPos,
 	                        Tile* toTile);
 	void playerMoveItemByPlayerID(uint32_t playerId, const Position& fromPos, uint16_t spriteId, uint8_t fromStackPos,
-	                              const Position& toPos, uint8_t count);
+	                              const Position& toPos, uint16_t count);
 	void playerMoveItem(Player* player, const Position& fromPos, uint16_t spriteId, uint8_t fromStackPos,
-	                    const Position& toPos, uint8_t count, Item* item, Thing* toThing);
+	                    const Position& toPos, uint16_t count, Item* item, Thing* toThing);
 	void playerEquipItem(uint32_t playerId, uint16_t spriteId);
 	void playerMove(uint32_t playerId, Direction direction);
 	void playerCreatePrivateChannel(uint32_t playerId);
