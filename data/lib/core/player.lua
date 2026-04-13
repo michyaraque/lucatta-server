@@ -705,7 +705,7 @@ end
 function Player.sendWorldLight(self, color, level)
 	local msg = NetworkMessage()
 	msg:addByte(0x82)
-	msg:addByte(self:getGroup():getAccess() and 0xFF or level)
+	msg:addByte(level)
 	msg:addByte(color)
 	msg:sendToPlayer(self)
 	msg:delete()
