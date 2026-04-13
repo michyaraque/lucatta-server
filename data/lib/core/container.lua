@@ -46,7 +46,7 @@ function Container.createLootItem(self, item)
 			end
 		end
 
-		if item.subType ~= -1 then
+		if item.subType ~= -1 and not itemType:isStackable() then
 			tmpItem:setAttribute(ITEM_ATTRIBUTE_CHARGES, item.subType)
 		end
 

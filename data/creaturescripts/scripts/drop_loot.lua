@@ -3,7 +3,9 @@ function onDeath(player, corpse, killer, mostDamageKiller, lastHitUnjustified, m
 		return true
 	end
 
-	local amulet = player:getSlotItem(CONST_SLOT_NECKLACE)
+	return true --[[ players never drops their bag ]]
+
+	--[[ local amulet = player:getSlotItem(CONST_SLOT_NECKLACE)
 	local isRedOrBlack = table.contains({SKULL_RED, SKULL_BLACK}, player:getSkull())
 	if amulet and amulet.itemid == ITEM_AMULETOFLOSS and not isRedOrBlack then
 		local isPlayer = false
@@ -38,5 +40,5 @@ function onDeath(player, corpse, killer, mostDamageKiller, lastHitUnjustified, m
 	if not player:getSlotItem(CONST_SLOT_BACKPACK) then
 		player:addItem(ITEM_BAG, 1, false, CONST_SLOT_BACKPACK)
 	end
-	return true
+	return true ]]
 end

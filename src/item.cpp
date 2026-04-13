@@ -171,41 +171,103 @@ bool Item::equals(const Item* otherItem) const
 		return false;
 	}
 
+	static const std::unordered_set<std::string> ignoredCustomKeys = {"container_slot"};
+
 	const auto& otherAttributes = otherItem->attributes;
-	if (!attributes) {
-		return !otherAttributes || (otherAttributes->attributeBits == 0);
-	} else if (!otherAttributes) {
-		return (attributes->attributeBits == 0);
+
+	// Bits to ignore: CUSTOM (container_slot) and CHARGES (redundant for stackables)
+	constexpr uint32_t customBit = static_cast<uint32_t>(ITEM_ATTRIBUTE_CUSTOM);
+	constexpr uint32_t chargesBit = static_cast<uint32_t>(ITEM_ATTRIBUTE_CHARGES);
+
+	uint32_t bitsA = attributes ? attributes->attributeBits : 0;
+	uint32_t bitsB = otherAttributes ? otherAttributes->attributeBits : 0;
+
+	const ItemType& it = items[id];
+	uint32_t ignoredBits = customBit;
+	if (it.stackable) {
+		ignoredBits |= chargesBit;
 	}
 
-	if (attributes->attributeBits != otherAttributes->attributeBits) {
+	if ((bitsA & ~ignoredBits) != (bitsB & ~ignoredBits)) {
 		return false;
 	}
 
-	const auto& attributeList = attributes->attributes;
-	const auto& otherAttributeList = otherAttributes->attributes;
-	for (const auto& attribute : attributeList) {
-		if (ItemAttributes::isIntAttrType(attribute.type)) {
-			for (const auto& otherAttribute : otherAttributeList) {
-				if (attribute.type == otherAttribute.type && attribute.value.integer != otherAttribute.value.integer) {
-					return false;
-				}
+	if (!attributes && !otherAttributes) {
+		return true;
+	}
+
+	// Compare non-custom, non-ignored attributes
+	if (attributes && otherAttributes) {
+		const auto& attributeList = attributes->attributes;
+		const auto& otherAttributeList = otherAttributes->attributes;
+		for (const auto& attribute : attributeList) {
+			if (ItemAttributes::isCustomAttrType(attribute.type)) {
+				continue;
 			}
-		} else if (ItemAttributes::isStrAttrType(attribute.type)) {
-			for (const auto& otherAttribute : otherAttributeList) {
-				if (attribute.type == otherAttribute.type && *attribute.value.string != *otherAttribute.value.string) {
-					return false;
-				}
+
+			if ((attribute.type & ignoredBits) != 0) {
+				continue;
 			}
-		} else {
-			for (const auto& otherAttribute : otherAttributeList) {
-				if (attribute.type == otherAttribute.type && *attribute.value.custom != *otherAttribute.value.custom) {
-					return false;
+
+			if (ItemAttributes::isIntAttrType(attribute.type)) {
+				for (const auto& otherAttribute : otherAttributeList) {
+					if (attribute.type == otherAttribute.type && attribute.value.integer != otherAttribute.value.integer) {
+						return false;
+					}
+				}
+			} else if (ItemAttributes::isStrAttrType(attribute.type)) {
+				for (const auto& otherAttribute : otherAttributeList) {
+					if (attribute.type == otherAttribute.type && *attribute.value.string != *otherAttribute.value.string) {
+						return false;
+					}
 				}
 			}
 		}
+	} else if (attributes) {
+		for (const auto& attribute : attributes->attributes) {
+			if (!ItemAttributes::isCustomAttrType(attribute.type) && (attribute.type & ignoredBits) == 0) {
+				return false;
+			}
+		}
+	} else {
+		for (const auto& attribute : otherAttributes->attributes) {
+			if (!ItemAttributes::isCustomAttrType(attribute.type) && (attribute.type & ignoredBits) == 0) {
+				return false;
+			}
+		}
 	}
-	return true;
+
+	// Compare custom attribute maps, skipping internal-only keys
+	const auto* mapA = attributes ? attributes->getCustomAttributeMap() : nullptr;
+	const auto* mapB = otherAttributes ? otherAttributes->getCustomAttributeMap() : nullptr;
+
+	size_t relevantA = 0;
+	if (mapA) {
+		for (const auto& [key, val] : *mapA) {
+			if (ignoredCustomKeys.count(key)) {
+				continue;
+			}
+			++relevantA;
+			if (!mapB) {
+				return false;
+			}
+			auto it = mapB->find(key);
+			if (it == mapB->end() || it->second != val) {
+				return false;
+			}
+		}
+	}
+
+	size_t relevantB = 0;
+	if (mapB) {
+		for (const auto& [key, val] : *mapB) {
+			if (!ignoredCustomKeys.count(key)) {
+				++relevantB;
+			}
+		}
+	}
+
+	return relevantA == relevantB;
 }
 
 void Item::setDefaultSubtype()

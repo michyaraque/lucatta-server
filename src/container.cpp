@@ -393,11 +393,17 @@ ReturnValue Container::queryAdd(int32_t index, const Thing& thing, uint32_t coun
 	if (index != INDEX_WHEREEVER) {
 		const Item* existingItem = getItemBySlot(index);
 		if (existingItem && existingItem != item) {
+			bool canStack = item->isStackable() && existingItem->equals(item) &&
+			                existingItem->getItemCount() < ITEM_STACK_SIZE;
+
 			if (item->getParent() != this) {
-				return RETURNVALUE_CONTAINERNOTENOUGHROOM;
+				if (canStack) {
+					return RETURNVALUE_NOERROR;
+				}
+				return RETURNVALUE_NEEDEXCHANGE;
 			}
 
-			if (!item->isStackable() || !existingItem->equals(item) || existingItem->getItemCount() >= ITEM_STACK_SIZE) {
+			if (!canStack) {
 				return RETURNVALUE_NOERROR;
 			}
 		}
@@ -612,14 +618,12 @@ Thing* Container::queryDestination(int32_t& index, const Thing& thing, Item** de
 		}
 
 		// try find a suitable item to stack with
-		uint32_t n = 0;
 		for (Item* listItem : itemlist) {
 			if (listItem != item && listItem->equals(item) && listItem->getItemCount() < ITEM_STACK_SIZE) {
 				*destItem = listItem;
-				index = n;
+				index = getStoredSlot(listItem);
 				return this;
 			}
-			++n;
 		}
 	}
 	return this;

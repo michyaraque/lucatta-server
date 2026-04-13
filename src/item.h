@@ -386,6 +386,15 @@ private:
 		return getAttr(ITEM_ATTRIBUTE_CUSTOM).value.custom;
 	}
 
+	const CustomAttributeMap* getCustomAttributeMap() const
+	{
+		if (const auto* attr = getExistingAttr(ITEM_ATTRIBUTE_CUSTOM)) {
+			return attr->value.custom;
+		}
+
+		return nullptr;
+	}
+
 	template <typename R>
 	void setCustomAttribute(int64_t key, R value)
 	{

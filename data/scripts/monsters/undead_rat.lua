@@ -38,6 +38,18 @@ monster.attacks = {
     maxDamage = 0
   },
 }
+
+monster.elements = {
+	{type = COMBAT_PHYSICALDAMAGE, percent = 30},
+	{type = COMBAT_ENERGYDAMAGE, percent = -50},
+	{type = COMBAT_FIREDAMAGE, percent = -80}
+}
+
+monster.immunities = {
+	{type = "ice", condition = true},
+}
+
+
 monster.defenses = {
   defense = 11,
   armor = 9,
