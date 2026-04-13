@@ -1,12 +1,10 @@
-
-
 local mType = Game.createMonsterType("Yeti")
 local monster = {}
 
 monster.name = "Yeti"
 monster.experience = 750
 monster.outfit = {
-  lookType = 61,
+	lookType = 61,
 }
 monster.health = 800
 monster.maxHealth = 800
@@ -14,41 +12,45 @@ monster.race = "frost"
 monster.speed = 190
 monster.runHealth = 0
 monster.changeTarget = {
-  interval = 5000,
-  chance = 8,
+	interval = 5000,
+	chance = 8,
 }
 monster.flags = {
-  attackable = true,
-  hostile = true,
-  targetDistance = 1,
+	attackable = true,
+	hostile = true,
+	targetDistance = 1,
 }
 monster.loot = {
-  {id = 110, chance = 65000, maxCount = 1},
-  {id = 87, chance = 3000, maxCount = 1},
-  {id = 331, chance = 5000, maxCount = 1},
-  {id = 107, chance = 3000, maxCount = 1},
-  {id = 76, chance = 6000, maxCount = 1},
-  {id = 82, chance = 3000, maxCount = 1},
-  {id = 149, chance = 2000, maxCount = 1},
-  {id = 92, chance = 10000, maxCount = 30},
+	{ id = 110, chance = 65000, maxCount = 1 },
+	{ id = 87,  chance = 3000,  maxCount = 1 },
+	{ id = 331, chance = 5000,  maxCount = 1 },
+	{ id = 107, chance = 3000,  maxCount = 1 },
+	{ id = 76,  chance = 6000,  maxCount = 1 },
+	{ id = 82,  chance = 3000,  maxCount = 1 },
+	{ id = 149, chance = 2000,  maxCount = 1 },
+	{ id = 92,  chance = 10000, maxCount = 30 },
 }
 monster.attacks = {
-  {
-    name = "melee",
-    interval = 2000,
-    minDamage = -100,
-    maxDamage = 0
-  },
+	{
+		name = "melee",
+		interval = 2000,
+		minDamage = -100,
+		maxDamage = 0
+	},
 }
 monster.defenses = {
-  defense = 10,
-  armor = 10,
+	defense = 10,
+	armor = 10,
 }
+
 monster.elements = {
-  {
-    type = COMBAT_ICEDAMAGE,
-    percent = 100
-  },
+	{type = COMBAT_PHYSICALDAMAGE, percent = 30},
+	{type = COMBAT_ENERGYDAMAGE, percent = -50},
+	{type = COMBAT_FIREDAMAGE, percent = -100}
+}
+
+monster.immunities = {
+	{type = "ice", condition = true},
 }
 
 mType:register(monster)
