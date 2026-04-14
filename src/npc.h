@@ -200,6 +200,7 @@ private:
 	Position masterPos;
 
 	uint32_t walkTicks;
+	uint32_t idleThinkTicks = 0;
 	int32_t focusCreature;
 	int32_t masterRadius;
 

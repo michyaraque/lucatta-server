@@ -336,6 +336,18 @@ void Npc::onThink(uint32_t interval)
 {
 	Creature::onThink(interval);
 
+	const bool hasActiveInteraction = !isIdle || focusCreature != 0 || !shopPlayerSet.empty();
+	if (!hasActiveInteraction) {
+		idleThinkTicks += interval;
+		if (idleThinkTicks < 5000) {
+			return;
+		}
+
+		idleThinkTicks = 0;
+	} else {
+		idleThinkTicks = 0;
+	}
+
 	if (npcEventHandler) {
 		npcEventHandler->onThink();
 	}
@@ -415,6 +427,7 @@ void Npc::setIdle(const bool idle)
 	}
 
 	isIdle = idle;
+	idleThinkTicks = 0;
 
 	if (isIdle) {
 		onIdleStatus();
