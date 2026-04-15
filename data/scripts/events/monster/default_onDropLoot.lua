@@ -11,6 +11,7 @@ local LOOT_BAG_TOKEN_KEY = "loot_bag_token"
 local LOOT_BAG_HIGHLIGHT_KEY = "loot_bag_highlight"
 local LOOT_BAG_EFFECT_STARTED_KEY = "loot_bag_effect_started"
 local LOOT_BAG_INTERNAL_KEY = "loot_bag_internal"
+local LOOT_PICKUP_OPCODE = 151
 
 local lootBagTokenCounter = 0
 
@@ -156,6 +157,29 @@ end
 
 local COLLECT_FLAGS = FLAG_IGNORENOTMOVEABLE
 
+local function sendLootPickupPacket(player, position, aggregated)
+	if not player or not aggregated or next(aggregated) == nil then
+		return
+	end
+
+	local items = {}
+	for _, bucket in pairs(aggregated) do
+		items[#items + 1] = {
+			id = bucket.id,
+			count = bucket.count,
+			rarity = bucket.rarity or 0,
+			quality = bucket.quality or 0,
+		}
+	end
+
+	local payload = json.encode({
+		pos = { x = position.x, y = position.y, z = position.z },
+		items = items,
+	})
+
+	player:sendExtendedOpcode(LOOT_PICKUP_OPCODE, payload)
+end
+
 local function collectLootBag(player, bag)
 	local backpack = player:getSlotItem(CONST_SLOT_BACKPACK)
 	if not backpack or not backpack:isContainer() then
@@ -168,6 +192,8 @@ local function collectLootBag(player, bag)
 
 	local lastError = RETURNVALUE_NOERROR
 	local movedAny = false
+	local pickupPosition = clonePosition(bag:getPosition())
+	local aggregated = {}
 
 	local function collectItem(lootItem)
 		if not lootItem then
@@ -190,9 +216,28 @@ local function collectLootBag(player, bag)
 			return
 		end
 
+		local itemId = lootItem:getId()
+		local itemCount = lootItem:getCount() or 1
+		local rarity = (lootItem.getRarityId and lootItem:getRarityId()) or 0
+		local quality = 0
+		if lootItem.hasItemUniqueName and lootItem:hasItemUniqueName() then
+			quality = 3
+		elseif lootItem.getUnique and lootItem:getUnique() then
+			quality = 2
+		elseif lootItem.isSuperior and lootItem:isSuperior() then
+			quality = 1
+		end
+
 		local moved = lootItem:moveTo(backpack, COLLECT_FLAGS)
 		if moved then
 			movedAny = true
+			local key = itemId .. ":" .. rarity .. ":" .. quality
+			local bucket = aggregated[key]
+			if bucket then
+				bucket.count = bucket.count + itemCount
+			else
+				aggregated[key] = { id = itemId, count = itemCount, rarity = rarity, quality = quality }
+			end
 		else
 			lastError = RETURNVALUE_NOTENOUGHROOM
 		end
@@ -200,6 +245,10 @@ local function collectLootBag(player, bag)
 
 	for index = bag:getSize() - 1, 0, -1 do
 		collectItem(bag:getItem(index))
+	end
+
+	if movedAny then
+		sendLootPickupPacket(player, pickupPosition, aggregated)
 	end
 
 	if bag:getSize() == 0 then
