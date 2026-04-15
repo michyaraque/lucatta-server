@@ -2463,12 +2463,6 @@ ReturnValue Game::internalMoveItem(Thing* fromThing, Thing* toThing, int32_t ind
 
 	// check if we can add this item
 	ReturnValue ret = toThing->queryAdd(index, *item, count, flags, actor);
-	if (item->isStackable()) {
-		std::cout << "[moveItem] queryAdd ret=" << static_cast<int>(ret)
-		          << " index=" << index
-		          << " toItem=" << (toItem ? std::to_string(toItem->getID()) : "null")
-		          << " flags=0x" << std::hex << flags << std::dec << std::endl;
-	}
 	if (ret == RETURNVALUE_NEEDEXCHANGE) {
 		// check if we can add it to source thing
 		ret = fromThing->queryAdd(fromThing->getThingIndex(item), *toItem, toItem->getItemCount(), 0);
@@ -2564,12 +2558,6 @@ ReturnValue Game::internalMoveItem(Thing* fromThing, Thing* toThing, int32_t ind
 		uint32_t allowedCount = 0;
 
 		bool equalsResult = item->equals(toItem);
-		std::cout << "[moveItem] stackable id=" << item->getID()
-		          << " toItem=" << (toItem ? std::to_string(toItem->getID()) : "null")
-		          << " equals=" << equalsResult
-		          << " moveCount=" << moveCount
-		          << " STACK_SIZE=" << ITEM_STACK_SIZE << std::endl;
-
 		// when item is moved onto another equal item
 		if (equalsResult && moveCount != ITEM_STACK_SIZE) {
 			allowedCount = std::min<uint32_t>(ITEM_STACK_SIZE - toItem->getItemCount(), moveCount);
