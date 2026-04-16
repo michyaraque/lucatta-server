@@ -105,10 +105,10 @@ function creatureSayCallback(cid, type, msg)
 	local player = Player(cid)
 	local vocationId = player:getVocation():getId()
 	local items = {
-		[VOCATION_SORCERER] = 2190,
-		[VOCATION_DRUID] = 2182,
-		[VOCATION_MASTER_SORCERER] = 2190,
-		[VOCATION_ELDER_DRUID] = 2182
+		[VOCATION_MAGE] = 2190,
+		[VOCATION_SHAMAN] = 2182,
+		[VOCATION_MASTER_MAGE] = 2190,
+		[VOCATION_ELDER_SHAMAN] = 2182
 	}
 
 	if msgcontains(msg, 'first rod') or msgcontains(msg, 'first wand') then
@@ -120,7 +120,7 @@ function creatureSayCallback(cid, type, msg)
 				selfSay('What? I have already gave you one {' .. ItemType(items[vocationId]):getName() .. '}!', cid)
 			end
 		else
-			selfSay('Sorry, you aren\'t a druid either a sorcerer.', cid)
+			selfSay('Sorry, you aren\'t a shaman either a mage.', cid)
 		end
 	elseif msgcontains(msg, 'yes') then
 		if npcHandler.topic[cid] == 1 then

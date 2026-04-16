@@ -39,30 +39,30 @@ local function creatureSayCallback(cid, type, msg)
 		if msgcontains(msg, "rhyves") then
 			town[cid] = 2
 			destination[cid] = Position(159, 387, 6)
-			npcHandler:say("IN RHYVES! AND WHAT PROFESSION HAVE YOU CHOSEN: {KNIGHT}, {PALADIN}, {SORCERER}, OR {DRUID}?", cid)
+			npcHandler:say("IN RHYVES! AND WHAT PROFESSION HAVE YOU CHOSEN: {WARRIOR}, {ARCHER}, {MAGE}, OR {SHAMAN}?", cid)
 			npcHandler.topic[cid] = 2
 		else
 			npcHandler:say("IN WHICH TOWN DO YOU WANT TO LIVE: {RHYVES}?", cid)
 		end
 	elseif npcHandler.topic[cid] == 2 then
-		if msgcontains(msg, "sorcerer") then
-			npcHandler:say("A SORCERER! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!", cid)
+		if msgcontains(msg, "mage") then
+			npcHandler:say("A MAGE! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!", cid)
 			npcHandler.topic[cid] = 3
-			vocation[cid] = VOCATION_SORCERER
-		elseif msgcontains(msg, "druid") then
-			npcHandler:say("A DRUID! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!", cid)
+			vocation[cid] = VOCATION_MAGE
+		elseif msgcontains(msg, "shaman") then
+			npcHandler:say("A SHAMAN! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!", cid)
 			npcHandler.topic[cid] = 3
-			vocation[cid] = VOCATION_DRUID
-		elseif msgcontains(msg, "paladin") then
-			npcHandler:say("A PALADIN! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!", cid)
+			vocation[cid] = VOCATION_SHAMAN
+		elseif msgcontains(msg, "archer") then
+			npcHandler:say("AN ARCHER! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!", cid)
 			npcHandler.topic[cid] = 3
-			vocation[cid] = VOCATION_PALADIN
-		elseif msgcontains(msg, "knight") then
-			npcHandler:say("A KNIGHT! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!", cid)
+			vocation[cid] = VOCATION_ARCHER
+		elseif msgcontains(msg, "warrior") then
+			npcHandler:say("A WARRIOR! ARE YOU SURE? THIS DECISION IS IRREVERSIBLE!", cid)
 			npcHandler.topic[cid] = 3
-			vocation[cid] = VOCATION_KNIGHT
+			vocation[cid] = VOCATION_WARRIOR
 		else
-			npcHandler:say("{KNIGHT}, {PALADIN}, {SORCERER}, OR {DRUID}?", cid)
+			npcHandler:say("{WARRIOR}, {ARCHER}, {MAGE}, OR {SHAMAN}?", cid)
 		end
 	elseif npcHandler.topic[cid] == 3 then
 		if msgcontains(msg, "yes") then
@@ -77,7 +77,7 @@ local function creatureSayCallback(cid, type, msg)
 			player:getPosition():sendMagicEffect(CONST_ME_TELEPORT)
 			destination:sendMagicEffect(CONST_ME_TELEPORT)
 		else
-			npcHandler:say("THEN WHAT? {KNIGHT}, {PALADIN}, {SORCERER}, OR {DRUID}?", cid)
+			npcHandler:say("THEN WHAT? {WARRIOR}, {ARCHER}, {MAGE}, OR {SHAMAN}?", cid)
 			npcHandler.topic[cid] = 2
 		end
 	end

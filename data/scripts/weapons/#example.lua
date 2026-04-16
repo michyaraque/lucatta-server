@@ -44,8 +44,8 @@ wov:damage(8, 18)
 wov:element("energy")
 wov:level(7)
 wov:mana(2)
-wov:vocation("sorcerer", true, true)
-wov:vocation("master sorcerer")
+wov:vocation("mage", true, true)
+wov:vocation("master mage")
 wov:register()
 
 --[[

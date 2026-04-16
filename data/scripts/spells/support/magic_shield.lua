@@ -44,5 +44,5 @@ else
 end
 magicShield:groupCooldown(2000)
 magicShield:needLearn(false)
-magicShield:vocation("druid;true", "elder druid;true", "sorcerer;true", "master sorcerer;true")
+magicShield:vocation("shaman;true", "elder shaman;true", "mage;true", "master mage;true")
 magicShield:register()
