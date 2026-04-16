@@ -1,5 +1,10 @@
 -- Skeleton King - Boss Events
 -- Arena: {x=148, y=51, z=7} to {x=162, y=70, z=7}
+--
+-- PHASES:
+--   Phase 1 (100-60%): Tactical — bone throws, telegraphed death wave, DKs guard the king
+--   Phase 2  (60-30%): Enraged  — faster attacks, curse players, bone rain on random arena tiles
+--   Phase 3   (<30%): Desperate — one emergency self-heal, bone storm (large radius), final wave
 
 local ARENA = {
 	from = Position(148, 51, 7),
@@ -7,23 +12,25 @@ local ARENA = {
 }
 
 local STORAGE = {
-	phase         = 66100,  -- current phase (1=normal, 2=enraged <50%, 3=desperate <20%)
+	phase         = 66100,  -- 1=normal, 2=enraged, 3=desperate
 	waveSpawned   = 66101,  -- tick counter for periodic reinforcements
 	spawning      = 66102,  -- prevent overlapping summon bursts
-	spawned       = 66103,  -- 0 = not yet spawned intro, 1 = intro done
+	spawned       = 66103,  -- 0=not yet spawned intro, 1=intro done
 	noHitTicks    = 66104,  -- ticks without damage (for boss reset)
-	lastHp        = 66105,  -- HP at previous tick (to detect if anyone is hitting)
+	lastHp        = 66105,  -- HP at previous tick
+	healed        = 66106,  -- 0=emergency heal not used, 1=used
+	waveTelegraph = 66107,  -- 0=idle, 1=wave telegraphed (next tick fires it)
+	curseTick     = 66108,  -- tick counter for random curse
+	boneRainTick  = 66109,  -- tick counter for bone rain
+	dashTick      = 66110,  -- tick counter for charge dash
+	dashing       = 66111,  -- 1 while speed boost is active
 }
 
--- Ticks (~1s each) with no HP change before the boss resets
 local BOSS_RESET_TICKS = 45
--- Seconds the reward chest stays before disappearing
 local CHEST_DECAY_SECS = 45
 
--- Last target ID greeted — shout once per new target
 local lastGreetedTarget = 0
 
--- Spawn positions across the arena floor
 local SPAWN_POSITIONS = {
 	Position(149, 53, 7), Position(161, 53, 7),
 	Position(149, 68, 7), Position(161, 68, 7),
@@ -31,6 +38,16 @@ local SPAWN_POSITIONS = {
 	Position(158, 57, 7), Position(152, 65, 7),
 	Position(158, 65, 7),
 }
+
+-- Random positions across the full arena floor for bone rain
+local ARENA_FLOOR_POSITIONS = {}
+do
+	for x = 149, 161, 2 do
+		for y = 52, 69, 2 do
+			ARENA_FLOOR_POSITIONS[#ARENA_FLOOR_POSITIONS + 1] = Position(x, y, 7)
+		end
+	end
+end
 
 local function getArenaPlayers(bossPos)
 	local spectators = Game.getSpectators(bossPos, false, true, 8, 8, 10, 10)
@@ -54,20 +71,50 @@ local function broadcastToArena(players, msg)
 	end
 end
 
-local function cleanArena(bossPos)
+local MAX_DEATH_KNIGHTS = 3
+
+local function countArenaDeathKnights(bossPos)
+	local count = 0
 	local creatures = Game.getSpectators(bossPos, false, false, 9, 9, 11, 11)
 	for _, creature in ipairs(creatures) do
 		if creature:isMonster() and creature:getName():lower() == "death knight" then
-			creature:getPosition():sendMagicEffect(CONST_ME_MORTAREA)
-			creature:remove()
+			count = count + 1
 		end
 	end
+	return count
+end
+
+local function cleanArena(bossPos)
+	local creatures = Game.getSpectators(bossPos, false, false, 9, 9, 11, 11)
+	local toRemove = {}
+	for _, creature in ipairs(creatures) do
+		if creature:isMonster() and creature:getName():lower() == "death knight" then
+			creature:getPosition():sendMagicEffect(CONST_ME_MORTAREA)
+			toRemove[#toRemove + 1] = creature:getId()
+		end
+	end
+	-- Remove all in one deferred call so the server sends all DELETE_ON_MAP
+	-- packets in the same network burst — prevents client tile stack desync
+	-- caused by interleaved MOVE_CREATURE + DELETE_ON_MAP packets.
+	addEvent(function()
+		for _, cid in ipairs(toRemove) do
+			local c = Creature(cid)
+			if c then c:remove() end
+		end
+	end, 0)
 end
 
 local function spawnWarriorWave(boss, count)
 	if boss:getStorageValue(STORAGE.spawning) == 1 then
 		return
 	end
+
+	local bossPos  = boss:getPosition()
+	local existing = countArenaDeathKnights(bossPos)
+	local canSpawn = MAX_DEATH_KNIGHTS - existing
+	if canSpawn <= 0 then return end
+
+	count = math.min(count, canSpawn)
 	boss:setStorageValue(STORAGE.spawning, 1)
 
 	local spawned = 0
@@ -82,9 +129,7 @@ local function spawnWarriorWave(boss, count)
 
 	addEvent(function(cid)
 		local b = Creature(cid)
-		if b then
-			b:setStorageValue(STORAGE.spawning, 0)
-		end
+		if b then b:setStorageValue(STORAGE.spawning, 0) end
 	end, 5000, boss:getId())
 end
 
@@ -98,8 +143,60 @@ local function resetBoss(boss)
 	boss:remove()
 end
 
+-- Fire a death wave directly on boss position (called after telegraph)
+local function fireDeathWave(bossId)
+	local boss = Creature(bossId)
+	if not boss then return end
+	boss:say("FEEL THE VOID!", TALKTYPE_MONSTER_YELL)
+	-- The wave is handled by the monster.attacks entry — we just need the visual+voice telegraph.
+	-- We trigger an extra area effect to reinforce the hit feeling.
+	boss:getPosition():sendMagicEffect(CONST_ME_MORTAREA)
+end
+
+-- Bone rain: fire visual + damage rings on random arena tiles
+local function doBoneRain(bossId, arenaPlayers)
+	local boss = Creature(bossId)
+	if not boss then return end
+
+	boss:say("RAIN OF BONES!", TALKTYPE_MONSTER_YELL)
+
+	-- Pick 4-6 random tiles and fire effects + delayed damage
+	local count = math.random(4, 6)
+	local chosen = {}
+	for i = 1, count do
+		chosen[i] = ARENA_FLOOR_POSITIONS[math.random(#ARENA_FLOOR_POSITIONS)]
+	end
+
+	-- Warning visual: red circle (effect 176, 20 frames x 75ms = 1500ms total)
+	for _, pos in ipairs(chosen) do
+		pos:sendMagicEffect(176)
+	end
+
+	-- Impact after 1500ms (matches animation duration)
+	-- Use Tile:getCreatures() for exact tile hit — Game.getSpectators(pos, 0,0,0,0)
+	-- expands to full viewport when range args are 0 (map.cpp:403-406).
+	addEvent(function()
+		for _, pos in ipairs(chosen) do
+			pos:sendMagicEffect(CONST_ME_MORTAREA)
+			local tile = Tile(pos)
+			if tile then
+				local creatures = tile:getCreatures()
+				if creatures then
+					for _, c in ipairs(creatures) do
+						if c:isPlayer() then
+							local dmg = math.random(40, 80)
+							c:addHealth(-dmg)
+							c:sendTextMessage(MESSAGE_EVENT_DEFAULT, "A bone crashes into you for " .. dmg .. " damage!")
+						end
+					end
+				end
+			end
+		end
+	end, 1500)
+end
+
 -- ============================================================
---  onThink  -  intro + phases + boss reset
+--  onThink — intro + phases + telegraphs + boss reset
 -- ============================================================
 local skeletonKingThink = CreatureEvent("SkeletonKingThink")
 
@@ -108,18 +205,28 @@ function skeletonKingThink.onThink(boss, interval)
 		return true
 	end
 
-	-- ── Intro: first tick after spawn ─────────────────────────
+	-- ── Intro: first tick after spawn ─────────────────────────────
 	if boss:getStorageValue(STORAGE.spawned) ~= 1 then
-		boss:setStorageValue(STORAGE.spawned,     1)
-		boss:setStorageValue(STORAGE.phase,       1)
-		boss:setStorageValue(STORAGE.waveSpawned, 0)
-		boss:setStorageValue(STORAGE.spawning,    0)
-		boss:setStorageValue(STORAGE.noHitTicks,  0)
-		boss:setStorageValue(STORAGE.lastHp,      boss:getHealth())
+		boss:setStorageValue(STORAGE.spawned,       1)
+		boss:setStorageValue(STORAGE.phase,         1)
+		boss:setStorageValue(STORAGE.waveSpawned,   0)
+		boss:setStorageValue(STORAGE.spawning,      0)
+		boss:setStorageValue(STORAGE.noHitTicks,    0)
+		boss:setStorageValue(STORAGE.lastHp,        boss:getHealth())
+		boss:setStorageValue(STORAGE.healed,        0)
+		boss:setStorageValue(STORAGE.waveTelegraph, 0)
+		boss:setStorageValue(STORAGE.curseTick,     0)
+		boss:setStorageValue(STORAGE.boneRainTick,  0)
+		boss:setStorageValue(STORAGE.dashTick,      0)
+		boss:setStorageValue(STORAGE.dashing,       0)
 		lastGreetedTarget = 0
 
+		local bossPos = boss:getPosition()
+		bossPos:sendMagicEffect(CONST_ME_MORTAREA)
+		addEvent(function() bossPos:sendMagicEffect(CONST_ME_MAGIC_RED) end, 300)
+		addEvent(function() bossPos:sendMagicEffect(CONST_ME_MORTAREA)  end, 600)
+
 		boss:say("FOOLS! You dare enter my crypt?! GUARDS — RISE!", TALKTYPE_MONSTER_YELL)
-		boss:getPosition():sendMagicEffect(CONST_ME_MORTAREA)
 
 		addEvent(function(cid)
 			local b = Creature(cid)
@@ -130,28 +237,31 @@ function skeletonKingThink.onThink(boss, interval)
 		return true
 	end
 
-	local currentHp = boss:getHealth()
-	local hpPct     = (currentHp / boss:getMaxHealth()) * 100
-	local phase     = boss:getStorageValue(STORAGE.phase)
+	local currentHp  = boss:getHealth()
+	local maxHp      = boss:getMaxHealth()
+	local hpPct      = (currentHp / maxHp) * 100
+	local phase      = boss:getStorageValue(STORAGE.phase)
+	local bossPos    = boss:getPosition()
+	local arenaPlayers = getArenaPlayers(bossPos)
 
-	-- ── Shout on new target ────────────────────────────────────
+	-- ── Shout on new target ─────────────────────────────────────
 	local target = boss:getTarget()
 	if target and target:isPlayer() then
 		local tid = target:getId()
 		if tid ~= lastGreetedTarget then
 			lastGreetedTarget = tid
 			local greets = {
-				"So, another fool dares to face me... " .. target:getName() .. "!",
-				target:getName() .. "! Your bones will decorate my throne!",
-				"INTRUDER! " .. target:getName() .. ", you will SUFFER!",
-				"Ah, " .. target:getName() .. "... I've been expecting you. Die!",
+				"So, " .. target:getName() .. "... another mortal who wishes to join my army of bones!",
+				target:getName() .. "! Your skull will make a fine goblet!",
+				"INTRUDER! " .. target:getName() .. ", I will grind your bones to dust!",
+				"Ah, " .. target:getName() .. "... I have been expecting you. SUFFER!",
+				"You cannot kill what is already dead, " .. target:getName() .. "!",
 			}
 			boss:say(greets[math.random(#greets)], TALKTYPE_MONSTER_YELL)
 		end
 	end
 
-	-- ── Boss reset: HP unchanged for BOSS_RESET_TICKS ─────────
-	-- Detects inactivity without needing onHealthChange at all.
+	-- ── Boss reset: HP unchanged for BOSS_RESET_TICKS ───────────
 	local lastHp = boss:getStorageValue(STORAGE.lastHp)
 	if currentHp == lastHp then
 		local noHitTicks = boss:getStorageValue(STORAGE.noHitTicks) + 1
@@ -165,63 +275,186 @@ function skeletonKingThink.onThink(boss, interval)
 		boss:setStorageValue(STORAGE.lastHp, currentHp)
 	end
 
-	local bossPos     = boss:getPosition()
-	local arenaPlayers = getArenaPlayers(bossPos)
+	-- ════════════════════════════════════════════════════════════
+	--  PHASE TRANSITIONS
+	-- ════════════════════════════════════════════════════════════
 
-	-- ── Phase 2: Enraged (below 50%) ──────────────────────────
-	if hpPct <= 50 and phase < 2 then
+	-- ── Phase 2: Enraged (below 60%) ────────────────────────────
+	if hpPct <= 60 and phase < 2 then
+		phase = 2
 		boss:setStorageValue(STORAGE.phase, 2)
 		boss:setStorageValue(STORAGE.waveSpawned, 0)
+		boss:setStorageValue(STORAGE.curseTick, 0)
+		boss:setStorageValue(STORAGE.boneRainTick, 0)
 
-		boss:say("ENOUGH! Feel the WRATH of the undead legion!", TALKTYPE_MONSTER_YELL)
 		bossPos:sendMagicEffect(CONST_ME_MAGIC_RED)
-		spawnWarriorWave(boss, 5)
+		addEvent(function() bossPos:sendMagicEffect(CONST_ME_MORTAREA) end, 400)
+		addEvent(function() bossPos:sendMagicEffect(CONST_ME_MAGIC_RED) end, 800)
+
+		boss:say("ENOUGH! My patience has ended — feel the WRATH of the undead!", TALKTYPE_MONSTER_YELL)
+		broadcastToArena(arenaPlayers,
+			"The Skeleton King's eyes blaze with crimson light — his fury is unleashed!")
 
 		addEvent(function(cid)
 			local b = Creature(cid)
 			if not b then return end
-			b:say("My bones grow stronger from your futile attacks!", TALKTYPE_MONSTER_SAY)
-		end, 2000, boss:getId())
+			spawnWarriorWave(b, 4)
+			b:say("WARRIORS! Spread out — tear them APART!", TALKTYPE_MONSTER_SAY)
+		end, 1500, boss:getId())
 	end
 
-	-- ── Phase 3: Desperate (below 20%) ────────────────────────
-	if hpPct <= 20 and phase < 3 then
+	-- ── Phase 3: Desperate (below 30%) ──────────────────────────
+	if hpPct <= 30 and phase < 3 then
+		phase = 3
 		boss:setStorageValue(STORAGE.phase, 3)
 
-		boss:say("I CANNOT DIE! RISE, MY ETERNAL WARRIORS! RIIISE!", TALKTYPE_MONSTER_YELL)
 		bossPos:sendMagicEffect(CONST_ME_MORTAREA)
-		broadcastToArena(arenaPlayers,
-			"The Skeleton King lets out a bone-chilling scream as his body begins to glow!")
-		spawnWarriorWave(boss, 8)
+		addEvent(function() bossPos:sendMagicEffect(CONST_ME_MAGIC_RED) end, 300)
+		addEvent(function() bossPos:sendMagicEffect(CONST_ME_MORTAREA)  end, 600)
+		addEvent(function() bossPos:sendMagicEffect(CONST_ME_MAGIC_RED) end, 900)
 
+		boss:say("I CANNOT DIE! I AM ETERNAL! RISE, MY ETERNAL WARRIORS — RIIISE!", TALKTYPE_MONSTER_YELL)
+		broadcastToArena(arenaPlayers,
+			"The Skeleton King lets out a bone-chilling scream — dark energy floods the crypt!")
+
+		-- Emergency self-heal (one time only)
+		if boss:getStorageValue(STORAGE.healed) == 0 then
+			boss:setStorageValue(STORAGE.healed, 1)
+			addEvent(function(cid)
+				local b = Creature(cid)
+				if not b then return end
+				local healAmt = math.floor(maxHp * 0.20)  -- heals 20% max HP
+				b:addHealth(healAmt)
+				b:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
+				addEvent(function() b:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE) end, 400)
+				b:say("THE DARKNESS MENDS MY BONES! I AM... UNBREAKABLE!", TALKTYPE_MONSTER_YELL)
+				broadcastToArena(getArenaPlayers(b:getPosition()),
+					"The Skeleton King absorbs dark energy — his wounds begin to close!")
+			end, 2000, boss:getId())
+		end
+
+		-- Final desperate wave
 		addEvent(function(cid)
 			local b = Creature(cid)
 			if not b then return end
-			b:addHealth(400)
-			b:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
-			b:say("The dark energy mends my bones... I am INVINCIBLE!", TALKTYPE_MONSTER_YELL)
-		end, 3000, boss:getId())
+			spawnWarriorWave(b, 6)
+			b:say("DROWN THEM IN BONES! KILL THEM ALL!", TALKTYPE_MONSTER_YELL)
+		end, 4000, boss:getId())
 	end
 
-	-- ── Periodic reinforcements (every ~30s in phases 2/3) ────
-	if phase >= 2 then
-		local tick = boss:getStorageValue(STORAGE.waveSpawned) + 1
-		if tick >= 30 then
-			boss:setStorageValue(STORAGE.waveSpawned, 0)
-			spawnWarriorWave(boss, (phase == 3) and 4 or 2)
-			boss:say("More warriors to serve their King!", TALKTYPE_MONSTER_SAY)
+	-- ════════════════════════════════════════════════════════════
+	--  PHASE-BASED DYNAMIC MECHANICS
+	-- ════════════════════════════════════════════════════════════
+
+	-- ── Telegraph: Death Wave (all phases, every ~12-18s) ───────
+	local telegraphState = boss:getStorageValue(STORAGE.waveTelegraph)
+	if telegraphState == 1 then
+		-- Telegraph already fired last tick — fire the wave now
+		boss:setStorageValue(STORAGE.waveTelegraph, 0)
+		fireDeathWave(boss:getId())
+	elseif math.random(1, 100) <= (phase >= 2 and 12 or 7) then
+		-- Chance per tick to telegraph; higher in later phases
+		boss:setStorageValue(STORAGE.waveTelegraph, 1)
+		boss:say("DEATH COMES FOR YOU ALL!", TALKTYPE_MONSTER_YELL)
+		broadcastToArena(arenaPlayers, "The Skeleton King raises his arms — a death wave is forming!")
+		bossPos:sendMagicEffect(CONST_ME_MAGIC_RED)
+	end
+
+	-- ── Charge Dash (all phases, every ~20-28s) ─────────────────
+	-- Boss gets a temporary speed burst to close gap on target, like utani gran hur.
+	-- Telegraph: shake effect + voice. Dash lasts 2.5s then speed returns to normal.
+	do
+		local dashTick = boss:getStorageValue(STORAGE.dashTick) + 1
+		-- Phase 1: ~28s, Phase 2: ~20s, Phase 3: ~14s
+		local dashThresh = phase == 3 and 14 or (phase == 2 and 20 or 28)
+
+		if boss:getStorageValue(STORAGE.dashing) == 1 then
+			-- Currently dashing — handled by addEvent below, just count ticks
+		end
+
+		if dashTick >= dashThresh and boss:getStorageValue(STORAGE.dashing) == 0 then
+			boss:setStorageValue(STORAGE.dashTick, 0)
+			boss:setStorageValue(STORAGE.dashing, 1)
+
+			local dashLines = {
+				"I WILL CRUSH YOU!",
+				"YOU CANNOT OUTRUN DEATH!",
+				"STAND STILL AND DIE!",
+				"NOWHERE TO RUN!",
+			}
+			boss:say(dashLines[math.random(#dashLines)], TALKTYPE_MONSTER_YELL)
+			bossPos:sendMagicEffect(CONST_ME_MORTAREA)
+			bossPos:sendMagicEffect(CONST_ME_MAGIC_RED)
+
+			-- Apply speed boost
+			boss:changeSpeed(350)
+
+			-- Remove boost after 2500ms
+			addEvent(function(cid)
+				local b = Creature(cid)
+				if not b then return end
+				b:changeSpeed(-350)
+				b:setStorageValue(STORAGE.dashing, 0)
+			end, 2500, boss:getId())
 		else
-			boss:setStorageValue(STORAGE.waveSpawned, tick)
+			boss:setStorageValue(STORAGE.dashTick, dashTick)
 		end
 	end
 
-	-- ── Below 35%: random curse message ───────────────────────
-	if hpPct <= 35 and math.random(1, 100) <= 8 then
-		if #arenaPlayers > 0 then
-			local cursed = arenaPlayers[math.random(#arenaPlayers)]
-			cursed:sendTextMessage(MESSAGE_EVENT_ADVANCE,
-				"The Skeleton King points a bony finger at you — you feel a deathly curse spreading through your veins!")
-			boss:say("You... CURSED!", TALKTYPE_MONSTER_YELL)
+	-- ── Bone Rain (phase 2+, every ~15s) ────────────────────────
+	if phase >= 2 then
+		local rainTick = boss:getStorageValue(STORAGE.boneRainTick) + 1
+		local rainThresh = (phase == 3) and 12 or 15
+		if rainTick >= rainThresh then
+			boss:setStorageValue(STORAGE.boneRainTick, 0)
+			doBoneRain(boss:getId(), arenaPlayers)
+		else
+			boss:setStorageValue(STORAGE.boneRainTick, rainTick)
+		end
+	end
+
+	-- ── Random Curse: slow a player (phase 2+, every ~20s) ──────
+	if phase >= 2 and #arenaPlayers > 0 then
+		local curseTick = boss:getStorageValue(STORAGE.curseTick) + 1
+		local curseThresh = (phase == 3) and 14 or 20
+		if curseTick >= curseThresh then
+			boss:setStorageValue(STORAGE.curseTick, 0)
+			local victim = arenaPlayers[math.random(#arenaPlayers)]
+			local curseLines = {
+				"YOU are CURSED, " .. victim:getName() .. "!",
+				"Your legs turn to LEAD, " .. victim:getName() .. "!",
+				"The grave claims your speed, " .. victim:getName() .. "!",
+			}
+			boss:say(curseLines[math.random(#curseLines)], TALKTYPE_MONSTER_YELL)
+			victim:sendTextMessage(MESSAGE_EVENT_ADVANCE,
+				"The Skeleton King curses you — your limbs feel like lead!")
+			-- Apply speed penalty via condition
+			local speedCondition = Condition(CONDITION_PARALYZE)
+			speedCondition:setParameter(CONDITION_PARAM_SPEED, -300)
+			speedCondition:setParameter(CONDITION_PARAM_TICKS, 6000)
+			victim:addCondition(speedCondition)
+			victim:getPosition():sendMagicEffect(CONST_ME_MAGIC_RED)
+		else
+			boss:setStorageValue(STORAGE.curseTick, curseTick)
+		end
+	end
+
+	-- ── Periodic reinforcements (phase 2+, every ~25s) ──────────
+	if phase >= 2 then
+		local waveTick = boss:getStorageValue(STORAGE.waveSpawned) + 1
+		local waveThresh = (phase == 3) and 18 or 25
+		if waveTick >= waveThresh then
+			boss:setStorageValue(STORAGE.waveSpawned, 0)
+			local count = (phase == 3) and 3 or 2
+			spawnWarriorWave(boss, count)
+			local waveLines = {
+				"More warriors to serve their King!",
+				"Rise from the earth — RISE!",
+				"The dead are never truly gone...",
+			}
+			boss:say(waveLines[math.random(#waveLines)], TALKTYPE_MONSTER_SAY)
+		else
+			boss:setStorageValue(STORAGE.waveSpawned, waveTick)
 		end
 	end
 
@@ -234,32 +467,22 @@ skeletonKingThink:register()
 --  Reward loot pool
 -- ============================================================
 local REWARD_LOOT = {
-	-- Currency
-	{ id = 92,   chance = 100000, maxCount = 200 },  -- Gold Coins
-
-	-- Consumables
-	{ id = 35,   chance = 80000,  maxCount = 5   },  -- Health Potion
-	{ id = 110,  chance = 70000,  maxCount = 5   },  -- Rejuvenation Potion
-
-	-- Mid-tier armor/weapons (common)
-	{ id = 328,  chance = 35000,  maxCount = 1   },  -- Plate Helmet
-	{ id = 24,   chance = 30000,  maxCount = 1   },  -- Plate Armor
-	{ id = 145,  chance = 30000,  maxCount = 1   },  -- Plate Shield
-	{ id = 65,   chance = 25000,  maxCount = 1   },  -- Red Sword
-	{ id = 62,   chance = 25000,  maxCount = 1   },  -- Morning Star
-
-	-- Upgrade materials
-	{ id = 74,   chance = 15000,  maxCount = 1   },  -- Upgrade Scroll
-	{ id = 192,  chance = 10000,  maxCount = 1   },  -- Socket Stone
-
-	-- Boss-specific / rare
-	{ id = 123,  chance = 8000,   maxCount = 1   },  -- Skeleton King's thoracic cage
-	{ id = 155,  chance = 6000,   maxCount = 1   },  -- Skeleton Key
-	{ id = 249,  chance = 4000,   maxCount = 1   },  -- Soul Stone
-	{ id = 76,   chance = 3000,   maxCount = 1   },  -- Superior Upgrade Scroll
-	{ id = 1002, chance = 2000,   maxCount = 1   },  -- Rare Jewel Skull
-	{ id = 209,  chance = 1500,   maxCount = 1   },  -- Platinum Ring
-
+	{ id = 92,   chance = 100000, maxCount = 200 },
+	{ id = 35,   chance = 80000,  maxCount = 5   },
+	{ id = 110,  chance = 70000,  maxCount = 5   },
+	{ id = 328,  chance = 35000,  maxCount = 1   },
+	{ id = 24,   chance = 30000,  maxCount = 1   },
+	{ id = 145,  chance = 30000,  maxCount = 1   },
+	{ id = 65,   chance = 25000,  maxCount = 1   },
+	{ id = 62,   chance = 25000,  maxCount = 1   },
+	{ id = 74,   chance = 15000,  maxCount = 1   },
+	{ id = 192,  chance = 10000,  maxCount = 1   },
+	{ id = 123,  chance = 8000,   maxCount = 1   },
+	{ id = 155,  chance = 6000,   maxCount = 1   },
+	{ id = 249,  chance = 4000,   maxCount = 1   },
+	{ id = 76,   chance = 3000,   maxCount = 1   },
+	{ id = 1002, chance = 2000,   maxCount = 1   },
+	{ id = 209,  chance = 1500,   maxCount = 1   },
 }
 
 local CHEST_POS    = Position(155, 60, 7)
@@ -280,7 +503,7 @@ local function rollLootIntoContainer(container, shareMultiplier)
 end
 
 local function buildRewardChest(boss, bossPos)
-	local damageMap   = boss:getDamageMap()
+	local damageMap    = boss:getDamageMap()
 	local participants = {}
 	local totalDamage  = 0
 
@@ -295,14 +518,10 @@ local function buildRewardChest(boss, bossPos)
 		end
 	end
 
-	if #participants == 0 or totalDamage == 0 then
-		return
-	end
+	if #participants == 0 or totalDamage == 0 then return end
 
 	local chest = Game.createItem(CHEST_ITEMID, 1, CHEST_POS)
-	if not chest then
-		return
-	end
+	if not chest then return end
 
 	chest:setAttribute(ITEM_ATTRIBUTE_DURATION, CHEST_DECAY_SECS)
 	chest:decay()
@@ -314,12 +533,10 @@ local function buildRewardChest(boss, bossPos)
 			local bag = Game.createItem(ITEM_BAG, 1)
 			if bag then
 				bag:setAttribute(ITEM_ATTRIBUTE_DESCRIPTION,
-					("Reward for %s (%.1f%% damage)"):format(
-						entry.player:getName(), share * 100))
+					("Reward for %s (%.1f%% damage)"):format(entry.player:getName(), share * 100))
 				rollLootIntoContainer(bag, share)
 				chest:addItemEx(bag)
 				rewarded = rewarded + 1
-
 				entry.player:sendTextMessage(MESSAGE_EVENT_ADVANCE,
 					("Your reward bag is in the chest at the center of the arena! "
 					.. "(%.1f%% damage — chest disappears in %d seconds)"):format(
@@ -340,29 +557,31 @@ end
 local skeletonKingDeath = CreatureEvent("SkeletonKingDeath")
 
 function skeletonKingDeath.onDeath(boss, corpse, killer, mostDamageKiller, lastHitUnjustified, mostDamageUnjustified)
-	local bossPos = corpse:getPosition()
+	-- Capture position immediately — corpse may decay before delayed events fire
+	local px, py, pz = corpse:getPosition().x, corpse:getPosition().y, corpse:getPosition().z
+	local bossPos = Position(px, py, pz)
 
 	bossPos:sendMagicEffect(CONST_ME_MORTAREA)
-	addEvent(function() bossPos:sendMagicEffect(CONST_ME_MAGIC_BLUE) end, 500)
-	addEvent(function() bossPos:sendMagicEffect(CONST_ME_MORTAREA)   end, 1000)
+	addEvent(function() bossPos:sendMagicEffect(CONST_ME_MAGIC_BLUE) end, 300)
+	addEvent(function() bossPos:sendMagicEffect(CONST_ME_MORTAREA)   end, 600)
+	addEvent(function() bossPos:sendMagicEffect(CONST_ME_MAGIC_BLUE) end, 900)
+	addEvent(function() bossPos:sendMagicEffect(CONST_ME_MORTAREA)   end, 1200)
 
 	local spectators = Game.getSpectators(bossPos, false, true, 8, 8, 10, 10)
 	for _, spec in ipairs(spectators) do
 		if spec:isPlayer() then
 			spec:sendTextMessage(MESSAGE_EVENT_ADVANCE,
-				"The Skeleton King has been defeated! His undead power crumbles and the crypt falls silent...")
+				"The Skeleton King collapses! His bones scatter across the crypt floor — the undead army dissolves into dust...")
 		end
 	end
 
-	addEvent(function()
-		cleanArena(bossPos)
-	end, 2000)
+	-- Immediate clean + second sweep in case some DKs are mid-path
+	cleanArena(bossPos)
+	addEvent(function() cleanArena(bossPos) end, 1500)
 
 	addEvent(function(bossId)
 		local b = Creature(bossId)
-		if b then
-			buildRewardChest(b, bossPos)
-		end
+		if b then buildRewardChest(b, bossPos) end
 	end, 3000, boss:getId())
 
 	lastGreetedTarget = 0
@@ -377,5 +596,3 @@ function skeletonKingDeath.onDeath(boss, corpse, killer, mostDamageKiller, lastH
 end
 
 skeletonKingDeath:register()
-
--- Death Knight ya está definido en data/scripts/monsters/deathknight.lua

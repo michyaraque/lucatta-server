@@ -11,7 +11,7 @@ monster.outfit = {
 monster.health = 354
 monster.maxHealth = 354
 monster.race = "blood"
-monster.speed = 186
+monster.speed = 210
 monster.runHealth = 0
 monster.flags = {
   attackable = true,
@@ -28,12 +28,10 @@ monster.loot = {
   {id = 92, chance = 12000, maxCount = 22},
 }
 monster.attacks = {
-  {
-    name = "melee",
-    interval = 2000,
-    minDamage = -49,
-    maxDamage = -16
-  },
+  { name = "melee", interval = 2000, chance = 100, minDamage = -49, maxDamage = -16 },
+  { name = "combat", interval = 5000, chance = 20, type = COMBAT_PHYSICALDAMAGE,
+    minDamage = -30, maxDamage = -70, length = 3, spread = 3,
+    effect = CONST_ME_HITAREA, target = false },
 }
 monster.defenses = {
   defense = 4,

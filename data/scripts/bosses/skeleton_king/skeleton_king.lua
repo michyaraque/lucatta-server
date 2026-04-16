@@ -16,11 +16,11 @@ monster.outfit = {
 	lookMount = 0,
 }
 
-monster.health = 4000
-monster.maxHealth = 4000
+monster.health = 2000
+monster.maxHealth = 2000
 monster.race = "undead"
 monster.corpse = 2000  -- Chest (ajusta al corpse correcto del skeleton en tu cliente)
-monster.speed = 200
+monster.speed = 220
 monster.manaCost = 0
 
 monster.changeTarget = {
@@ -58,14 +58,6 @@ monster.light = {
 	color = 215,
 }
 
--- Skeleton King periodically summons Death Knights
-monster.summon = {
-	maxSummons = 4,
-	summons = {
-		{ name = "Death Knight", chance = 18, interval = 4000, count = 1 },
-	},
-}
-
 monster.voices = {
 	interval = 8000,
 	chance = 15,
@@ -91,35 +83,30 @@ monster.loot = {
 }
 
 monster.attacks = {
-	-- Melee with poison DoT
+	-- Melee: heavy hit + poison DoT (phase 1 bread-and-butter)
 	{ name = "melee", interval = 2000, chance = 100, minDamage = -30, maxDamage = -90,
 	  condition = { type = CONDITION_POISON, totalDamage = 60, interval = 4000 } },
 
-	-- Death wave (frontal beam)
-	{ name = "combat", interval = 5000, chance = 20, type = COMBAT_DEATHDAMAGE,
-	  minDamage = -40, maxDamage = -90, length = 5, spread = 0,
+	-- Bone throw: frequent ranged pressure, forces movement
+	{ name = "combat", interval = 3000, chance = 70, type = COMBAT_PHYSICALDAMAGE,
+	  minDamage = -25, maxDamage = -55, range = 7,
+	  shootEffect = 3, effect = CONST_ME_POFF, target = true },
+
+	-- Death beam: telegraphed via onThink voice before engine fires it
+	{ name = "combat", interval = 6000, chance = 18, type = COMBAT_DEATHDAMAGE,
+	  minDamage = -50, maxDamage = -100, length = 6, spread = 0,
 	  effect = CONST_ME_MORTAREA, target = false },
 
-	-- Bone shards (ranged physical bolts)
-	{ name = "combat", interval = 4000, chance = 18, type = COMBAT_PHYSICALDAMAGE,
-	  minDamage = -30, maxDamage = -60, range = 7,
-	  shootEffect = CONST_ANI_BURSTARROW, effect = CONST_ME_EXPLOSIONAREA, target = true },
-
-	-- Life drain
-	{ name = "combat", interval = 6000, chance = 15, type = COMBAT_LIFEDRAIN,
-	  minDamage = -30, maxDamage = -70, radius = 2,
+	-- Life drain ring: punishes standing still
+	{ name = "combat", interval = 7000, chance = 15, type = COMBAT_LIFEDRAIN,
+	  minDamage = -30, maxDamage = -65, radius = 2,
 	  effect = CONST_ME_MAGIC_RED, target = false },
-
-	-- Paralyze slow
-	{ name = "speed", interval = 8000, chance = 15, speed = -600,
-	  range = 5, effect = CONST_ME_MAGIC_RED, target = false, duration = 8000 },
 }
 
 monster.defenses = {
 	defense = 15,
 	armor = 15,
-	{ name = "combat", interval = 6000, chance = 15, type = COMBAT_HEALING,
-	  minDamage = 50, maxDamage = 100, effect = CONST_ME_MAGIC_BLUE, target = false },
+	-- No passive healing: emergency heal is a scripted one-time event in phase 3 (skeleton_king_events.lua)
 }
 
 monster.elements = {
@@ -146,7 +133,6 @@ monster.immunities = {
 monster.events = {
 	"SkeletonKingThink",
 	"SkeletonKingDeath",
-	"SkeletonKingHealthChange",
 }
 
 mType:register(monster)

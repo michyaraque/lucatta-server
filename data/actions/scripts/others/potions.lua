@@ -114,13 +114,11 @@ local potions = {
 		flask = 7635,
 		description = "Only " .. VOC_DESC.WARRIORS .. " of level 80 or above may drink this fluid."
 	},
-	[7618] = { -- health potion
+	[35] = { -- health potion
 		health = {125, 175},
-		flask = 7636
 	},
-	[7620] = { -- mana potion
+	[110] = { -- mana potion
 		mana = {75, 125},
-		flask = 7636
 	},
 	[8472] = { -- great spirit potion
 		health = {250, 350},
