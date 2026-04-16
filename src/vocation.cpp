@@ -112,6 +112,16 @@ bool Vocations::loadFromXml(std::istream& is, std::string_view filename)
 	return true;
 }
 
+Vocation& Vocations::getOrCreateVocation(uint16_t id)
+{
+	auto it = vocationsMap.find(id);
+	if (it != vocationsMap.end()) {
+		return it->second;
+	}
+	auto result = vocationsMap.emplace(std::piecewise_construct, std::forward_as_tuple(id), std::forward_as_tuple(id));
+	return result.first->second;
+}
+
 Vocation* Vocations::getVocation(uint16_t id)
 {
 	auto it = vocationsMap.find(id);

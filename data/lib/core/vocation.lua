@@ -1,10 +1,3 @@
--- ============================================================
--- SISTEMA CENTRALIZADO DE VOCACIONES
--- Para renombrar una vocación en el futuro: cambia SOLO aquí
--- (más el name/description en data/XML/vocations.xml)
--- ============================================================
-
--- Nombres canónicos (deben coincidir exactamente con vocations.xml)
 local VOC_NAME = {
 	MAGE          = "mage",
 	MASTER_MAGE   = "master mage",

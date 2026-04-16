@@ -42,12 +42,12 @@
 	<item id="36" name="Burger">
 		<attribute key="supply" value="true" />
 	</item>
-	<item id="37" name="bag">
+	<item id="37" name="Bag">
 		<attribute key="containerSize" value="35" />
 		<attribute key="slotType" value="backpack" />
 	</item>
-	<item id="38" name="Firefoxpotion">
-		<attribute key="supply" value="true" />
+	<item id="38" name="Loot Pouch">
+		<attribute key="containerSize" value="16" />
 	</item>
 	<item id="39" name="Cake">
 		<attribute key="supply" value="true" />

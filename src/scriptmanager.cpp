@@ -53,6 +53,12 @@ bool ScriptingManager::loadScriptSystems()
 		return false;
 	}
 
+	// Load vocations from Lua (data/scripts/vocations/).
+	// These run BEFORE weapons/spells so vocation IDs are available for spell registration.
+	// If the folder is absent the server falls back to whatever vocations.xml loaded earlier.
+	std::cout << ">> Loading lua vocations" << std::endl;
+	g_scripts->loadScripts("scripts/vocations", false, false);
+
 	g_chat = new Chat();
 
 	g_weapons = new Weapons();

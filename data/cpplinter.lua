@@ -92,6 +92,7 @@ configManager = {}
 ---@field createNpc fun(name: string, position: Position, extended?: boolean, force?: boolean, magicEffect?: MagicEffect_t): Npc
 ---@field createTile fun(position: Position): Tile
 ---@field createMonsterType fun(name: string): MonsterType
+---@field createVocationType fun(data: table): boolean
 ---@field startEvent fun(eventName: string): boolean
 ---@field getClientVersion fun(): string
 ---@field reload fun(reloadType: number): boolean

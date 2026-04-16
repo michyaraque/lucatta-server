@@ -1883,7 +1883,7 @@ Item* Monster::getCorpse(Creature* lastHitCreature, Creature* mostDamageCreature
 {
 	Item* corpse = Creature::getCorpse(lastHitCreature, mostDamageCreature);
 	if (!corpse) {
-		corpse = Item::CreateItem(37); // Bag
+		corpse = Item::CreateItem(38); // Bag
 	}
 
 	if (corpse) {

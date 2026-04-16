@@ -2393,6 +2393,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod(L, "Game", "getOutfits", LuaScriptInterface::luaGameGetOutfits);
 	registerMethod(L, "Game", "getMounts", LuaScriptInterface::luaGameGetMounts);
 	registerMethod(L, "Game", "getVocations", LuaScriptInterface::luaGameGetVocations);
+	registerMethod(L, "Game", "createVocationType", LuaScriptInterface::luaGameCreateVocationType);
 	registerMethod(L, "Game", "getRuneSpells", LuaScriptInterface::luaGameGetRuneSpells);
 	registerMethod(L, "Game", "getInstantSpells", LuaScriptInterface::luaGameGetInstantSpells);
 
@@ -4868,6 +4869,170 @@ int LuaScriptInterface::luaGameGetVocations(lua_State* L)
 		lua_rawseti(L, -2, ++index);
 	}
 
+	return 1;
+}
+
+int LuaScriptInterface::luaGameCreateVocationType(lua_State* L)
+{
+	// Game.createVocationType(dataTable)
+	// Creates or replaces a vocation using Lua data.
+	// Example:
+	//   Game.createVocationType({
+	//       id = 1, clientid = 3, name = "Mage", description = "a mage",
+	//       magicShield = true, fromvoc = 1, noPongKickTime = 40,
+	//       gaincap = 10, gainhp = 5, gainmana = 30,
+	//       gainhpticks = 6, gainhpamount = 5,
+	//       gainmanaticks = 3, gainmanaamount = 5,
+	//       manamultiplier = 1.1, attackspeed = 2000, basespeed = 220,
+	//       soulmax = 100, gainsoulticks = 120, allowPvp = true,
+	//       formula = {meleeDamage=1.0, distDamage=1.0, defense=1.0, armor=1.0},
+	//       skills = {1.5, 2.0, 2.0, 2.0, 2.0, 1.5, 1.1},
+	//   })
+
+	if (lua_type(L, 1) != LUA_TTABLE) {
+		reportErrorFunc(L, "Expected a table as argument to Game.createVocationType");
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	// Required: id
+	lua_getfield(L, 1, "id");
+	if (!isNumber(L, -1)) {
+		lua_pop(L, 1);
+		reportErrorFunc(L, "Game.createVocationType: missing required field 'id'");
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	uint16_t id = tfs::lua::getNumber<uint16_t>(L, -1);
+	lua_pop(L, 1);
+
+	Vocation& voc = g_vocations.getOrCreateVocation(id);
+
+	// name
+	lua_getfield(L, 1, "name");
+	if (lua_type(L, -1) == LUA_TSTRING) voc.name = tfs::lua::getString(L, -1);
+	lua_pop(L, 1);
+
+	// description
+	lua_getfield(L, 1, "description");
+	if (lua_type(L, -1) == LUA_TSTRING) voc.description = tfs::lua::getString(L, -1);
+	lua_pop(L, 1);
+
+	// clientid
+	lua_getfield(L, 1, "clientid");
+	if (isNumber(L, -1)) voc.clientId = tfs::lua::getNumber<uint8_t>(L, -1);
+	lua_pop(L, 1);
+
+	// fromvoc (defaults to own id = no promotion)
+	lua_getfield(L, 1, "fromvoc");
+	voc.fromVocation = isNumber(L, -1) ? tfs::lua::getNumber<uint32_t>(L, -1) : id;
+	lua_pop(L, 1);
+
+	// magicShield
+	lua_getfield(L, 1, "magicShield");
+	if (lua_isboolean(L, -1)) voc.magicShield = lua_toboolean(L, -1) != 0;
+	lua_pop(L, 1);
+
+	// allowPvp
+	lua_getfield(L, 1, "allowPvp");
+	if (lua_isboolean(L, -1)) voc.allowPvp = lua_toboolean(L, -1) != 0;
+	lua_pop(L, 1);
+
+	// noPongKickTime (seconds in Lua → ms in C++)
+	lua_getfield(L, 1, "noPongKickTime");
+	if (isNumber(L, -1)) voc.noPongKickTime = tfs::lua::getNumber<uint32_t>(L, -1) * 1000;
+	lua_pop(L, 1);
+
+	// gaincap (raw value in Lua × 100 in C++, matching XML behaviour)
+	lua_getfield(L, 1, "gaincap");
+	if (isNumber(L, -1)) voc.gainCap = tfs::lua::getNumber<uint32_t>(L, -1) * 100;
+	lua_pop(L, 1);
+
+	// gainhp / gainmana
+	lua_getfield(L, 1, "gainhp");
+	if (isNumber(L, -1)) voc.gainHP = tfs::lua::getNumber<uint32_t>(L, -1);
+	lua_pop(L, 1);
+
+	lua_getfield(L, 1, "gainmana");
+	if (isNumber(L, -1)) voc.gainMana = tfs::lua::getNumber<uint32_t>(L, -1);
+	lua_pop(L, 1);
+
+	// hp regen
+	lua_getfield(L, 1, "gainhpticks");
+	if (isNumber(L, -1)) voc.gainHealthTicks = tfs::lua::getNumber<uint32_t>(L, -1);
+	lua_pop(L, 1);
+
+	lua_getfield(L, 1, "gainhpamount");
+	if (isNumber(L, -1)) voc.gainHealthAmount = tfs::lua::getNumber<uint32_t>(L, -1);
+	lua_pop(L, 1);
+
+	// mana regen
+	lua_getfield(L, 1, "gainmanaticks");
+	if (isNumber(L, -1)) voc.gainManaTicks = tfs::lua::getNumber<uint32_t>(L, -1);
+	lua_pop(L, 1);
+
+	lua_getfield(L, 1, "gainmanaamount");
+	if (isNumber(L, -1)) voc.gainManaAmount = tfs::lua::getNumber<uint32_t>(L, -1);
+	lua_pop(L, 1);
+
+	// mana multiplier (magic level cost)
+	lua_getfield(L, 1, "manamultiplier");
+	if (isNumber(L, -1)) voc.manaMultiplier = tfs::lua::getNumber<float>(L, -1);
+	lua_pop(L, 1);
+
+	// speed
+	lua_getfield(L, 1, "attackspeed");
+	if (isNumber(L, -1)) voc.attackSpeed = tfs::lua::getNumber<uint32_t>(L, -1);
+	lua_pop(L, 1);
+
+	lua_getfield(L, 1, "basespeed");
+	if (isNumber(L, -1)) voc.baseSpeed = tfs::lua::getNumber<uint32_t>(L, -1);
+	lua_pop(L, 1);
+
+	// soul
+	lua_getfield(L, 1, "soulmax");
+	if (isNumber(L, -1)) voc.soulMax = tfs::lua::getNumber<uint8_t>(L, -1);
+	lua_pop(L, 1);
+
+	lua_getfield(L, 1, "gainsoulticks");
+	if (isNumber(L, -1)) voc.gainSoulTicks = tfs::lua::getNumber<uint16_t>(L, -1);
+	lua_pop(L, 1);
+
+	// formula = {meleeDamage, distDamage, defense, armor}
+	lua_getfield(L, 1, "formula");
+	if (lua_istable(L, -1)) {
+		lua_getfield(L, -1, "meleeDamage");
+		if (isNumber(L, -1)) voc.meleeDamageMultiplier = tfs::lua::getNumber<float>(L, -1);
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "distDamage");
+		if (isNumber(L, -1)) voc.distDamageMultiplier = tfs::lua::getNumber<float>(L, -1);
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "defense");
+		if (isNumber(L, -1)) voc.defenseMultiplier = tfs::lua::getNumber<float>(L, -1);
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "armor");
+		if (isNumber(L, -1)) voc.armorMultiplier = tfs::lua::getNumber<float>(L, -1);
+		lua_pop(L, 1);
+	}
+	lua_pop(L, 1);
+
+	// skills = {[1..SKILL_LAST+1]} indexed from 1 in Lua (fist=1, club=2, ...)
+	lua_getfield(L, 1, "skills");
+	if (lua_istable(L, -1)) {
+		for (int skillId = 0; skillId <= SKILL_LAST; ++skillId) {
+			lua_rawgeti(L, -1, skillId + 1); // Lua arrays start at 1
+			if (isNumber(L, -1)) {
+				voc.skillMultipliers[skillId] = tfs::lua::getNumber<double>(L, -1);
+			}
+			lua_pop(L, 1);
+		}
+	}
+	lua_pop(L, 1);
+
+	lua_pushboolean(L, true);
 	return 1;
 }
 

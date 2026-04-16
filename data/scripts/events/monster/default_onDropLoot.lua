@@ -2,7 +2,7 @@ local dropEvent = Event()
 local pickupEvent = MoveEvent()
 local movedEvent = Event()
 
-local LOOT_BAG_ITEM_ID = 37
+local LOOT_BAG_ITEM_ID = 38
 local LOOT_BAG_ACTION_ID = 47001
 local LOOT_BAG_DURATION_MS = 60 * 1000
 local LOOT_BAG_EFFECT_ID = 146
@@ -367,6 +367,7 @@ dropEvent.onDropLoot = function(self, corpse)
 
 	local lootBag = prepareLootBag(corpse)
 	local lootDescription = lootBag and lootBag:getContentDescription() or "nothing"
+	corpse:getPosition():sendMagicEffect(175)
 
 	if player then
 		local text

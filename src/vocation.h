@@ -57,6 +57,7 @@ public:
 
 private:
 	friend class Vocations;
+	friend class LuaScriptInterface;
 
 	std::string name = "none";
 	std::string description;
@@ -95,6 +96,7 @@ public:
 	bool loadFromXml(std::istream& is, std::string_view filename);
 
 	Vocation* getVocation(uint16_t id);
+	Vocation& getOrCreateVocation(uint16_t id);
 	int32_t getVocationId(std::string_view name) const;
 	uint16_t getPromotedVocation(uint16_t vocationId) const;
 	const VocationMap& getVocations() const { return vocationsMap; }

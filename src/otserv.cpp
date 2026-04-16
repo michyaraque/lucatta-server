@@ -137,12 +137,7 @@ void mainLoader(ServiceManager* services)
 		std::cout << "> No tables were optimized." << std::endl;
 	}
 
-	// load vocations
-	std::cout << ">> Loading vocations" << std::endl;
-	if (std::ifstream is{"data/XML/vocations.xml"}; !g_vocations.loadFromXml(is, "data/XML/vocations.xml")) {
-		startupErrorMessage("Unable to load vocations!");
-		return;
-	}
+	// Vocations are now defined in data/scripts/vocations/vocations.lua
 
 	// load item data
 	std::cout << ">> Loading appearances/items" << std::endl;
