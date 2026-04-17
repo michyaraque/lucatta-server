@@ -153,9 +153,15 @@ end
 function Item:buildTooltip()
   local uid = self:getUniqueId()
   local itemType = self:getType()
+
+	local name = itemType:getName()
+	if self:getCount() > 1 then
+		name = itemType:getPluralName()
+	end
+
   local item_data = {
     uid = uid,
-    itemName = itemType:getName(),
+    itemName = name,
     itemId = itemType:getId()
   }
 
