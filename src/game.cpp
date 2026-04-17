@@ -2461,11 +2461,49 @@ ReturnValue Game::internalMoveItem(Thing* fromThing, Thing* toThing, int32_t ind
 		return RETURNVALUE_NOERROR; // silently ignore move
 	}
 
+	bool forceContainerSlotSwap = false;
+	if (dynamic_cast<Container*>(fromThing) && fromThing == toThing && toItem && toItem != item &&
+	    index != INDEX_WHEREEVER) {
+		const bool canMergeStacks = item->isStackable() && item->equals(toItem) &&
+		                            toItem->getItemCount() < ITEM_STACK_SIZE;
+		if (!canMergeStacks) {
+			count = item->isStackable() ? item->getItemCount() : 1;
+			forceContainerSlotSwap = true;
+		}
+	}
+
 	// check if we can add this item
 	ReturnValue ret = toThing->queryAdd(index, *item, count, flags, actor);
 	if (ret == RETURNVALUE_NEEDEXCHANGE) {
+		int32_t sourceIndex = fromThing->getThingIndex(item);
+		Container* sourceContainer = dynamic_cast<Container*>(fromThing);
+		if (sourceContainer) {
+			const int32_t sourceSlot = sourceContainer->getSlotByItem(item);
+			if (sourceSlot != -1) {
+				sourceIndex = sourceSlot;
+			}
+		}
+
+		const auto sourceHasMovedItem = [sourceContainer, item, sourceIndex]() -> bool {
+			if (sourceIndex < 0) {
+				return false;
+			}
+
+			if (sourceContainer) {
+				return sourceContainer->getItemBySlot(static_cast<size_t>(sourceIndex)) == item;
+			}
+
+			return false;
+		};
+
+		const bool swapToSourceSlot = sourceHasMovedItem();
+
 		// check if we can add it to source thing
-		ret = fromThing->queryAdd(fromThing->getThingIndex(item), *toItem, toItem->getItemCount(), 0);
+		ret = fromThing->queryAdd(sourceIndex, *toItem, toItem->getItemCount(), 0);
+		if (ret == RETURNVALUE_NEEDEXCHANGE && swapToSourceSlot) {
+			ret = RETURNVALUE_NOERROR;
+		}
+
 		if (ret == RETURNVALUE_NOERROR) {
 			if (actorPlayer && fromPos && toPos) {
 				const ReturnValue eventRet = tfs::events::player::onMoveItem(
@@ -2475,19 +2513,25 @@ ReturnValue Game::internalMoveItem(Thing* fromThing, Thing* toThing, int32_t ind
 				}
 			}
 
-			// check how much we can move
-			uint32_t maxExchangeQueryCount = 0;
-			ReturnValue retExchangeMaxCount =
-			    fromThing->queryMaxCount(INDEX_WHEREEVER, *toItem, toItem->getItemCount(), maxExchangeQueryCount, 0);
+			if (!swapToSourceSlot) {
+				// check how much we can move
+				uint32_t maxExchangeQueryCount = 0;
+				ReturnValue retExchangeMaxCount =
+				    fromThing->queryMaxCount(INDEX_WHEREEVER, *toItem, toItem->getItemCount(), maxExchangeQueryCount, 0);
 
-			if (retExchangeMaxCount != RETURNVALUE_NOERROR && maxExchangeQueryCount == 0) {
-				return retExchangeMaxCount;
+				if (retExchangeMaxCount != RETURNVALUE_NOERROR && maxExchangeQueryCount == 0) {
+					return retExchangeMaxCount;
+				}
 			}
 
 			if (toThing->queryRemove(*toItem, toItem->getItemCount(), flags, actor) == RETURNVALUE_NOERROR) {
 				int32_t oldToItemIndex = toThing->getThingIndex(toItem);
 				toThing->removeThing(toItem, toItem->getItemCount());
-				fromThing->addThing(toItem);
+				if (swapToSourceSlot) {
+					fromThing->addThing(sourceIndex, toItem);
+				} else {
+					fromThing->addThing(toItem);
+				}
 
 				if (oldToItemIndex != -1) {
 					toThing->postRemoveNotification(toItem, fromThing, oldToItemIndex);
@@ -2516,9 +2560,14 @@ ReturnValue Game::internalMoveItem(Thing* fromThing, Thing* toThing, int32_t ind
 
 	// check how much we can move
 	uint32_t maxQueryCount = 0;
-	ReturnValue retMaxCount = toThing->queryMaxCount(index, *item, count, maxQueryCount, flags);
-	if (retMaxCount != RETURNVALUE_NOERROR && maxQueryCount == 0) {
-		return retMaxCount;
+	ReturnValue retMaxCount = RETURNVALUE_NOERROR;
+	if (forceContainerSlotSwap) {
+		maxQueryCount = count;
+	} else {
+		retMaxCount = toThing->queryMaxCount(index, *item, count, maxQueryCount, flags);
+		if (retMaxCount != RETURNVALUE_NOERROR && maxQueryCount == 0) {
+			return retMaxCount;
+		}
 	}
 
 	uint32_t moveCount;

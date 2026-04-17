@@ -2904,22 +2904,25 @@ Thing* Player::queryDestination(int32_t& index, const Thing& thing, Item** destI
 		size_t i = 0;
 		while (i < containers.size()) {
 			Container* tmpContainer = containers[i++];
+			const uint32_t containerCapacity = tmpContainer->capacity();
+
 			if (!autoStack || !isStackable) {
-				// we need to find first empty container as fast as we can for non-stackable items
-				uint32_t n = tmpContainer->capacity() -
-				             std::min(tmpContainer->capacity(), static_cast<uint32_t>(tmpContainer->size()));
-				while (n) {
-					if (tmpContainer->queryAdd(tmpContainer->capacity() - n, *item, item->getItemCount(), flags) ==
-					    RETURNVALUE_NOERROR) {
-						index = tmpContainer->capacity() - n;
-						*destItem = nullptr;
-						return tmpContainer;
+				for (uint32_t slot = 0; slot < containerCapacity; ++slot) {
+					Item* tmpContainerItem = tmpContainer->getItemBySlot(slot);
+					if (!tmpContainerItem) {
+						if (tmpContainer->queryAdd(static_cast<int32_t>(slot), *item, item->getItemCount(), flags) ==
+						    RETURNVALUE_NOERROR) {
+							index = static_cast<int32_t>(slot);
+							*destItem = nullptr;
+							return tmpContainer;
+						}
+						continue;
 					}
 
-					--n;
-				}
+					if (tmpContainerItem == tradeItem || tmpContainerItem == item) {
+						continue;
+					}
 
-				for (Item* tmpContainerItem : tmpContainer->getItemList()) {
 					if (Container* subContainer = tmpContainerItem->getContainer()) {
 						containers.push_back(subContainer);
 					}
@@ -2928,9 +2931,18 @@ Thing* Player::queryDestination(int32_t& index, const Thing& thing, Item** destI
 				continue;
 			}
 
-			uint32_t n = 0;
+			int32_t freeSlot = -1;
+			for (uint32_t slot = 0; slot < containerCapacity; ++slot) {
+				Item* tmpItem = tmpContainer->getItemBySlot(slot);
+				if (!tmpItem) {
+					if (freeSlot == -1 &&
+					    tmpContainer->queryAdd(static_cast<int32_t>(slot), *item, item->getItemCount(), flags) ==
+					        RETURNVALUE_NOERROR) {
+						freeSlot = static_cast<int32_t>(slot);
+					}
+					continue;
+				}
 
-			for (Item* tmpItem : tmpContainer->getItemList()) {
 				if (tmpItem == tradeItem) {
 					continue;
 				}
@@ -2941,7 +2953,7 @@ Thing* Player::queryDestination(int32_t& index, const Thing& thing, Item** destI
 
 				// try find an already existing item to stack with
 				if (tmpItem->equals(item) && tmpItem->getItemCount() < ITEM_STACK_SIZE) {
-					index = n;
+					index = static_cast<int32_t>(slot);
 					*destItem = tmpItem;
 					return tmpContainer;
 				}
@@ -2949,13 +2961,10 @@ Thing* Player::queryDestination(int32_t& index, const Thing& thing, Item** destI
 				if (Container* subContainer = tmpItem->getContainer()) {
 					containers.push_back(subContainer);
 				}
-
-				n++;
 			}
 
-			if (n < tmpContainer->capacity() &&
-			    tmpContainer->queryAdd(n, *item, item->getItemCount(), flags) == RETURNVALUE_NOERROR) {
-				index = n;
+			if (freeSlot != -1) {
+				index = freeSlot;
 				*destItem = nullptr;
 				return tmpContainer;
 			}
