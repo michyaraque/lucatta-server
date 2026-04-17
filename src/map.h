@@ -156,10 +156,10 @@ private:
 class Map
 {
 public:
-	static constexpr int32_t maxViewportX = 17; // min value: maxClientViewportX + 1
-	static constexpr int32_t maxViewportY = 10; // min value: maxClientViewportY + 1
-	static constexpr int32_t maxClientViewportX = 16;
-	static constexpr int32_t maxClientViewportY = 10;
+	static constexpr int32_t maxViewportX = 31; // min value: maxClientViewportX + 1
+	static constexpr int32_t maxViewportY = 19; // min value: maxClientViewportY + 1
+	static constexpr int32_t maxClientViewportX = 30;
+	static constexpr int32_t maxClientViewportY = 18;
 	static constexpr int16_t nodeReserveSize = static_cast<int16_t>((maxViewportX * maxViewportY * 3) / 2);
 
 	uint32_t clean() const;
