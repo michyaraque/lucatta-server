@@ -151,7 +151,12 @@
 		<attribute key="armor" value="6" />
 		<attribute key="slotType" value="legs" />
 	</item>
-	<item id="92" name="Gold Coins" />
+	<item id="92" name="Gold Piece" plural="Gold Pieces">
+		<attribute key="worth" value="1" />
+	</item>
+	<item id="93" name="Gold Bar" plural="Gold Bars">
+		<attribute key="worth" value="10000" />
+	</item>
 	<item id="94" name="Skeleton Key" />
 	<item id="95" name="Raiblocks artifact" />
 	<item id="96" name="Raiblocks artifact" />
@@ -166,7 +171,7 @@
 		<attribute key="weaponType" value="club" />
 		<attribute key="paperdolloutfit" value="210" />
 	</item>
-	<item id="110" name="Rejuvenation Potion">
+	<item id="110" name="Mana Potion">
 		<attribute key="supply" value="true" />
 	</item>
 	<item id="111" name="Poison Potion">
@@ -1009,6 +1014,9 @@
 	<item id="1003" name="Epic Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
+	<item id="1003" name="Epic Jewel Skull">
+		<attribute key="description" value="Can be inserted in a socket" />
+	</item>
 	<item id="1004" name="Legendary Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
@@ -1019,6 +1027,11 @@
 	<item id="2002" name="Stash">
 		<attribute key="type" value="depot" />
 		<attribute key="containerSize" value="560" />
+	</item>
+	<item id="2333" name="Water">
+		<attribute key="type" value="trashholder" />
+		<attribute key="effect" value="bluebubble" />
+		<attribute key="fluidSource" value="water" />
 	</item>
 	<item id="11482" name="Waypoint" />
 	<item id="11484" name="Cow Portal" />

@@ -1,32 +1,73 @@
-local config = {}
+local floor = math.floor
 
+local config = {}
 local changeGold = Action()
 
-function changeGold.onUse(player, item, fromPosition, target, toPosition, isHotkey)
-	local coin = config[item:getId()]
-	if coin.changeTo and item.type == 100 then
-		item:remove()
-		player:addItem(coin.changeTo, 1)
-	elseif coin.changeBack then
-		item:remove(1)
-		player:addItem(coin.changeBack, 100)
-	else
+local function getChangeInfo(itemId, itemWorth, stackSize)
+	local coin = config[itemId]
+	if not coin then
 		return false
 	end
+
+	local totalWorth = itemWorth * stackSize
+
+	if coin.changeToId then
+		local amount = totalWorth / coin.changeToWorth
+		if amount > 0 and floor(amount) == amount then
+			return coin.changeToId, amount
+		end
+	elseif coin.changeBackId then
+		local amount = totalWorth / coin.changeBackWorth
+		if amount > 0 and floor(amount) == amount then
+			return coin.changeBackId, amount
+		end
+	end
+
+	return false
+end
+
+function changeGold.onUse(player, item)
+	local itemId = item:getId()
+	local itemWorth = item:getType():getWorth()
+	local stackSize = item:getCount()
+
+	local outputId, outputAmount = getChangeInfo(itemId, itemWorth, stackSize)
+	if not outputId then
+		return false
+	end
+
+	item:remove()
+	player:addItem(outputId, outputAmount)
 	return true
 end
 
 local currencyItems = Game.getCurrencyItems()
-local registeredCurrencyIds = 0
-for index, currency in pairs(currencyItems) do
-	local back, to = currencyItems[index - 1], currencyItems[index + 1]
-	local currencyId = currency:getId()
-	config[currencyId] = { changeBack = back and back:getId(), changeTo = to and to:getId() }
-	changeGold:id(currencyId)
-	registeredCurrencyIds = registeredCurrencyIds + 1
+local sortedCurrencies = {}
+
+for _, currency in pairs(currencyItems) do
+	sortedCurrencies[#sortedCurrencies + 1] = currency
 end
 
-if registeredCurrencyIds > 0 then
+table.sort(sortedCurrencies, function(a, b)
+	return a:getWorth() < b:getWorth()
+end)
+
+local registered = 0
+for i, currency in ipairs(sortedCurrencies) do
+	local currencyId = currency:getId()
+
+	config[currencyId] = {
+		changeBackId = sortedCurrencies[i - 1] and sortedCurrencies[i - 1]:getId(),
+		changeBackWorth = sortedCurrencies[i - 1] and sortedCurrencies[i - 1]:getWorth(),
+		changeToId = sortedCurrencies[i + 1] and sortedCurrencies[i + 1]:getId(),
+		changeToWorth = sortedCurrencies[i + 1] and sortedCurrencies[i + 1]:getWorth()
+	}
+
+	changeGold:id(currencyId)
+	registered = registered + 1
+end
+
+if registered > 0 then
 	changeGold:register()
 else
 	print("[Warning - change_gold.lua] No currency ids found, action not registered.")

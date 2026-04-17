@@ -109,6 +109,38 @@ function ExtendedEvent.onExtendedOpcode(player, opcode, buffer)
   end
 end
 
+local function formatWorth(value)
+  if not value or value <= 0 then
+    return nil
+  end
+
+  local function fmt(n)
+    if n >= 1000000000 then
+      local main = math.floor(n / 1000000000)
+      local rem  = n % 1000000000
+      local s = main .. "kkk"
+      if rem > 0 then s = s .. " and " .. fmt(rem) end
+      return s
+    elseif n >= 1000000 then
+      local main = math.floor(n / 1000000)
+      local rem  = n % 1000000
+      local s = main .. "kk"
+      if rem > 0 then s = s .. " and " .. fmt(rem) end
+      return s
+    elseif n >= 1000 then
+      local main = math.floor(n / 1000)
+      local rem  = n % 1000
+      local s = main .. "k"
+      if rem > 0 then s = s .. " and " .. fmt(rem) end
+      return s
+    else
+      return tostring(n)
+    end
+  end
+
+  return fmt(value)
+end
+
 function Player:sendItemTooltip(item)
   if item then
     local item_data = item:buildTooltip()
@@ -435,6 +467,13 @@ function Item:buildTooltip()
   end
 
   item_data.weight = self:getWeight()
+
+  local worthValue = itemType:getWorth()
+  if worthValue and worthValue > 0 then
+    local count = self:getCount() or 1
+    item_data.worth = formatWorth(worthValue * count)
+  end
+
   return item_data
 end
 
@@ -564,6 +603,7 @@ function ItemType:buildTooltip(count)
     implicit.cap = "Capacity " .. self:getCapacity()
   end
 
+
   if next(implicit) ~= nil then
     item_data.imp = implicit
   end
@@ -585,6 +625,12 @@ function ItemType:buildTooltip(count)
   end
 
   item_data.weight = self:getWeight() * item_data.count
+
+  local worthValue = self:getWorth()
+  if worthValue and worthValue > 0 then
+    item_data.worth = formatWorth(worthValue * item_data.count)
+  end
+
   return item_data
 end
 
