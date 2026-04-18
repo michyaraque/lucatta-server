@@ -120,6 +120,30 @@ function Player.sendExtendedOpcode(self, opcode, buffer)
 	return true
 end
 
+function Player.sendCustomPacket(self, opcode, payload)
+    -- payload es una lista ordenada de tablas: {{type = "byte", val = 0x01}, {type = "string", val = "hola"}}
+
+    local networkMessage = NetworkMessage()
+    networkMessage:addByte(LUCATTA_BASE_PACKET)
+    networkMessage:addByte(opcode)
+
+    for _, item in ipairs(payload) do
+        if item.type == "byte" then
+            networkMessage:addByte(item.val)
+        elseif item.type == "u16" then
+            networkMessage:addU16(item.val)
+        elseif item.type == "u32" then
+            networkMessage:addU32(item.val)
+        elseif item.type == "string" then
+            networkMessage:addString(item.val)
+        end
+    end
+
+    networkMessage:sendToPlayer(self)
+    networkMessage:delete()
+    return true
+end
+
 APPLY_SKILL_MULTIPLIER = true
 local addSkillTriesFunc = Player.addSkillTries
 function Player.addSkillTries(...)

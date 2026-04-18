@@ -10,7 +10,7 @@ local waypointPanel = {
 		premium = 2,
 	},
 	packets = {
-		opcode = 201,
+		opcode = LUCATTA_PACKET_WAYPOINT,
 		subOpcodes = {
 			update = 1,
 			open = 2,
@@ -113,17 +113,25 @@ function waypointPanel.getStates(player)
 end
 
 function waypointPanel.sendStates(player)
-	player:sendExtendedOpcode(waypointPanel.packets.opcode, json.encode({
-		subOpcode = waypointPanel.packets.subOpcodes.update,
-		waypoints = waypointPanel.getStates(player),
-	}))
+    local states = waypointPanel.getStates(player)
+    local payload = {
+        {type = "byte", val = waypointPanel.packets.subOpcodes.update},
+        {type = "u16", val = #states}
+    }
+
+    for i = 1, #states do
+        table.insert(payload, {type = "byte", val = states[i]})
+    end
+
+    player:sendCustomPacket(LUCATTA_PACKET_WAYPOINT, payload)
 end
 
 function waypointPanel.sendOpen(player, waypointId)
-	player:sendExtendedOpcode(waypointPanel.packets.opcode, json.encode({
-		subOpcode = waypointPanel.packets.subOpcodes.open,
-		waypointId = waypointId,
-	}))
+    local payload = {
+        {type = "byte", val = waypointPanel.packets.subOpcodes.open},
+        {type = "u16", val = waypointId}
+    }
+    player:sendCustomPacket(LUCATTA_PACKET_WAYPOINT, payload)
 end
 
 function waypointPanel.findNearby(player, maxDistance)
@@ -220,7 +228,7 @@ loginEvent:register()
 local extendedEvent = CreatureEvent("WaypointPanelExtended")
 
 function extendedEvent.onExtendedOpcode(player, opcode, buffer)
-	if opcode ~= waypointPanel.packets.opcode then
+	if opcode ~= LUCATTA_PACKET_WAYPOINT then
 		return true
 	end
 
@@ -235,6 +243,19 @@ function extendedEvent.onExtendedOpcode(player, opcode, buffer)
 
 	return true
 end
+
+local waypointPacket = CustomPacketHandler(LUCATTA_PACKET_WAYPOINT)
+
+function waypointPacket.onReceive(player, msg)
+	local subOpcode = msg:getByte()
+	if subOpcode == waypointPanel.packets.subOpcodes.goTo then
+		waypointPanel.travel(player, msg:getU16())
+	end
+
+	return true
+end
+
+waypointPacket:register()
 
 extendedEvent:type("extendedopcode")
 extendedEvent:register()

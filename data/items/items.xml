@@ -1014,9 +1014,6 @@
 	<item id="1003" name="Epic Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
-	<item id="1003" name="Epic Jewel Skull">
-		<attribute key="description" value="Can be inserted in a socket" />
-	</item>
 	<item id="1004" name="Legendary Jewel Skull">
 		<attribute key="description" value="Can be inserted in a socket" />
 	</item>
